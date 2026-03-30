@@ -1,20 +1,19 @@
+import os
+import uuid
+from pathlib import Path
+
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from ..core.database import get_db
 from ..core.security import get_current_user
+from ..core.patient_resolver import resolve_patient_id
 from ..models.people import PersonOut, PersonUpdate, NotesUpdate, Interaction
 
 router = APIRouter(prefix="/api/people", tags=["people"])
 
-
-async def _get_patient_id(user_id: str) -> str:
-    """Resolve the patient_id for the current caregiver."""
-    db = get_db()
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
-    if not user or not user.get("patient_id"):
-        raise HTTPException(status_code=404, detail="No patient linked to your account")
-    return str(user["patient_id"])
+UPLOAD_DIR = Path("uploads/faces")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _doc_to_person(doc: dict) -> PersonOut:
@@ -32,17 +31,24 @@ def _doc_to_person(doc: dict) -> PersonOut:
 
 
 @router.get("", response_model=list[PersonOut])
-async def list_people(user_id: str = Depends(get_current_user)):
+async def list_people(patient_id: str = Depends(resolve_patient_id)):
     """List all people in the patient's contact database."""
     db = get_db()
-    # Return all people from the shared 'people' collection.
-    # The glasses write here; the app reads from here.
-    docs = await db["people"].find({}, {"embedding": 0}).to_list(length=500)
+    # Return people scoped to this patient, or unscoped ones (legacy from glasses)
+    query = {
+        "$or": [
+            {"patient_id": patient_id},
+            {"patient_id": {"$exists": False}},
+        ]
+    }
+    docs = await db["people"].find(query, {"embedding": 0}).to_list(length=500)
     return [_doc_to_person(d) for d in docs]
 
 
 @router.get("/{person_id}", response_model=PersonOut)
-async def get_person(person_id: str, user_id: str = Depends(get_current_user)):
+async def get_person(
+    person_id: str, patient_id: str = Depends(resolve_patient_id)
+):
     db = get_db()
     doc = await db["people"].find_one(
         {"_id": ObjectId(person_id)}, {"embedding": 0}
@@ -56,7 +62,7 @@ async def get_person(person_id: str, user_id: str = Depends(get_current_user)):
 async def update_person(
     person_id: str,
     body: PersonUpdate,
-    user_id: str = Depends(get_current_user),
+    patient_id: str = Depends(resolve_patient_id),
 ):
     db = get_db()
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -79,7 +85,7 @@ async def update_person(
 async def update_notes(
     person_id: str,
     body: NotesUpdate,
-    user_id: str = Depends(get_current_user),
+    patient_id: str = Depends(resolve_patient_id),
 ):
     db = get_db()
     result = await db["people"].update_one(
@@ -95,8 +101,60 @@ async def update_notes(
     return _doc_to_person(doc)
 
 
+@router.post("/enroll", response_model=PersonOut, status_code=201)
+async def enroll_face(
+    name: str = Form(...),
+    relation: str = Form(""),
+    photo: UploadFile = File(...),
+    patient_id: str = Depends(resolve_patient_id),
+):
+    """Enroll a new face — accepts name, relation, and a photo."""
+    db = get_db()
+
+    # Save photo to disk
+    ext = os.path.splitext(photo.filename or "face.jpg")[1] or ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = UPLOAD_DIR / filename
+
+    content = await photo.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    doc = {
+        "name": name,
+        "relation": relation,
+        "notes": "",
+        "embedding": [],
+        "last_seen": None,
+        "seen_count": 0,
+        "interactions": [],
+        "patient_id": patient_id,
+        "photo_path": str(filepath),
+    }
+    result = await db["people"].insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return _doc_to_person(doc)
+
+
+@router.delete("/{person_id}", status_code=204)
+async def delete_person(
+    person_id: str, patient_id: str = Depends(resolve_patient_id)
+):
+    db = get_db()
+    # Try to delete the photo file too
+    doc = await db["people"].find_one({"_id": ObjectId(person_id)})
+    if doc and doc.get("photo_path"):
+        try:
+            os.remove(doc["photo_path"])
+        except OSError:
+            pass
+
+    result = await db["people"].delete_one({"_id": ObjectId(person_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+
 # Legacy endpoint — matches the original dashboard API shape
-# so the existing frontend keeps working during migration.
 @router.post("/by-name/{name}/notes")
 async def update_notes_by_name(name: str, body: NotesUpdate):
     db = get_db()

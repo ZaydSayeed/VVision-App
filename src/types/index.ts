@@ -1,5 +1,18 @@
+// ── Auth ──────────────────────────────────────────────────
+export type UserRole = "patient" | "caregiver";
+
+export interface AppUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  patient_id: string | null;
+}
+
+// ── People (face recognition database) ───────────────────
 export interface Person {
-  _id: string;
+  id: string;
+  _id?: string; // legacy compat
   name: string;
   relation: string;
   last_seen: string | null;
@@ -13,12 +26,16 @@ export interface Interaction {
   summary: string;
 }
 
+// ── Alerts (unknown faces) ───────────────────────────────
 export interface Alert {
-  _id: string;
+  id: string;
+  _id?: string; // legacy compat
   type: string;
   timestamp: string;
+  patient_id?: string;
 }
 
+// ── Vitals ───────────────────────────────────────────────
 export interface VitalsReading {
   pulse_rate: number | null;
   breathing_rate: number | null;
@@ -36,6 +53,7 @@ export type Expression =
   | "Neutral"
   | "";
 
+// ── Dashboard ────────────────────────────────────────────
 export interface DashboardStats {
   seenToday: number;
   alertCount: number;
@@ -52,48 +70,44 @@ export interface TimelineEvent {
   count?: number;
 }
 
-// --- Auth ---
-export type UserRole = "patient" | "caregiver";
-
-export interface AppUser {
-  name: string;
-  role: UserRole;
-}
-
-// --- Routine Tasks ---
+// ── Routine Tasks ────────────────────────────────────────
 export interface RoutineTask {
   id: string;
   label: string;
   time: string;
-  completedDate: string | null;
+  completed_date: string | null;
+  patient_id?: string;
 }
 
-// --- Medications ---
+// ── Medications ──────────────────────────────────────────
 export interface Medication {
   id: string;
   name: string;
   dosage: string;
   time: string;
-  takenDate: string | null;
+  taken_date: string | null;
+  patient_id?: string;
 }
 
-// --- Caregiver Profiles ---
-export interface CaregiverProfile {
-  id: string;
-  name: string;
-  phone: string;
-  relation: string;
-  addedAt: string;
-}
-
-// --- Help Alerts (local) ---
+// ── Help Alerts ──────────────────────────────────────────
 export interface HelpAlert {
   id: string;
+  patient_id?: string;
   timestamp: string;
   dismissed: boolean;
 }
 
-// --- Faces ---
+// ── Caregiver Profiles ───────────────────────────────────
+export interface CaregiverProfile {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  relation?: string;
+  addedAt?: string;
+}
+
+// ── Faces ────────────────────────────────────────────────
 export interface FacePerson {
   id: string;
   name: string;

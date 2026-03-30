@@ -3,87 +3,98 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..core.database import get_db
 from ..core.security import get_current_user
-from ..models.patient import PatientCreate, PatientOut, PatientUpdate
+from ..core.patient_resolver import resolve_patient_id
+from ..models.patient import PatientOut, PatientUpdate, LinkPatientRequest
 
 router = APIRouter(prefix="/api/patients", tags=["patients"])
 
 
-@router.post("", response_model=PatientOut, status_code=status.HTTP_201_CREATED)
-async def create_patient(body: PatientCreate, user_id: str = Depends(get_current_user)):
-    db = get_db()
-
-    # Check if caregiver already has a patient
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
-    if user and user.get("patient_id"):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You already have a patient linked. Update the existing one instead.",
-        )
-
-    doc = {
-        "name": body.name,
-        "age": body.age,
-        "diagnosis": body.diagnosis,
-        "notes": body.notes,
-        "caregiver_id": user_id,
-    }
-    result = await db["patients"].insert_one(doc)
-    patient_id = str(result.inserted_id)
-
-    # Link patient to caregiver
-    await db["users"].update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": {"patient_id": patient_id}},
+def _patient_to_out(doc: dict) -> PatientOut:
+    return PatientOut(
+        id=str(doc["_id"]),
+        name=doc["name"],
+        age=doc.get("age"),
+        diagnosis=doc.get("diagnosis"),
+        notes=doc.get("notes", ""),
+        caregiver_id=doc.get("caregiver_id", ""),
+        caregiver_ids=doc.get("caregiver_ids", []),
+        link_code=doc.get("link_code", ""),
     )
-
-    return PatientOut(id=patient_id, **body.model_dump(), caregiver_id=user_id)
 
 
 @router.get("/mine", response_model=PatientOut)
-async def get_my_patient(user_id: str = Depends(get_current_user)):
+async def get_my_patient(patient_id: str = Depends(resolve_patient_id)):
+    """Get the patient profile for the current user (works for both roles)."""
     db = get_db()
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
-    if not user or not user.get("patient_id"):
-        raise HTTPException(status_code=404, detail="No patient linked to your account")
-
-    patient = await db["patients"].find_one({"_id": ObjectId(user["patient_id"])})
+    patient = await db["patients"].find_one({"_id": ObjectId(patient_id)})
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-
-    return PatientOut(
-        id=str(patient["_id"]),
-        name=patient["name"],
-        age=patient.get("age"),
-        diagnosis=patient.get("diagnosis"),
-        notes=patient.get("notes", ""),
-        caregiver_id=patient["caregiver_id"],
-    )
+    return _patient_to_out(patient)
 
 
 @router.patch("/mine", response_model=PatientOut)
 async def update_my_patient(
-    body: PatientUpdate, user_id: str = Depends(get_current_user)
+    body: PatientUpdate, patient_id: str = Depends(resolve_patient_id)
 ):
     db = get_db()
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
-    if not user or not user.get("patient_id"):
-        raise HTTPException(status_code=404, detail="No patient linked to your account")
-
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
 
     await db["patients"].update_one(
-        {"_id": ObjectId(user["patient_id"])},
-        {"$set": updates},
+        {"_id": ObjectId(patient_id)}, {"$set": updates}
     )
+    patient = await db["patients"].find_one({"_id": ObjectId(patient_id)})
+    return _patient_to_out(patient)
+
+
+@router.get("/mine/link-code")
+async def get_link_code(user_id: str = Depends(get_current_user)):
+    """Get the patient's link code (for sharing with caregivers). Patient only."""
+    db = get_db()
+    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+    if not user or user.get("role") != "patient":
+        raise HTTPException(status_code=403, detail="Only patients have a link code")
+    if not user.get("patient_id"):
+        raise HTTPException(status_code=404, detail="No patient profile found")
 
     patient = await db["patients"].find_one({"_id": ObjectId(user["patient_id"])})
-    return PatientOut(
-        id=str(patient["_id"]),
-        name=patient["name"],
-        age=patient.get("age"),
-        diagnosis=patient.get("diagnosis"),
-        notes=patient.get("notes", ""),
-        caregiver_id=patient["caregiver_id"],
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    return {"link_code": patient.get("link_code", "")}
+
+
+@router.post("/link", response_model=PatientOut)
+async def link_to_patient(
+    body: LinkPatientRequest, user_id: str = Depends(get_current_user)
+):
+    """Caregiver enters a patient's link code to connect their accounts."""
+    db = get_db()
+    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+    if not user or user.get("role") != "caregiver":
+        raise HTTPException(status_code=403, detail="Only caregivers can link to a patient")
+    if user.get("patient_id"):
+        raise HTTPException(status_code=409, detail="You are already linked to a patient")
+
+    code = body.link_code.strip().upper()
+    patient = await db["patients"].find_one({"link_code": code})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Invalid link code")
+
+    patient_id = str(patient["_id"])
+
+    # Add caregiver to patient's list
+    await db["patients"].update_one(
+        {"_id": patient["_id"]},
+        {"$addToSet": {"caregiver_ids": user_id}},
     )
+
+    # Link caregiver to patient
+    await db["users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"patient_id": patient_id}},
+    )
+
+    patient = await db["patients"].find_one({"_id": ObjectId(patient_id)})
+    return _patient_to_out(patient)

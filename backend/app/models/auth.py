@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -5,6 +7,7 @@ class SignupRequest(BaseModel):
     email: EmailStr
     password: str
     name: str
+    role: Literal["patient", "caregiver"]
 
 
 class LoginRequest(BaseModel):
@@ -22,8 +25,8 @@ class UserOut(BaseModel):
     id: str
     email: str
     name: str
+    role: str
     patient_id: str | None = None
 
 
-# Needed for forward ref
 AuthResponse.model_rebuild()

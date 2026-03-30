@@ -95,7 +95,7 @@ export function AlertsScreen({
         ) : (
           alerts.map((alert) => (
             <AlertCard
-              key={alert._id}
+              key={alert.id ?? alert._id}
               alert={alert}
               onDismiss={handleDismissApiAlert}
             />

@@ -26,7 +26,7 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
       </View>
       <TouchableOpacity
         style={styles.dismissBtn}
-        onPress={() => onDismiss(alert._id)}
+        onPress={() => onDismiss(alert.id ?? alert._id ?? "")}
       >
         <Text style={styles.dismissText}>Dismiss</Text>
       </TouchableOpacity>

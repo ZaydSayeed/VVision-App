@@ -1,21 +1,50 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { LoginScreen } from "../screens/LoginScreen";
+import { LinkPatientScreen } from "../screens/caregiver/LinkPatientScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
 import { colors, fonts, spacing } from "../config/theme";
 
 export function RootNavigator() {
-  const { user, loading, login, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   if (loading) return null;
 
   if (!user) {
-    return <LoginScreen onLogin={login} />;
+    return <LoginScreen />;
   }
 
-  const header = (
+  // Caregiver not yet linked to a patient
+  if (user.role === "caregiver" && !user.patient_id) {
+    return (
+      <View style={styles.root}>
+        <Header onLogout={logout} />
+        <LinkPatientScreen />
+      </View>
+    );
+  }
+
+  if (user.role === "caregiver") {
+    return (
+      <View style={styles.root}>
+        <Header onLogout={logout} />
+        <CaregiverTabNavigator />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.root}>
+      <Header onLogout={logout} />
+      <PatientTabNavigator patientName={user.name} />
+    </View>
+  );
+}
+
+function Header({ onLogout }: { onLogout: () => void }) {
+  return (
     <View style={styles.header}>
       <View style={styles.headerInner}>
         <View style={styles.logo}>
@@ -28,26 +57,10 @@ export function RootNavigator() {
             <Text style={styles.logoText}>Vela Vision</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+        <TouchableOpacity onPress={onLogout} style={styles.logoutBtn}>
           <Text style={styles.logoutText}>Sign out</Text>
         </TouchableOpacity>
       </View>
-    </View>
-  );
-
-  if (user.role === "caregiver") {
-    return (
-      <View style={styles.root}>
-        {header}
-        <CaregiverTabNavigator />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.root}>
-      {header}
-      <PatientTabNavigator patientName={user.name} />
     </View>
   );
 }

@@ -140,7 +140,7 @@ export function FacesScreen() {
 
               return (
                 <TouchableOpacity
-                  key={person._id}
+                  key={person.id ?? person._id}
                   style={styles.faceCard}
                   onLongPress={() => handleDelete(person)}
                   activeOpacity={0.85}

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const STORAGE_KEYS = {
+  AUTH_TOKEN: "@vela/auth_token",
   CURRENT_USER: "@vela/current_user",
   ROUTINE_TASKS: "@vela/routine_tasks",
   MEDICATIONS: "@vela/medications",

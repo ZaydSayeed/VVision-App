@@ -1,49 +1,73 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { useCaregiver } from "../../hooks/useCaregiver";
+import { useAuth } from "../../context/AuthContext";
+import { getMyLinkCode } from "../../api/client";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
 import { colors, fonts, spacing, radius } from "../../config/theme";
 
 export function AddCaregiverScreen() {
-  const { profiles, addProfile, deleteProfile } = useCaregiver();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [relation, setRelation] = useState("");
-  const [error, setError] = useState("");
+  const { profiles, refresh } = useCaregiver();
+  const { user } = useAuth();
+  const [linkCode, setLinkCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  async function handleAdd() {
-    if (!name.trim() || !phone.trim() || !relation.trim()) {
-      setError("All fields are required.");
-      return;
+  // If user is a patient, fetch link code
+  useEffect(() => {
+    if (user?.role === "patient") {
+      getMyLinkCode()
+        .then((res) => setLinkCode(res.link_code))
+        .catch(() => {});
     }
-    setError("");
-    await addProfile(name.trim(), phone.trim(), relation.trim());
-    setName("");
-    setPhone("");
-    setRelation("");
-  }
+  }, [user?.role]);
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={async () => {
+            setLoading(true);
+            await refresh();
+            setLoading(false);
+          }}
+          tintColor={colors.violet}
+        />
+      }
     >
-      {/* Existing Profiles */}
+      {/* Link Code Section (patient only) */}
+      {user?.role === "patient" && linkCode && (
+        <View style={styles.codeCard}>
+          <Text style={styles.codeLabel}>YOUR LINK CODE</Text>
+          <Text style={styles.codeValue}>{linkCode}</Text>
+          <Text style={styles.codeHint}>
+            Share this code with your caregiver so they can connect to your
+            account.
+          </Text>
+        </View>
+      )}
+
+      {/* Care Team */}
       <SectionHeader label="Care Team" />
       {profiles.length === 0 ? (
         <EmptyState
           emoji="👥"
-          title="No caregivers yet"
-          subtitle="Add your first caregiver below"
+          title="No caregivers linked"
+          subtitle={
+            user?.role === "patient"
+              ? "Share your link code above with a caregiver"
+              : "You are the only caregiver linked to this patient"
+          }
         />
       ) : (
         profiles.map((profile) => (
@@ -55,60 +79,13 @@ export function AddCaregiverScreen() {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{profile.name}</Text>
-              <Text style={styles.profileMeta}>
-                {profile.relation} · {profile.phone}
-              </Text>
+              {profile.email && (
+                <Text style={styles.profileMeta}>{profile.email}</Text>
+              )}
             </View>
-            <TouchableOpacity
-              onPress={() => deleteProfile(profile.id)}
-              style={styles.removeBtn}
-            >
-              <Text style={styles.removeText}>Remove</Text>
-            </TouchableOpacity>
           </View>
         ))
       )}
-
-      {/* Add Form */}
-      <View style={styles.formSection}>
-        <SectionHeader label="Add Caregiver" />
-
-        <Text style={styles.fieldLabel}>NAME</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. John Smith"
-          placeholderTextColor={colors.muted}
-          autoCapitalize="words"
-        />
-
-        <Text style={styles.fieldLabel}>PHONE NUMBER</Text>
-        <TextInput
-          style={styles.input}
-          value={phone}
-          onChangeText={setPhone}
-          placeholder="e.g. (214) 555-0100"
-          placeholderTextColor={colors.muted}
-          keyboardType="phone-pad"
-        />
-
-        <Text style={styles.fieldLabel}>RELATION TO PATIENT</Text>
-        <TextInput
-          style={styles.input}
-          value={relation}
-          onChangeText={setRelation}
-          placeholder="e.g. Son, Nurse, Neighbor"
-          placeholderTextColor={colors.muted}
-          autoCapitalize="words"
-        />
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <TouchableOpacity style={styles.btn} onPress={handleAdd}>
-          <Text style={styles.btnText}>Add to Care Team</Text>
-        </TouchableOpacity>
-      </View>
     </ScrollView>
   );
 }
@@ -116,6 +93,37 @@ export function AddCaregiverScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.xl, paddingBottom: 100 },
+  codeCard: {
+    backgroundColor: colors.violet50,
+    borderWidth: 1,
+    borderColor: colors.violet100,
+    borderRadius: radius.md,
+    padding: spacing.xl,
+    alignItems: "center",
+    marginBottom: spacing.xxl,
+  },
+  codeLabel: {
+    fontSize: 10,
+    color: colors.lavender,
+    ...fonts.medium,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    marginBottom: spacing.sm,
+  },
+  codeValue: {
+    fontSize: 36,
+    color: colors.violet,
+    ...fonts.medium,
+    letterSpacing: 8,
+    marginBottom: spacing.md,
+  },
+  codeHint: {
+    fontSize: 13,
+    color: colors.muted,
+    ...fonts.regular,
+    textAlign: "center",
+    lineHeight: 19,
+  },
   profileCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -151,57 +159,5 @@ const styles = StyleSheet.create({
     color: colors.muted,
     ...fonts.regular,
     marginTop: 2,
-  },
-  removeBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  removeText: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-  },
-  formSection: { marginTop: spacing.xxl },
-  fieldLabel: {
-    fontSize: 10,
-    color: colors.lavender,
-    ...fonts.medium,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    marginBottom: spacing.xs,
-    marginTop: spacing.md,
-  },
-  input: {
-    height: 52,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.lg,
-    fontSize: 16,
-    color: colors.text,
-    ...fonts.regular,
-  },
-  error: {
-    fontSize: 13,
-    color: colors.violet,
-    ...fonts.regular,
-    marginTop: spacing.sm,
-  },
-  btn: {
-    height: 52,
-    backgroundColor: colors.violet,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.lg,
-  },
-  btnText: {
-    fontSize: 16,
-    color: "#F5F0E8",
-    ...fonts.medium,
   },
 });

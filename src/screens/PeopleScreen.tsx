@@ -33,7 +33,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       {people.length > 0 ? (
         people.map((person) => (
           <PersonCard
-            key={person._id}
+            key={person.id ?? person._id}
             person={person}
             onRefresh={onRefresh}
           />

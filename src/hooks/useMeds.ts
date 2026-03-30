@@ -1,48 +1,59 @@
 import { useState, useEffect, useCallback } from "react";
 import { Medication } from "../types";
-import { STORAGE_KEYS, readStorage, writeStorage, today } from "../config/storage";
+import {
+  fetchMedications,
+  createMedication,
+  updateMedication,
+  deleteMedication,
+} from "../api/client";
+
+function today(): string {
+  return new Date().toISOString().split("T")[0];
+}
 
 export function useMeds() {
   const [meds, setMeds] = useState<Medication[]>([]);
 
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchMedications();
+      setMeds(data);
+    } catch {
+      // Keep current state on error
+    }
+  }, []);
+
   useEffect(() => {
-    readStorage<Medication[]>(STORAGE_KEYS.MEDICATIONS, []).then(setMeds);
-  }, []);
+    load();
+  }, [load]);
 
-  const persist = useCallback(async (updated: Medication[]) => {
-    setMeds(updated);
-    await writeStorage(STORAGE_KEYS.MEDICATIONS, updated);
-  }, []);
+  const addMed = useCallback(
+    async (name: string, dosage: string, time: string) => {
+      const med = await createMedication(name, dosage, time);
+      setMeds((prev) => [...prev, med]);
+    },
+    []
+  );
 
-  const addMed = useCallback(async (name: string, dosage: string, time: string) => {
-    const med: Medication = {
-      id: Date.now().toString(),
-      name,
-      dosage,
-      time,
-      takenDate: null,
-    };
-    const current = await readStorage<Medication[]>(STORAGE_KEYS.MEDICATIONS, []);
-    await persist([...current, med]);
-  }, [persist]);
+  const toggleTaken = useCallback(
+    async (id: string) => {
+      const med = meds.find((m) => m.id === id);
+      if (!med) return;
 
-  const toggleTaken = useCallback(async (id: string) => {
-    const current = await readStorage<Medication[]>(STORAGE_KEYS.MEDICATIONS, []);
-    const t = today();
-    const updated = current.map((med) =>
-      med.id === id
-        ? { ...med, takenDate: med.takenDate === t ? null : t }
-        : med
-    );
-    await persist(updated);
-  }, [persist]);
+      const t = today();
+      const newDate = med.taken_date === t ? null : t;
+      const updated = await updateMedication(id, { taken_date: newDate });
+      setMeds((prev) => prev.map((m) => (m.id === id ? updated : m)));
+    },
+    [meds]
+  );
 
   const deleteMed = useCallback(async (id: string) => {
-    const current = await readStorage<Medication[]>(STORAGE_KEYS.MEDICATIONS, []);
-    await persist(current.filter((m) => m.id !== id));
-  }, [persist]);
+    await deleteMedication(id);
+    setMeds((prev) => prev.filter((m) => m.id !== id));
+  }, []);
 
-  const isTakenToday = (med: Medication) => med.takenDate === today();
+  const isTakenToday = (med: Medication) => med.taken_date === today();
 
   return { meds, addMed, toggleTaken, deleteMed, isTakenToday };
 }

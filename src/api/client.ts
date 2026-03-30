@@ -1,24 +1,107 @@
 import { API_BASE_URL } from "../config/api";
-import { Person, Alert } from "../types";
+import {
+  Person,
+  Alert,
+  AppUser,
+  RoutineTask,
+  Medication,
+  HelpAlert,
+} from "../types";
 
+// ── Token management ──────────────────────────────────────
+let authToken: string | null = null;
+let onAuthExpired: (() => void) | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+
+export function setOnAuthExpired(cb: () => void) {
+  onAuthExpired = cb;
+}
+
+// ── Base request helper ───────────────────────────────────
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      ...options,
-    });
-    if (!res.ok) {
-      throw new Error(`API error ${res.status}: ${res.statusText}`);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(options?.headers as Record<string, string>),
+    };
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
     }
+
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (res.status === 401 && onAuthExpired) {
+      onAuthExpired();
+      throw new Error("Session expired");
+    }
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(body || `API error ${res.status}`);
+    }
+    if (res.status === 204) return undefined as T;
     return res.json();
   } finally {
     clearTimeout(timeout);
   }
 }
 
+// ── Auth ──────────────────────────────────────────────────
+interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: AppUser;
+}
+
+export async function signup(
+  email: string,
+  password: string,
+  name: string,
+  role: "patient" | "caregiver"
+): Promise<AuthResponse> {
+  return request<AuthResponse>("/api/auth/signup", {
+    method: "POST",
+    body: JSON.stringify({ email, password, name, role }),
+  });
+}
+
+export async function loginApi(
+  email: string,
+  password: string
+): Promise<AuthResponse> {
+  return request<AuthResponse>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function fetchMe(): Promise<AppUser> {
+  return request<AppUser>("/api/auth/me");
+}
+
+// ── Patient linking ───────────────────────────────────────
+export async function linkPatient(
+  linkCode: string
+): Promise<{ id: string; name: string; link_code: string }> {
+  return request("/api/patients/link", {
+    method: "POST",
+    body: JSON.stringify({ link_code: linkCode }),
+  });
+}
+
+export async function getMyLinkCode(): Promise<{ link_code: string }> {
+  return request("/api/patients/mine/link-code");
+}
+
+// ── People (face recognition database) ───────────────────
 export async function fetchPeople(): Promise<Person[]> {
   return request<Person[]>("/api/people");
 }
@@ -32,10 +115,10 @@ export async function dismissAlert(alertId: string): Promise<void> {
 }
 
 export async function updateNotes(
-  name: string,
+  personId: string,
   notes: string
 ): Promise<void> {
-  await request(`/api/people/${encodeURIComponent(name)}/notes`, {
+  await request(`/api/people/${personId}/notes`, {
     method: "POST",
     body: JSON.stringify({ notes }),
   });
@@ -55,9 +138,15 @@ export async function enrollFace(
     type: "image/jpeg",
   } as any);
 
+  const headers: Record<string, string> = {};
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+
   const res = await fetch(`${API_BASE_URL}/api/people/enroll`, {
     method: "POST",
     body: formData,
+    headers,
   });
   if (!res.ok) {
     const text = await res.text();
@@ -65,12 +154,97 @@ export async function enrollFace(
   }
 }
 
-export async function deletePerson(name: string): Promise<void> {
-  await request(`/api/people/${encodeURIComponent(name)}`, {
-    method: "DELETE",
+export async function deletePerson(personId: string): Promise<void> {
+  await request(`/api/people/${personId}`, { method: "DELETE" });
+}
+
+// ── Routines ──────────────────────────────────────────────
+export async function fetchRoutines(): Promise<RoutineTask[]> {
+  return request<RoutineTask[]>("/api/routines");
+}
+
+export async function createRoutine(
+  label: string,
+  time: string
+): Promise<RoutineTask> {
+  return request<RoutineTask>("/api/routines", {
+    method: "POST",
+    body: JSON.stringify({ label, time }),
   });
 }
 
+export async function updateRoutine(
+  id: string,
+  updates: { label?: string; time?: string; completed_date?: string | null }
+): Promise<RoutineTask> {
+  return request<RoutineTask>(`/api/routines/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function deleteRoutine(id: string): Promise<void> {
+  await request(`/api/routines/${id}`, { method: "DELETE" });
+}
+
+// ── Medications ───────────────────────────────────────────
+export async function fetchMedications(): Promise<Medication[]> {
+  return request<Medication[]>("/api/medications");
+}
+
+export async function createMedication(
+  name: string,
+  dosage: string,
+  time: string
+): Promise<Medication> {
+  return request<Medication>("/api/medications", {
+    method: "POST",
+    body: JSON.stringify({ name, dosage, time }),
+  });
+}
+
+export async function updateMedication(
+  id: string,
+  updates: {
+    name?: string;
+    dosage?: string;
+    time?: string;
+    taken_date?: string | null;
+  }
+): Promise<Medication> {
+  return request<Medication>(`/api/medications/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function deleteMedication(id: string): Promise<void> {
+  await request(`/api/medications/${id}`, { method: "DELETE" });
+}
+
+// ── Help Alerts ───────────────────────────────────────────
+export async function fetchHelpAlerts(): Promise<HelpAlert[]> {
+  return request<HelpAlert[]>("/api/help-alerts");
+}
+
+export async function createHelpAlert(): Promise<HelpAlert> {
+  return request<HelpAlert>("/api/help-alerts", { method: "POST" });
+}
+
+export async function dismissHelpAlert(id: string): Promise<HelpAlert> {
+  return request<HelpAlert>(`/api/help-alerts/${id}/dismiss`, {
+    method: "PATCH",
+  });
+}
+
+// ── Caregiver profiles ───────────────────────────────────
+export async function fetchCaregiverProfiles(): Promise<
+  { id: string; name: string; email: string }[]
+> {
+  return request("/api/caregiver-profiles");
+}
+
+// ── SSE ───────────────────────────────────────────────────
 export function createSSEConnection(onUpdate: () => void): () => void {
   const url = `${API_BASE_URL}/stream/events`;
   let eventSource: EventSource | null = null;

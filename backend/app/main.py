@@ -5,7 +5,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.database import connect_db, close_db
-from .routers import auth, patients, people, alerts, stream
+from .routers import (
+    auth,
+    patients,
+    people,
+    alerts,
+    stream,
+    routines,
+    medications,
+    help_alerts,
+    caregiver_profiles,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vvision-api")
@@ -43,6 +53,10 @@ app.include_router(patients.router)
 app.include_router(people.router)
 app.include_router(alerts.router)
 app.include_router(stream.router)
+app.include_router(routines.router)
+app.include_router(medications.router)
+app.include_router(help_alerts.router)
+app.include_router(caregiver_profiles.router)
 
 
 @app.get("/health")

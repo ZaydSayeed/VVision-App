@@ -1,47 +1,60 @@
 import { useState, useEffect, useCallback } from "react";
 import { RoutineTask } from "../types";
-import { STORAGE_KEYS, readStorage, writeStorage, today } from "../config/storage";
+import {
+  fetchRoutines,
+  createRoutine,
+  updateRoutine,
+  deleteRoutine,
+} from "../api/client";
+
+function today(): string {
+  return new Date().toISOString().split("T")[0];
+}
 
 export function useRoutine() {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
 
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchRoutines();
+      setTasks(data);
+    } catch {
+      // Keep current state on error
+    }
+  }, []);
+
   useEffect(() => {
-    readStorage<RoutineTask[]>(STORAGE_KEYS.ROUTINE_TASKS, []).then(setTasks);
-  }, []);
+    load();
+  }, [load]);
 
-  const persist = useCallback(async (updated: RoutineTask[]) => {
-    setTasks(updated);
-    await writeStorage(STORAGE_KEYS.ROUTINE_TASKS, updated);
-  }, []);
+  const addTask = useCallback(
+    async (label: string, time: string) => {
+      const task = await createRoutine(label, time);
+      setTasks((prev) => [...prev, task]);
+    },
+    []
+  );
 
-  const addTask = useCallback(async (label: string, time: string) => {
-    const task: RoutineTask = {
-      id: Date.now().toString(),
-      label,
-      time,
-      completedDate: null,
-    };
-    const current = await readStorage<RoutineTask[]>(STORAGE_KEYS.ROUTINE_TASKS, []);
-    await persist([...current, task]);
-  }, [persist]);
+  const toggleComplete = useCallback(
+    async (id: string) => {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
 
-  const toggleComplete = useCallback(async (id: string) => {
-    const current = await readStorage<RoutineTask[]>(STORAGE_KEYS.ROUTINE_TASKS, []);
-    const t = today();
-    const updated = current.map((task) =>
-      task.id === id
-        ? { ...task, completedDate: task.completedDate === t ? null : t }
-        : task
-    );
-    await persist(updated);
-  }, [persist]);
+      const t = today();
+      const newDate = task.completed_date === t ? null : t;
+      const updated = await updateRoutine(id, { completed_date: newDate });
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    },
+    [tasks]
+  );
 
   const deleteTask = useCallback(async (id: string) => {
-    const current = await readStorage<RoutineTask[]>(STORAGE_KEYS.ROUTINE_TASKS, []);
-    await persist(current.filter((t) => t.id !== id));
-  }, [persist]);
+    await deleteRoutine(id);
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
-  const isCompletedToday = (task: RoutineTask) => task.completedDate === today();
+  const isCompletedToday = (task: RoutineTask) =>
+    task.completed_date === today();
 
   return { tasks, addTask, toggleComplete, deleteTask, isCompletedToday };
 }

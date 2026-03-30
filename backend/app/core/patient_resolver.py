@@ -1,13 +1,12 @@
 """Shared utility to resolve patient_id for both patient and caregiver users."""
 
-from bson import ObjectId
 from fastapi import Depends, HTTPException
 
 from .database import get_db
 from .security import get_current_user
 
 
-async def resolve_patient_id(user_id: str = Depends(get_current_user)) -> str:
+async def resolve_patient_id(supabase_uid: str = Depends(get_current_user)) -> str:
     """
     Dependency that returns the patient_id for the current user.
 
@@ -16,9 +15,9 @@ async def resolve_patient_id(user_id: str = Depends(get_current_user)) -> str:
     - Raises 404 if no patient is linked.
     """
     db = get_db()
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+    user = await db["users"].find_one({"supabase_uid": supabase_uid})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Profile not found. Sign in again.")
 
     patient_id = user.get("patient_id")
     if not patient_id:

@@ -2,10 +2,10 @@ import { API_BASE_URL } from "../config/api";
 import {
   Person,
   Alert,
-  AppUser,
   RoutineTask,
   Medication,
   HelpAlert,
+  UserRole,
 } from "../types";
 
 // ── Token management ──────────────────────────────────────
@@ -54,37 +54,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 }
 
-// ── Auth ──────────────────────────────────────────────────
-interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  user: AppUser;
-}
-
-export async function signup(
-  email: string,
-  password: string,
+// ── Profile sync (called after Supabase login/signup) ─────
+export async function syncProfile(
   name: string,
-  role: "patient" | "caregiver"
-): Promise<AuthResponse> {
-  return request<AuthResponse>("/api/auth/signup", {
+  role: UserRole
+): Promise<{ patient_id: string | null }> {
+  return request("/api/auth/sync", {
     method: "POST",
-    body: JSON.stringify({ email, password, name, role }),
+    body: JSON.stringify({ name, role }),
   });
-}
-
-export async function loginApi(
-  email: string,
-  password: string
-): Promise<AuthResponse> {
-  return request<AuthResponse>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-}
-
-export async function fetchMe(): Promise<AppUser> {
-  return request<AppUser>("/api/auth/me");
 }
 
 // ── Patient linking ───────────────────────────────────────

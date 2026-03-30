@@ -6,10 +6,9 @@ class Settings(BaseSettings):
     mongodb_uri: str = ""
     mongodb_db_name: str = "dvision"
 
-    # JWT
-    jwt_secret: str = "change-this-to-a-random-secret-key"
-    jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440  # 24 hours
+    # Supabase (for token validation)
+    supabase_url: str = "https://xqqihmzbbqztfrvsbsnx.supabase.co"
+    supabase_anon_key: str = ""
 
     class Config:
         env_file = ".env"

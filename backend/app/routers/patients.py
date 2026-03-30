@@ -24,7 +24,6 @@ def _patient_to_out(doc: dict) -> PatientOut:
 
 @router.get("/mine", response_model=PatientOut)
 async def get_my_patient(patient_id: str = Depends(resolve_patient_id)):
-    """Get the patient profile for the current user (works for both roles)."""
     db = get_db()
     patient = await db["patients"].find_one({"_id": ObjectId(patient_id)})
     if not patient:
@@ -49,10 +48,9 @@ async def update_my_patient(
 
 
 @router.get("/mine/link-code")
-async def get_link_code(user_id: str = Depends(get_current_user)):
-    """Get the patient's link code (for sharing with caregivers). Patient only."""
+async def get_link_code(supabase_uid: str = Depends(get_current_user)):
     db = get_db()
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+    user = await db["users"].find_one({"supabase_uid": supabase_uid})
     if not user or user.get("role") != "patient":
         raise HTTPException(status_code=403, detail="Only patients have a link code")
     if not user.get("patient_id"):
@@ -67,11 +65,10 @@ async def get_link_code(user_id: str = Depends(get_current_user)):
 
 @router.post("/link", response_model=PatientOut)
 async def link_to_patient(
-    body: LinkPatientRequest, user_id: str = Depends(get_current_user)
+    body: LinkPatientRequest, supabase_uid: str = Depends(get_current_user)
 ):
-    """Caregiver enters a patient's link code to connect their accounts."""
     db = get_db()
-    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+    user = await db["users"].find_one({"supabase_uid": supabase_uid})
     if not user or user.get("role") != "caregiver":
         raise HTTPException(status_code=403, detail="Only caregivers can link to a patient")
     if user.get("patient_id"):
@@ -83,16 +80,15 @@ async def link_to_patient(
         raise HTTPException(status_code=404, detail="Invalid link code")
 
     patient_id = str(patient["_id"])
+    user_id = str(user["_id"])
 
-    # Add caregiver to patient's list
     await db["patients"].update_one(
         {"_id": patient["_id"]},
         {"$addToSet": {"caregiver_ids": user_id}},
     )
 
-    # Link caregiver to patient
     await db["users"].update_one(
-        {"_id": ObjectId(user_id)},
+        {"_id": user["_id"]},
         {"$set": {"patient_id": patient_id}},
     )
 

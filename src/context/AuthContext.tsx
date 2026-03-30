@@ -1,14 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
-import { STORAGE_KEYS } from "../config/storage";
-import {
-  signup as apiSignup,
-  loginApi,
-  fetchMe,
-  setAuthToken,
-  setOnAuthExpired,
-} from "../api/client";
+import { setAuthToken, setOnAuthExpired, syncProfile } from "../api/client";
 
 interface AuthContextValue {
   user: AppUser | null;
@@ -26,48 +25,53 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function sessionToUser(
+  session: { user: { id: string; email?: string; user_metadata?: any } } | null
+): AppUser | null {
+  if (!session?.user) return null;
+  const meta = session.user.user_metadata ?? {};
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    name: meta.name ?? "",
+    role: meta.role ?? "caregiver",
+    patient_id: meta.patient_id ?? null,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const clearAuth = useCallback(async () => {
-    setAuthToken(null);
-    await AsyncStorage.multiRemove([
-      STORAGE_KEYS.AUTH_TOKEN,
-      STORAGE_KEYS.CURRENT_USER,
-    ]);
-    setUser(null);
-  }, []);
-
-  // On mount — restore token and validate
+  // Restore session on mount
   useEffect(() => {
-    setOnAuthExpired(() => clearAuth());
+    setOnAuthExpired(() => {
+      supabase.auth.signOut();
+      setUser(null);
+    });
 
-    (async () => {
-      try {
-        const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-        if (token) {
-          setAuthToken(token);
-          const me = await fetchMe();
-          setUser(me);
-        }
-      } catch {
-        await clearAuth();
-      } finally {
-        setLoading(false);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) {
+        setAuthToken(session.access_token);
+        setUser(sessionToUser(session));
       }
-    })();
-  }, [clearAuth]);
+      setLoading(false);
+    });
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await loginApi(email, password);
-    setAuthToken(res.access_token);
-    await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, res.access_token);
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.CURRENT_USER,
-      JSON.stringify(res.user)
-    );
-    setUser(res.user);
+    // Listen for auth changes (token refresh, sign out, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.access_token) {
+        setAuthToken(session.access_token);
+        setUser(sessionToUser(session));
+      } else {
+        setAuthToken(null);
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signup = useCallback(
@@ -77,25 +81,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name: string,
       role: UserRole
     ) => {
-      const res = await apiSignup(email, password, name, role);
-      setAuthToken(res.access_token);
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, res.access_token);
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CURRENT_USER,
-        JSON.stringify(res.user)
-      );
-      setUser(res.user);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, role },
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (!data.session) {
+        throw new Error("Check your email to confirm your account.");
+      }
+
+      setAuthToken(data.session.access_token);
+      const appUser = sessionToUser(data.session);
+      setUser(appUser);
+
+      // Sync profile to MongoDB backend
+      try {
+        const synced = await syncProfile(name, role);
+        if (synced.patient_id && appUser) {
+          const updated = { ...appUser, patient_id: synced.patient_id };
+          setUser(updated);
+        }
+      } catch {
+        // Non-fatal — profile will sync on next request
+      }
     },
     []
   );
 
+  const login = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw new Error(error.message);
+
+    setAuthToken(data.session.access_token);
+    const appUser = sessionToUser(data.session);
+    setUser(appUser);
+
+    // Sync profile to get latest patient_id
+    try {
+      const synced = await syncProfile(
+        appUser?.name ?? "",
+        (appUser?.role as UserRole) ?? "caregiver"
+      );
+      if (appUser) {
+        setUser({ ...appUser, patient_id: synced.patient_id ?? null });
+      }
+    } catch {
+      // Non-fatal
+    }
+  }, []);
+
   const logout = useCallback(async () => {
-    await clearAuth();
-  }, [clearAuth]);
+    await supabase.auth.signOut();
+    setAuthToken(null);
+    setUser(null);
+  }, []);
 
   const updateUser = useCallback((updated: AppUser) => {
     setUser(updated);
-    AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updated));
   }, []);
 
   return (

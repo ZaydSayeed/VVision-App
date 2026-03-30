@@ -19,7 +19,7 @@ export function StatChip({ value, label, color }: StatChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
-    backgroundColor: colors.bgGlass,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -30,13 +30,13 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 22,
-    ...fonts.bold,
+    ...fonts.display,
   },
   label: {
-    fontSize: 11,
-    color: colors.textMuted,
+    fontSize: 10,
+    color: colors.muted,
     textTransform: "uppercase",
-    letterSpacing: 0.8,
-    ...fonts.bold,
+    letterSpacing: 1,
+    ...fonts.medium,
   },
 });

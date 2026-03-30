@@ -1,25 +1,38 @@
+// Vela Vision Brand Design Tokens
+// Source: VelaVision_BrandGuidelines.pdf
+
 export const colors = {
-  bgPrimary: "#0a0e1a",
-  bgCard: "rgba(22, 28, 45, 0.85)",
-  bgCardHover: "rgba(30, 38, 60, 0.85)",
-  bgGlass: "rgba(255,255,255,0.04)",
-  border: "rgba(255,255,255,0.06)",
-  borderFocus: "rgba(99,102,241,0.5)",
-  textPrimary: "#f1f5f9",
-  textSecondary: "#94a3b8",
-  textMuted: "#64748b",
-  accentBlue: "#38bdf8",
-  accentIndigo: "#818cf8",
-  accentGreen: "#34d399",
-  accentRed: "#f87171",
-  accentAmber: "#fbbf24",
-  accentPurple: "#c084fc",
+  // Page & surfaces
+  bg: "#F5F0E8",          // Soft sand — default page background
+  surface: "#FAF8F4",     // Warm white — cards, modals
+  darkSurface: "#2B2340", // Deep plum — dark cards / dark mode
+
+  // Brand
+  violet: "#6B5AE0",      // Primary — CTAs, logo, headings
+  violetHover: "#4F40B8", // Hover state on violet
+  lavender: "#A695F5",    // Accent — tags, labels, eyebrow text
+
+  // Violet tint scale
+  violet50: "#EEEBFB",
+  violet100: "#D4CEFF",
+  violet300: "#A695F5",
+  violet500: "#6B5AE0",
+  violet700: "#4F40B8",
+  violet800: "#3D3560",
+  violet900: "#2B2340",
+
+  // Text
+  text: "#2B2340",        // Deep plum — body text on light bg
+  subtext: "#3D3560",     // Mid plum — subheadings, dark surfaces
+  muted: "#8B7FA8",       // Muted violet — captions, meta
+
+  // Borders & dividers
+  border: "#E8E0D4",      // Sand mid
 };
 
 export const gradients = {
-  primary: ["#38bdf8", "#818cf8"] as const,
-  secondary: ["#818cf8", "#c084fc"] as const,
-  danger: ["#f87171", "#fb923c"] as const,
+  primary: ["#6B5AE0", "#A695F5"] as const,  // Violet → lavender
+  dark: ["#2B2340", "#3D3560"] as const,     // Deep plum
 };
 
 export const spacing = {
@@ -29,18 +42,21 @@ export const spacing = {
   lg: 16,
   xl: 20,
   xxl: 24,
+  xxxl: 32,
+  xxxxl: 48,
 };
 
 export const radius = {
-  sm: 10,
+  sm: 8,
   md: 12,
-  lg: 16,
-  xl: 20,
+  pill: 999,
 };
 
 export const fonts = {
-  regular: { fontWeight: "400" as const },
-  medium: { fontWeight: "500" as const },
-  semibold: { fontWeight: "600" as const },
-  bold: { fontWeight: "700" as const },
+  // Body & UI — DM Sans
+  regular: { fontFamily: "DMSans_400Regular" },
+  medium: { fontFamily: "DMSans_500Medium" },
+  // Display & Headlines — Cormorant Garamond
+  display: { fontFamily: "CormorantGaramond_400Regular" },
+  displayLight: { fontFamily: "CormorantGaramond_300Light" },
 };

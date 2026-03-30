@@ -2,14 +2,21 @@ import { API_BASE_URL } from "../config/api";
 import { Person, Alert } from "../types";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      ...options,
+    });
+    if (!res.ok) {
+      throw new Error(`API error ${res.status}: ${res.statusText}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
   }
-  return res.json();
 }
 
 export async function fetchPeople(): Promise<Person[]> {
@@ -31,6 +38,36 @@ export async function updateNotes(
   await request(`/api/people/${encodeURIComponent(name)}/notes`, {
     method: "POST",
     body: JSON.stringify({ notes }),
+  });
+}
+
+export async function enrollFace(
+  name: string,
+  relation: string,
+  photoUri: string
+): Promise<void> {
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("relation", relation);
+  formData.append("photo", {
+    uri: photoUri,
+    name: "face.jpg",
+    type: "image/jpeg",
+  } as any);
+
+  const res = await fetch(`${API_BASE_URL}/api/people/enroll`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `API error ${res.status}`);
+  }
+}
+
+export async function deletePerson(name: string): Promise<void> {
+  await request(`/api/people/${encodeURIComponent(name)}`, {
+    method: "DELETE",
   });
 }
 

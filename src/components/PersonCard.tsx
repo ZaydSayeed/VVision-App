@@ -48,7 +48,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <LinearGradient
-            colors={[gradients.secondary[0], gradients.secondary[1]]}
+            colors={[gradients.primary[0], gradients.primary[1]]}
             style={styles.avatar}
           >
             <Text style={styles.avatarText}>{initials}</Text>
@@ -83,7 +83,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
             value={noteText}
             onChangeText={setNoteText}
             placeholder="Enter caregiver notes..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={colors.muted}
             multiline
           />
           <View style={styles.notesActions}>
@@ -91,13 +91,13 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
               <Text style={styles.btnPrimaryText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.btnGhost}
+              style={styles.btnOutline}
               onPress={() => {
                 setEditing(false);
                 setNoteText(person.notes ?? "");
               }}
             >
-              <Text style={styles.btnGhostText}>Cancel</Text>
+              <Text style={styles.btnOutlineText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -154,10 +154,10 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.bgCard,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     padding: 18,
     marginBottom: spacing.md,
   },
@@ -174,54 +174,56 @@ const styles = StyleSheet.create({
   avatar: {
     width: 42,
     height: 42,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
     fontSize: 15,
-    color: "#fff",
-    ...fonts.bold,
+    color: "#FAF8F4",
+    ...fonts.medium,
   },
   info: {
     marginLeft: spacing.md,
   },
   name: {
-    fontSize: 16,
-    color: colors.textPrimary,
-    ...fonts.bold,
-    letterSpacing: -0.2,
+    fontSize: 18,
+    color: colors.text,
+    ...fonts.display,
   },
   relation: {
     fontSize: 13,
-    color: colors.accentIndigo,
+    color: colors.lavender,
     marginTop: 1,
     ...fonts.medium,
   },
   seenBadge: {
-    backgroundColor: "rgba(56,189,248,0.12)",
+    backgroundColor: colors.violet50,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: radius.xl,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.violet100,
   },
   seenBadgeText: {
     fontSize: 12,
-    color: colors.accentBlue,
-    ...fonts.semibold,
+    color: colors.violet,
+    ...fonts.medium,
   },
   meta: {
     marginBottom: spacing.sm + 2,
   },
   metaText: {
     fontSize: 13,
-    color: colors.textMuted,
+    color: colors.muted,
+    ...fonts.regular,
   },
   metaValue: {
-    color: colors.textSecondary,
+    color: colors.subtext,
     ...fonts.medium,
   },
   notesBox: {
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
@@ -231,23 +233,25 @@ const styles = StyleSheet.create({
   notesBoxEmpty: {},
   notesText: {
     fontSize: 14,
-    color: colors.accentIndigo,
+    color: colors.text,
     lineHeight: 20,
+    ...fonts.regular,
   },
   notesTextEmpty: {
-    color: colors.textMuted,
+    color: colors.muted,
     fontStyle: "italic",
   },
   notesInput: {
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: colors.borderFocus,
+    borderColor: colors.violet,
     borderRadius: radius.sm,
     padding: spacing.md,
-    color: colors.textPrimary,
+    color: colors.text,
     fontSize: 14,
     minHeight: 60,
     textAlignVertical: "top",
+    ...fonts.regular,
   },
   notesActions: {
     flexDirection: "row",
@@ -255,27 +259,27 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   btnPrimary: {
-    backgroundColor: colors.accentIndigo,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 8,
+    backgroundColor: colors.violet,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
   },
   btnPrimaryText: {
-    color: "#fff",
+    color: "#F5F0E8",
     fontSize: 13,
-    ...fonts.semibold,
+    ...fonts.medium,
   },
-  btnGhost: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 8,
+  btnOutline: {
+    borderWidth: 1.5,
+    borderColor: colors.violet,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
   },
-  btnGhostText: {
-    color: colors.textMuted,
+  btnOutlineText: {
+    color: colors.violet,
     fontSize: 13,
-    ...fonts.semibold,
+    ...fonts.medium,
   },
   historyToggle: {
     marginTop: spacing.sm,
@@ -283,13 +287,16 @@ const styles = StyleSheet.create({
   },
   historyToggleText: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.muted,
+    ...fonts.regular,
   },
   historyList: {
     marginTop: spacing.sm,
-    backgroundColor: "rgba(0,0,0,0.15)",
-    borderRadius: 8,
+    backgroundColor: colors.bg,
+    borderRadius: radius.sm,
     padding: spacing.sm + 2,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   historyItem: {
     paddingVertical: 4,
@@ -300,6 +307,7 @@ const styles = StyleSheet.create({
   },
   historyText: {
     fontSize: 13,
-    color: colors.textMuted,
+    color: colors.muted,
+    ...fonts.regular,
   },
 });

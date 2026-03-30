@@ -9,9 +9,9 @@ interface TimelineItemProps {
 }
 
 const iconConfig = {
-  seen: { emoji: "👁️", bgColor: "rgba(52,211,153,0.12)" },
-  interaction: { emoji: "💬", bgColor: "rgba(56,189,248,0.12)" },
-  alert: { emoji: "⚠️", bgColor: "rgba(248,113,113,0.12)" },
+  seen: { emoji: "👁️", bgColor: colors.violet50 },
+  interaction: { emoji: "💬", bgColor: colors.violet50 },
+  alert: { emoji: "⚠️", bgColor: colors.violet100 },
 };
 
 export function TimelineItem({ event }: TimelineItemProps) {
@@ -25,7 +25,7 @@ export function TimelineItem({ event }: TimelineItemProps) {
       <View style={styles.body}>
         {event.type === "alert" ? (
           <>
-            <Text style={[styles.title, { color: colors.accentRed }]}>
+            <Text style={[styles.title, { color: colors.violet }]}>
               Unknown person detected
             </Text>
             <Text style={styles.subtitle}>Caregiver notification sent</Text>
@@ -72,18 +72,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 14.5,
-    color: colors.textPrimary,
-    ...fonts.semibold,
+    fontSize: 15,
+    color: colors.text,
+    ...fonts.display,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.muted,
+    ...fonts.regular,
   },
   time: {
     fontSize: 11.5,
-    color: colors.textMuted,
+    color: colors.muted,
     marginTop: 2,
+    ...fonts.regular,
   },
 });

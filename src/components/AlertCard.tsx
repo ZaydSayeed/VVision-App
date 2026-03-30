@@ -13,11 +13,11 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.info}>
-        <View style={styles.icon}>
+        <View style={styles.iconWrap}>
           <Text style={styles.iconText}>👤</Text>
         </View>
-        <View>
-          <Text style={styles.text}>Unknown person detected</Text>
+        <View style={styles.textWrap}>
+          <Text style={styles.title}>Unknown person detected</Text>
           <Text style={styles.time}>
             {formatTimeShort(alert.timestamp)} ·{" "}
             {formatRelativeTime(alert.timestamp)}
@@ -36,10 +36,10 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "rgba(127,29,29,0.15)",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "rgba(248,113,113,0.2)",
-    borderRadius: radius.lg,
+    borderColor: colors.violet100,
+    borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.sm + 2,
     flexDirection: "row",
@@ -52,38 +52,42 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     flex: 1,
   },
-  icon: {
+  iconWrap: {
     width: 38,
     height: 38,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(248,113,113,0.15)",
+    backgroundColor: colors.violet50,
     alignItems: "center",
     justifyContent: "center",
   },
   iconText: {
     fontSize: 18,
   },
-  text: {
+  textWrap: {
+    flex: 1,
+  },
+  title: {
     fontSize: 14,
-    color: "#fca5a5",
+    color: colors.text,
     ...fonts.medium,
   },
   time: {
     fontSize: 11.5,
-    color: colors.textMuted,
+    color: colors.muted,
     marginTop: 2,
+    ...fonts.regular,
   },
   dismissBtn: {
-    backgroundColor: "rgba(248,113,113,0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(248,113,113,0.25)",
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderColor: colors.violet,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   dismissText: {
-    color: "#fca5a5",
+    color: colors.violet,
     fontSize: 11.5,
-    ...fonts.semibold,
+    ...fonts.medium,
   },
 });

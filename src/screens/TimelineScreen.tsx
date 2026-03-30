@@ -32,7 +32,7 @@ export function TimelineScreen({
         <RefreshControl
           refreshing={loading}
           onRefresh={onRefresh}
-          tintColor={colors.accentBlue}
+          tintColor={colors.violet}
         />
       }
     >
@@ -46,22 +46,22 @@ export function TimelineScreen({
         <StatChip
           value={stats.seenToday}
           label="Seen Today"
-          color={colors.accentBlue}
+          color={colors.violet}
         />
         <StatChip
           value={stats.alertCount}
           label="Alerts"
-          color={colors.accentRed}
+          color={colors.subtext}
         />
         <StatChip
           value={stats.mostFrequent}
           label="Most Visits"
-          color={colors.accentGreen}
+          color={colors.violet}
         />
         <StatChip
           value={stats.lastActivity}
           label="Last Activity"
-          color={colors.accentPurple}
+          color={colors.subtext}
         />
       </ScrollView>
 
@@ -74,7 +74,6 @@ export function TimelineScreen({
           ))
         ) : (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📋</Text>
             <Text style={styles.emptyText}>No activity yet</Text>
           </View>
         )}
@@ -86,7 +85,7 @@ export function TimelineScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bgPrimary,
+    backgroundColor: colors.bg,
   },
   content: {
     paddingBottom: 100,
@@ -102,25 +101,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   sectionLabel: {
-    fontSize: 11,
-    color: colors.textMuted,
+    fontSize: 10,
+    color: colors.lavender,
     textTransform: "uppercase",
-    letterSpacing: 1,
-    ...fonts.bold,
+    letterSpacing: 1.5,
+    ...fonts.medium,
     paddingVertical: spacing.sm,
     paddingBottom: spacing.md,
   },
   empty: {
     alignItems: "center",
-    paddingVertical: 40,
-  },
-  emptyIcon: {
-    fontSize: 40,
-    opacity: 0.5,
-    marginBottom: spacing.md,
+    paddingVertical: 48,
   },
   emptyText: {
-    color: colors.textMuted,
-    fontSize: 14,
+    color: colors.muted,
+    fontSize: 15,
+    ...fonts.regular,
   },
 });

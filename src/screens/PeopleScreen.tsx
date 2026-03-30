@@ -25,7 +25,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
         <RefreshControl
           refreshing={loading}
           onRefresh={onRefresh}
-          tintColor={colors.accentBlue}
+          tintColor={colors.violet}
         />
       }
     >
@@ -40,7 +40,6 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
         ))
       ) : (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>👥</Text>
           <Text style={styles.emptyText}>No people enrolled yet</Text>
         </View>
       )}
@@ -51,31 +50,27 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bgPrimary,
+    backgroundColor: colors.bg,
   },
   content: {
     padding: spacing.xl,
     paddingBottom: 100,
   },
   sectionLabel: {
-    fontSize: 11,
-    color: colors.textMuted,
+    fontSize: 10,
+    color: colors.lavender,
     textTransform: "uppercase",
-    letterSpacing: 1,
-    ...fonts.bold,
+    letterSpacing: 1.5,
+    ...fonts.medium,
     paddingBottom: spacing.md,
   },
   empty: {
     alignItems: "center",
-    paddingVertical: 40,
-  },
-  emptyIcon: {
-    fontSize: 40,
-    opacity: 0.5,
-    marginBottom: spacing.md,
+    paddingVertical: 48,
   },
   emptyText: {
-    color: colors.textMuted,
-    fontSize: 14,
+    color: colors.muted,
+    fontSize: 15,
+    ...fonts.regular,
   },
 });

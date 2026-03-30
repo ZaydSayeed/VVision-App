@@ -11,7 +11,14 @@ from ..core.security import (
     create_access_token,
     get_current_user,
 )
-from ..models.auth import SignupRequest, LoginRequest, AuthResponse, UserOut
+from ..models.auth import (
+    SignupRequest,
+    LoginRequest,
+    AuthResponse,
+    UserOut,
+    ResetPasswordRequest,
+    DeleteAccountRequest,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -123,3 +130,65 @@ async def get_me(user_id: str = Depends(get_current_user)):
         role=user.get("role", "caregiver"),
         patient_id=str(user["patient_id"]) if user.get("patient_id") else None,
     )
+
+
+@router.post("/reset-password")
+async def reset_password(body: ResetPasswordRequest):
+    """Reset password by email. Simple reset — no email verification."""
+    db = get_db()
+    user = await db["users"].find_one({"email": body.email})
+    if not user:
+        # Don't reveal whether email exists
+        return {"status": "ok"}
+
+    await db["users"].update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": hash_password(body.new_password)}},
+    )
+    return {"status": "ok"}
+
+
+@router.delete("/account")
+async def delete_account(
+    body: DeleteAccountRequest, user_id: str = Depends(get_current_user)
+):
+    """Delete the current user's account and clean up linked data."""
+    db = get_db()
+    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Verify password before deletion
+    if not verify_password(body.password, user["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password",
+        )
+
+    patient_id = user.get("patient_id")
+    role = user.get("role", "caregiver")
+
+    if role == "patient" and patient_id:
+        # Remove patient doc and all associated data
+        pid = ObjectId(patient_id)
+        await db["patients"].delete_one({"_id": pid})
+        await db["routines"].delete_many({"patient_id": str(patient_id)})
+        await db["medications"].delete_many({"patient_id": str(patient_id)})
+        await db["help_alerts"].delete_many({"patient_id": str(patient_id)})
+        # Unlink all caregivers connected to this patient
+        await db["users"].update_many(
+            {"patient_id": str(patient_id), "role": "caregiver"},
+            {"$set": {"patient_id": None}},
+        )
+
+    elif role == "caregiver" and patient_id:
+        # Remove caregiver from patient's caregiver list
+        await db["patients"].update_one(
+            {"_id": ObjectId(patient_id)},
+            {"$pull": {"caregiver_ids": user_id}},
+        )
+
+    # Delete the user
+    await db["users"].delete_one({"_id": ObjectId(user_id)})
+
+    return {"status": "ok"}

@@ -29,4 +29,13 @@ class UserOut(BaseModel):
     patient_id: str | None = None
 
 
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str
+
+
 AuthResponse.model_rebuild()

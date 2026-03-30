@@ -36,10 +36,14 @@ export function RoutineScreen() {
       return;
     }
     setError("");
-    await addTask(label.trim(), time.trim());
-    setLabel("");
-    setTime("");
-    setShowModal(false);
+    try {
+      await addTask(label.trim(), time.trim());
+      setLabel("");
+      setTime("");
+      setShowModal(false);
+    } catch {
+      setError("Could not save — make sure you're connected to the same network as the glasses system.");
+    }
   }
 
   return (

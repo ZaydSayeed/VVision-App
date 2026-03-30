@@ -30,11 +30,15 @@ export function MedsScreen() {
       return;
     }
     setError("");
-    await addMed(name.trim(), dosage.trim(), time.trim());
-    setName("");
-    setDosage("");
-    setTime("");
-    setShowModal(false);
+    try {
+      await addMed(name.trim(), dosage.trim(), time.trim());
+      setName("");
+      setDosage("");
+      setTime("");
+      setShowModal(false);
+    } catch {
+      setError("Could not save — make sure you're connected to the same network as the glasses system.");
+    }
   }
 
   return (

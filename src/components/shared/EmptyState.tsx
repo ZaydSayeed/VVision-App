@@ -3,15 +3,14 @@ import { View, Text, StyleSheet } from "react-native";
 import { colors, fonts, spacing } from "../../config/theme";
 
 interface EmptyStateProps {
-  emoji: string;
+  emoji?: string;
   title: string;
   subtitle: string;
 }
 
-export function EmptyState({ emoji, title, subtitle }: EmptyStateProps) {
+export function EmptyState({ title, subtitle }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.emoji}>{emoji}</Text>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
     </View>
@@ -23,10 +22,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: spacing.xxxxl,
     gap: spacing.sm,
-  },
-  emoji: {
-    fontSize: 40,
-    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 22,

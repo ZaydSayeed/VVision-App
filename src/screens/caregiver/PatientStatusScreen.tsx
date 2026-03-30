@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
@@ -44,7 +45,7 @@ export function PatientStatusScreen() {
       {/* Help Alerts */}
       <SectionHeader label="Help Requests" />
       {pendingHelp.length === 0 ? (
-        <EmptyState emoji="✅" title="All clear" subtitle="No help requests from patient" />
+        <EmptyState title="All clear" subtitle="No help requests from patient" />
       ) : (
         pendingHelp.map((alert) => (
           <View key={alert.id} style={styles.helpCard}>
@@ -88,7 +89,7 @@ export function PatientStatusScreen() {
                 <Text style={styles.readTime}>{task.time}</Text>
               </View>
               {isCompletedToday(task) && (
-                <Text style={styles.checkmark}>✓</Text>
+                <Ionicons name="checkmark" size={16} color={colors.violet} />
               )}
             </View>
           ))
@@ -120,7 +121,7 @@ export function PatientStatusScreen() {
                 </Text>
               </View>
               {isTakenToday(med) && (
-                <Text style={styles.checkmark}>✓</Text>
+                <Ionicons name="checkmark" size={16} color={colors.violet} />
               )}
             </View>
           ))
@@ -233,9 +234,5 @@ const styles = StyleSheet.create({
     ...fonts.regular,
     marginTop: 2,
   },
-  checkmark: {
-    fontSize: 16,
-    color: colors.violet,
-    ...fonts.medium,
-  },
+  checkmark: {},
 });

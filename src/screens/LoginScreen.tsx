@@ -147,7 +147,6 @@ export function LoginScreen() {
                 onPress={() => setRole("patient")}
                 activeOpacity={0.8}
               >
-                <Text style={styles.roleEmoji}>🧓</Text>
                 <Text
                   style={[
                     styles.roleTitle,
@@ -169,7 +168,6 @@ export function LoginScreen() {
                 onPress={() => setRole("caregiver")}
                 activeOpacity={0.8}
               >
-                <Text style={styles.roleEmoji}>🩺</Text>
                 <Text
                   style={[
                     styles.roleTitle,
@@ -304,9 +302,6 @@ const styles = StyleSheet.create({
   roleCardActive: {
     borderColor: colors.violet,
     backgroundColor: colors.violet50,
-  },
-  roleEmoji: {
-    fontSize: 32,
   },
   roleTitle: {
     fontSize: 17,

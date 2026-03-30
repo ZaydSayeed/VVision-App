@@ -43,7 +43,7 @@ export function MedsScreen() {
         {/* All done banner */}
         {allDone && (
           <View style={styles.doneBanner}>
-            <Text style={styles.doneBannerText}>✓ All medications taken today!</Text>
+            <Text style={styles.doneBannerText}>All medications taken today!</Text>
           </View>
         )}
 
@@ -54,7 +54,6 @@ export function MedsScreen() {
 
         {meds.length === 0 ? (
           <EmptyState
-            emoji="💊"
             title="No medications"
             subtitle="Tap '+ Add Med' to add your medications"
           />

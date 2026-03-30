@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { AlertCard } from "../components/AlertCard";
 import { dismissAlert } from "../api/client";
@@ -57,7 +58,6 @@ export function AlertsScreen({
       <SectionHeader label="Help Requests" />
       {pendingHelp.length === 0 ? (
         <EmptyState
-          emoji="✅"
           title="All clear"
           subtitle="No help requests from patient"
         />
@@ -65,7 +65,7 @@ export function AlertsScreen({
         pendingHelp.map((alert) => (
           <View key={alert.id} style={styles.helpCard}>
             <View style={styles.helpIcon}>
-              <Text style={styles.helpIconText}>🆘</Text>
+              <Ionicons name="alert-circle-outline" size={20} color={colors.violet} />
             </View>
             <View style={styles.helpInfo}>
               <Text style={styles.helpTitle}>Patient needs help</Text>
@@ -88,7 +88,6 @@ export function AlertsScreen({
         <SectionHeader label="Unrecognized Faces" />
         {alerts.length === 0 ? (
           <EmptyState
-            emoji="👁️"
             title="No alerts"
             subtitle="All detected faces are recognized"
           />
@@ -128,7 +127,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  helpIconText: { fontSize: 20 },
+  helpIconText: {},
   helpInfo: { flex: 1 },
   helpTitle: {
     fontSize: 15,

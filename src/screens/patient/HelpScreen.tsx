@@ -4,8 +4,8 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { colors, fonts, spacing, gradients } from "../../config/theme";
@@ -47,12 +47,12 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
           >
             {sent ? (
               <>
-                <Text style={styles.btnIconSent}>✓</Text>
+                <Ionicons name="checkmark-circle-outline" size={64} color="#FAF8F4" />
                 <Text style={styles.btnLabelSent}>Help is on the way!</Text>
               </>
             ) : (
               <>
-                <Text style={styles.btnIcon}>🆘</Text>
+                <Ionicons name="alert-circle-outline" size={64} color="#FAF8F4" />
                 <Text style={styles.btnLabel}>I Need Help</Text>
               </>
             )}
@@ -123,17 +123,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.sm,
   },
-  btnIcon: {
-    fontSize: 64,
-  },
   btnLabel: {
     fontSize: 26,
     color: "#FAF8F4",
     ...fonts.display,
-  },
-  btnIconSent: {
-    fontSize: 64,
-    color: "#FAF8F4",
   },
   btnLabelSent: {
     fontSize: 20,

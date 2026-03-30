@@ -61,7 +61,6 @@ export function AddCaregiverScreen() {
       <SectionHeader label="Care Team" />
       {profiles.length === 0 ? (
         <EmptyState
-          emoji="👥"
           title="No caregivers linked"
           subtitle={
             user?.role === "patient"

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing, fonts } from "../config/theme";
 import { Alert as AlertType } from "../types";
 import { formatRelativeTime, formatTimeShort } from "../hooks/useDashboardData";
@@ -14,7 +15,7 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
     <View style={styles.card}>
       <View style={styles.info}>
         <View style={styles.iconWrap}>
-          <Text style={styles.iconText}>👤</Text>
+          <Ionicons name="person-outline" size={18} color={colors.violet} />
         </View>
         <View style={styles.textWrap}>
           <Text style={styles.title}>Unknown person detected</Text>
@@ -59,9 +60,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.violet50,
     alignItems: "center",
     justifyContent: "center",
-  },
-  iconText: {
-    fontSize: 18,
   },
   textWrap: {
     flex: 1,

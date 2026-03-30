@@ -1,6 +1,7 @@
 import React from "react";
-import { Text, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
 import { RoutineScreen } from "../screens/patient/RoutineScreen";
 import { MedsScreen } from "../screens/patient/MedsScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
@@ -13,11 +14,11 @@ interface PatientTabNavigatorProps {
 
 const Tab = createBottomTabNavigator();
 
-const icons: Record<string, string> = {
-  Routine: "📋",
-  Medications: "💊",
-  Faces: "👤",
-  Help: "🆘",
+const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Routine: "calendar-outline",
+  Medications: "medkit-outline",
+  Faces: "person-outline",
+  Help: "alert-circle-outline",
 };
 
 export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
@@ -29,8 +30,8 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         tabBarActiveTintColor: colors.violet,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: styles.tabLabel,
-        tabBarIcon: () => (
-          <Text style={styles.tabIcon}>{icons[route.name]}</Text>
+        tabBarIcon: ({ color }) => (
+          <Ionicons name={iconNames[route.name]} size={22} color={color} />
         ),
       })}
     >
@@ -59,5 +60,5 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
-  tabIcon: { fontSize: 22 },
+  tabIcon: {},
 });

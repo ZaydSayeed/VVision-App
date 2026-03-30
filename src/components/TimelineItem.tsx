@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing, fonts } from "../config/theme";
 import { TimelineEvent } from "../types";
 import { formatTimeShort } from "../hooks/useDashboardData";
@@ -8,10 +9,10 @@ interface TimelineItemProps {
   event: TimelineEvent;
 }
 
-const iconConfig = {
-  seen: { emoji: "👁️", bgColor: colors.violet50 },
-  interaction: { emoji: "💬", bgColor: colors.violet50 },
-  alert: { emoji: "⚠️", bgColor: colors.violet100 },
+const iconConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; bgColor: string }> = {
+  seen: { icon: "eye-outline", bgColor: colors.violet50 },
+  interaction: { icon: "chatbubble-outline", bgColor: colors.violet50 },
+  alert: { icon: "warning-outline", bgColor: colors.violet100 },
 };
 
 export function TimelineItem({ event }: TimelineItemProps) {
@@ -20,7 +21,7 @@ export function TimelineItem({ event }: TimelineItemProps) {
   return (
     <View style={styles.item}>
       <View style={[styles.icon, { backgroundColor: config.bgColor }]}>
-        <Text style={styles.emoji}>{config.emoji}</Text>
+        <Ionicons name={config.icon} size={16} color={colors.violet} />
       </View>
       <View style={styles.body}>
         {event.type === "alert" ? (
@@ -64,9 +65,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",
-  },
-  emoji: {
-    fontSize: 16,
   },
   body: {
     flex: 1,

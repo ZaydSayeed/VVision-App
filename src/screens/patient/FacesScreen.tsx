@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Person, FacePerson } from "../../types";
 import { fetchPeople, enrollFace, deletePerson } from "../../api/client";
@@ -118,13 +119,11 @@ export function FacesScreen() {
           <ActivityIndicator color={colors.violet} style={{ marginTop: 40 }} />
         ) : offline ? (
           <EmptyState
-            emoji="📡"
             title="Not connected"
             subtitle="Make sure your phone is on the same network as the glasses system, then pull down to refresh."
           />
         ) : people.length === 0 ? (
           <EmptyState
-            emoji="👤"
             title="No faces added"
             subtitle="Add photos of people you know so the glasses can recognize them"
           />
@@ -168,12 +167,12 @@ export function FacesScreen() {
             <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>
               {photoUri ? (
                 <View style={styles.photoTaken}>
-                  <Text style={styles.photoTakenIcon}>✓</Text>
+                  <Ionicons name="checkmark-circle-outline" size={24} color={colors.violet} />
                   <Text style={styles.photoTakenText}>Photo taken — tap to retake</Text>
                 </View>
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Text style={styles.photoPlaceholderIcon}>📷</Text>
+                  <Ionicons name="camera-outline" size={24} color={colors.violet} />
                   <Text style={styles.photoPlaceholderText}>Take Photo</Text>
                 </View>
               )}
@@ -277,7 +276,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.sm,
   },
-  photoPlaceholderIcon: { fontSize: 24 },
   photoPlaceholderText: { fontSize: 16, color: colors.violet, ...fonts.medium },
   photoTaken: {
     height: 80,
@@ -290,7 +288,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.sm,
   },
-  photoTakenIcon: { fontSize: 22, color: colors.violet },
   photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
   fieldLabel: {
     fontSize: 10,

@@ -58,7 +58,6 @@ export function RoutineScreen() {
 
         {tasks.length === 0 ? (
           <EmptyState
-            emoji="📋"
             title="No tasks yet"
             subtitle="Tap '+ Add Task' to add your daily routine"
           />

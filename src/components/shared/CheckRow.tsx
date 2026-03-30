@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, spacing, radius } from "../../config/theme";
 
 interface CheckRowProps {
@@ -18,7 +19,7 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: Check
         onPress={onToggle}
         activeOpacity={0.8}
       >
-        {checked && <Text style={styles.checkmark}>✓</Text>}
+        {checked && <Ionicons name="checkmark" size={16} color="#FAF8F4" />}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.labelWrap} onPress={onToggle} activeOpacity={0.8}>
@@ -30,7 +31,7 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: Check
 
       {onDelete ? (
         <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-          <Text style={styles.deleteText}>✕</Text>
+          <Ionicons name="close" size={16} color={colors.muted} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -59,11 +60,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.violet,
     borderColor: colors.violet,
   },
-  checkmark: {
-    color: "#FAF8F4",
-    fontSize: 16,
-    ...fonts.medium,
-  },
+  checkmark: {},
   labelWrap: {
     flex: 1,
   },
@@ -88,8 +85,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  deleteText: {
-    fontSize: 14,
-    color: colors.muted,
-  },
+  deleteText: {},
 });

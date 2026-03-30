@@ -1,6 +1,7 @@
 import React from "react";
-import { Text, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
 import { TimelineScreen } from "../screens/TimelineScreen";
 import { PeopleScreen } from "../screens/PeopleScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
@@ -12,12 +13,12 @@ import { colors, fonts } from "../config/theme";
 
 const Tab = createBottomTabNavigator();
 
-const icons: Record<string, string> = {
-  Timeline: "📋",
-  People: "👥",
-  Alerts: "🔔",
-  Patient: "📊",
-  "Care Team": "➕",
+const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Timeline: "list-outline",
+  People: "people-outline",
+  Alerts: "notifications-outline",
+  Patient: "pulse-outline",
+  "Care Team": "person-add-outline",
 };
 
 export function CaregiverTabNavigator() {
@@ -32,8 +33,8 @@ export function CaregiverTabNavigator() {
         tabBarActiveTintColor: colors.violet,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: styles.tabLabel,
-        tabBarIcon: () => (
-          <Text style={styles.tabIcon}>{icons[route.name]}</Text>
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={iconNames[route.name]} size={22} color={color} />
         ),
         tabBarBadge:
           route.name === "Alerts" && (alerts.length + pendingCount) > 0
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
-  tabIcon: { fontSize: 20 },
+  tabIcon: {},
   tabBadge: {
     backgroundColor: colors.violet,
     fontSize: 10,

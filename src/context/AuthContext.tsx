@@ -75,10 +75,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes (token refresh, sign out, etc.)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // INITIAL_SESSION is handled by getSession above (which also loads patient_id)
+      if (_event === "INITIAL_SESSION") return;
       if (session?.access_token) {
         setAuthToken(session.access_token);
-        setUser(sessionToUser(session));
+        const appUser = sessionToUser(session);
+        setUser(appUser);
+        if (appUser) {
+          const patientId = await loadPatientId(appUser.id);
+          if (patientId) setUser({ ...appUser, patient_id: patientId });
+        }
       } else {
         setAuthToken(null);
         setUser(null);

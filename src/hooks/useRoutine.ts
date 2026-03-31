@@ -6,19 +6,20 @@ function today(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-export function useRoutine() {
+export function useRoutine(patientId?: string) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const targetId = patientId ?? user.id;
     const { data } = await supabase
       .from("routine_tasks")
       .select("*")
-      .eq("patient_id", user.id)
+      .eq("patient_id", targetId)
       .order("created_at");
     if (data) setTasks(data);
-  }, []);
+  }, [patientId]);
 
   useEffect(() => {
     load();

@@ -11,6 +11,7 @@ import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
 import { fonts, spacing, radius } from "../../config/theme";
@@ -18,8 +19,10 @@ import { formatRelativeTime } from "../../hooks/useDashboardData";
 
 export function PatientStatusScreen() {
   const { colors } = useTheme();
-  const { tasks, isCompletedToday } = useRoutine();
-  const { meds, isTakenToday } = useMeds();
+  const { user } = useAuth();
+  const patientId = user?.patient_id ?? undefined;
+  const { tasks, isCompletedToday } = useRoutine(patientId);
+  const { meds, isTakenToday } = useMeds(patientId);
   const { alerts, dismissAlert } = useHelpAlert();
 
   const routineDone = tasks.filter(isCompletedToday).length;

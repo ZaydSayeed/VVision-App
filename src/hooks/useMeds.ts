@@ -6,19 +6,20 @@ function today(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-export function useMeds() {
+export function useMeds(patientId?: string) {
   const [meds, setMeds] = useState<Medication[]>([]);
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const targetId = patientId ?? user.id;
     const { data } = await supabase
       .from("medications")
       .select("*")
-      .eq("patient_id", user.id)
+      .eq("patient_id", targetId)
       .order("created_at");
     if (data) setMeds(data);
-  }, []);
+  }, [patientId]);
 
   useEffect(() => {
     load();

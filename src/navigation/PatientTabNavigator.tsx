@@ -6,6 +6,7 @@ import { RoutineScreen } from "../screens/patient/RoutineScreen";
 import { MedsScreen } from "../screens/patient/MedsScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
 import { HelpScreen } from "../screens/patient/HelpScreen";
+import { SettingsScreen } from "../screens/patient/SettingsScreen";
 import { colors, fonts } from "../config/theme";
 
 interface PatientTabNavigatorProps {
@@ -19,6 +20,7 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Medications: "medkit-outline",
   Faces: "person-outline",
   Help: "alert-circle-outline",
+  Profile: "person-circle-outline",
 };
 
 export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
@@ -41,6 +43,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       <Tab.Screen name="Help">
         {() => <HelpScreen patientName={patientName} />}
       </Tab.Screen>
+      <Tab.Screen name="Profile" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }

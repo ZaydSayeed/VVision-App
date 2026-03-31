@@ -7,10 +7,11 @@ import {
   TextInput,
   Alert,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors, radius, spacing, fonts, gradients } from "../config/theme";
 import { Person } from "../types";
-import { updateNotes } from "../api/client";
+import { updateNotes, deletePerson } from "../api/client";
 import { formatRelativeTime, formatTimeShort } from "../hooks/useDashboardData";
 
 interface PersonCardProps {
@@ -31,6 +32,28 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
     .toUpperCase();
 
   const recentInteractions = (person.interactions ?? []).slice(-5).reverse();
+
+  function handleDelete() {
+    Alert.alert(
+      "Remove person?",
+      `This will remove ${person.name} from the glasses recognition system.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deletePerson(person.name);
+              onRefresh();
+            } catch {
+              Alert.alert("Error", "Could not remove person. Make sure you're on the same network as the glasses system.");
+            }
+          },
+        },
+      ]
+    );
+  }
 
   async function handleSaveNotes() {
     try {
@@ -60,8 +83,13 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
             </Text>
           </View>
         </View>
-        <View style={styles.seenBadge}>
-          <Text style={styles.seenBadgeText}>{person.seen_count}x</Text>
+        <View style={styles.headerRight}>
+          <View style={styles.seenBadge}>
+            <Text style={styles.seenBadgeText}>{person.seen_count}x</Text>
+          </View>
+          <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="trash-outline" size={16} color={colors.muted} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -196,6 +224,11 @@ const styles = StyleSheet.create({
     color: colors.lavender,
     marginTop: 1,
     ...fonts.medium,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   seenBadge: {
     backgroundColor: colors.violet50,

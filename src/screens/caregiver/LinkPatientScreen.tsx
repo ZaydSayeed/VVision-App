@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
-import { linkPatient } from "../../api/client";
+import { supabase } from "../../config/supabase";
 import { colors, fonts, spacing, radius } from "../../config/theme";
 
 export function LinkPatientScreen() {
@@ -27,19 +27,28 @@ export function LinkPatientScreen() {
     setLoading(true);
     setError("");
     try {
-      const patient = await linkPatient(code.trim());
-      if (user) {
-        updateUser({ ...user, patient_id: patient.id });
+      // Look up the patient by their link code
+      const { data: profile, error: lookupError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("link_code", code.trim().toUpperCase())
+        .single();
+
+      if (lookupError || !profile) {
+        setError("Invalid or expired code. Please try again.");
+        return;
       }
-    } catch (e: any) {
-      let msg = "Invalid code. Please try again.";
-      try {
-        const parsed = JSON.parse(e.message);
-        msg = parsed.detail || msg;
-      } catch {
-        if (e.message) msg = e.message;
-      }
-      setError(msg);
+
+      // Save the patient_id to this caregiver's profile
+      const { error: saveError } = await supabase
+        .from("profiles")
+        .upsert({ id: user!.id, patient_id: profile.id });
+
+      if (saveError) throw saveError;
+
+      updateUser({ ...user!, patient_id: profile.id });
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

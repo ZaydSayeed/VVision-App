@@ -8,8 +8,13 @@ import {
   StyleSheet,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
-import { getMyLinkCode } from "../../api/client";
+import { supabase } from "../../config/supabase";
 import { colors, fonts, spacing, radius } from "../../config/theme";
+
+function generateCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
 
 export function SettingsScreen() {
   const { user, logout } = useAuth();
@@ -17,11 +22,25 @@ export function SettingsScreen() {
   const [codeLoading, setCodeLoading] = useState(true);
 
   useEffect(() => {
-    getMyLinkCode()
-      .then((res) => setLinkCode(res.link_code))
-      .catch(() => setLinkCode(null))
-      .finally(() => setCodeLoading(false));
-  }, []);
+    async function fetchOrCreateCode() {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("link_code")
+        .eq("id", user.id)
+        .single();
+
+      if (data?.link_code) {
+        setLinkCode(data.link_code);
+      } else {
+        const code = generateCode();
+        await supabase.from("profiles").upsert({ id: user.id, link_code: code });
+        setLinkCode(code);
+      }
+      setCodeLoading(false);
+    }
+    fetchOrCreateCode();
+  }, [user]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -49,9 +68,7 @@ export function SettingsScreen() {
             </Text>
           </>
         ) : (
-          <Text style={styles.codeHint}>
-            Could not load link code — make sure you're connected to the network.
-          </Text>
+          <Text style={styles.codeHint}>Could not load link code. Please try again.</Text>
         )}
       </View>
 

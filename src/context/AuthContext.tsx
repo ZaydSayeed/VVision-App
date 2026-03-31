@@ -39,6 +39,15 @@ function sessionToUser(
   };
 }
 
+async function loadPatientId(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("patient_id")
+    .eq("id", userId)
+    .single();
+  return data?.patient_id ?? null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,15 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const appUser = sessionToUser(data.session);
       setUser(appUser);
 
-      // Sync profile to MongoDB backend
-      try {
-        const synced = await syncProfile(name, role);
-        if (synced.patient_id && appUser) {
-          const updated = { ...appUser, patient_id: synced.patient_id };
-          setUser(updated);
-        }
-      } catch {
-        // Non-fatal — profile will sync on next request
+      // Try to sync to glasses backend (non-fatal)
+      try { await syncProfile(name, role); } catch {}
+
+      // Load patient_id from Supabase profiles table
+      if (appUser) {
+        const patientId = await loadPatientId(appUser.id);
+        if (patientId) setUser({ ...appUser, patient_id: patientId });
       }
     },
     []
@@ -122,17 +129,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const appUser = sessionToUser(data.session);
     setUser(appUser);
 
-    // Sync profile to get latest patient_id
-    try {
-      const synced = await syncProfile(
-        appUser?.name ?? "",
-        (appUser?.role as UserRole) ?? "caregiver"
-      );
-      if (appUser) {
-        setUser({ ...appUser, patient_id: synced.patient_id ?? null });
-      }
-    } catch {
-      // Non-fatal
+    // Try to sync to glasses backend (non-fatal)
+    try { await syncProfile(appUser?.name ?? "", (appUser?.role as UserRole) ?? "caregiver"); } catch {}
+
+    // Load patient_id from Supabase profiles table
+    if (appUser) {
+      const patientId = await loadPatientId(appUser.id);
+      if (patientId) setUser({ ...appUser, patient_id: patientId });
     }
   }, []);
 

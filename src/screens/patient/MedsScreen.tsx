@@ -202,9 +202,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   fabIcon: {
-    fontSize: 38,
+    fontSize: 50,
     color: "#FAF8F4",
-    lineHeight: 42,
+    lineHeight: 54,
   },
   doneBanner: {
     backgroundColor: colors.violet50,

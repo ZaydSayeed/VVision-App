@@ -11,9 +11,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { Person, FacePerson } from "../../types";
+import { Person } from "../../types";
 import { fetchPeople, enrollFace, deletePerson } from "../../api/client";
-import { STORAGE_KEYS, readStorage, writeStorage } from "../../config/storage";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
 import { colors, fonts, spacing, radius } from "../../config/theme";
@@ -57,18 +56,9 @@ export function FacesScreen() {
   }
 
   async function handleAdd() {
-    if (!name.trim()) {
-      setError("Please enter a name.");
-      return;
-    }
-    if (!relation.trim()) {
-      setError("Please enter their relation (e.g. Son, Nurse).");
-      return;
-    }
-    if (!photoUri) {
-      setError("Please take a photo first.");
-      return;
-    }
+    if (!name.trim()) { setError("Please enter a name."); return; }
+    if (!relation.trim()) { setError("Please enter their relation (e.g. Son, Nurse)."); return; }
+    if (!photoUri) { setError("Please take a photo first."); return; }
     setError("");
     setUploading(true);
     try {
@@ -94,9 +84,7 @@ export function FacesScreen() {
     try {
       await deletePerson(person.name);
       await load();
-    } catch {
-      // Silently fail — list will refresh on next load
-    }
+    } catch {}
   }
 
   function closeModal() {
@@ -107,13 +95,13 @@ export function FacesScreen() {
     setPhotoUri(null);
   }
 
+  const showFAB = !loading && (offline || people.length > 0);
+  const showEmptyCTA = !loading && !offline && people.length === 0;
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <SectionHeader
-          label="People I Know"
-          action={{ label: "+ Add Face", onPress: () => setShowModal(true) }}
-        />
+        <SectionHeader label="People I Know" />
 
         {loading ? (
           <ActivityIndicator color={colors.violet} style={{ marginTop: 40 }} />
@@ -122,11 +110,21 @@ export function FacesScreen() {
             title="Not connected"
             subtitle="Make sure your phone is on the same network as the glasses system, then pull down to refresh."
           />
-        ) : people.length === 0 ? (
-          <EmptyState
-            title="No faces added"
-            subtitle="Add photos of people you know so the glasses can recognize them"
-          />
+        ) : showEmptyCTA ? (
+          /* Big centered CTA when no faces yet */
+          <View style={styles.emptyCTA}>
+            <TouchableOpacity
+              style={styles.bigAddBtn}
+              onPress={() => setShowModal(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add" size={40} color="#FAF8F4" />
+            </TouchableOpacity>
+            <Text style={styles.emptyCTATitle}>Add a Face</Text>
+            <Text style={styles.emptyCTASubtitle}>
+              Add photos of people you know so{"\n"}the glasses can recognize them
+            </Text>
+          </View>
         ) : (
           <View style={styles.grid}>
             {people.map((person) => {
@@ -136,7 +134,6 @@ export function FacesScreen() {
                 .join("")
                 .slice(0, 2)
                 .toUpperCase();
-
               return (
                 <TouchableOpacity
                   key={person.id ?? person._id}
@@ -157,13 +154,23 @@ export function FacesScreen() {
         )}
       </ScrollView>
 
+      {/* Floating Add Button — shown when faces exist or offline */}
+      {showFAB && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowModal(true)}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="add" size={28} color="#FAF8F4" />
+        </TouchableOpacity>
+      )}
+
       {/* Add Face Modal */}
       <Modal visible={showModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Add a Face</Text>
 
-            {/* Photo Button */}
             <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>
               {photoUri ? (
                 <View style={styles.photoTaken}>
@@ -225,7 +232,60 @@ export function FacesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.xl, paddingBottom: 100 },
+  content: { padding: spacing.xl, paddingBottom: 120 },
+
+  /* Empty CTA */
+  emptyCTA: {
+    alignItems: "center",
+    paddingTop: 60,
+    gap: spacing.md,
+  },
+  bigAddBtn: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.violet,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.violet,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: spacing.sm,
+  },
+  emptyCTATitle: {
+    fontSize: 24,
+    color: colors.text,
+    ...fonts.display,
+  },
+  emptyCTASubtitle: {
+    fontSize: 15,
+    color: colors.muted,
+    ...fonts.regular,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+
+  /* Floating Action Button */
+  fab: {
+    position: "absolute",
+    bottom: 32,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.violet,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.violet,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+
+  /* Face grid */
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   faceCard: {
     width: "47%",
@@ -250,6 +310,8 @@ const styles = StyleSheet.create({
   faceName: { fontSize: 16, color: colors.text, ...fonts.medium, textAlign: "center" },
   faceRelation: { fontSize: 13, color: colors.lavender, ...fonts.regular, textAlign: "center" },
   faceHint: { fontSize: 11, color: colors.muted, ...fonts.regular },
+
+  /* Modal */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(43,35,64,0.3)",

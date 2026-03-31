@@ -40,11 +40,12 @@ function sessionToUser(
 }
 
 async function loadPatientId(userId: string): Promise<string | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("patient_id")
     .eq("id", userId)
     .single();
+  console.log("[loadPatientId] userId:", userId, "data:", data, "error:", error);
   return data?.patient_id ?? null;
 }
 
@@ -60,12 +61,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log("[getSession] session exists:", !!session);
       if (session?.access_token) {
         setAuthToken(session.access_token);
         const appUser = sessionToUser(session);
         setUser(appUser);
+        console.log("[getSession] appUser:", appUser);
         if (appUser) {
           const patientId = await loadPatientId(appUser.id);
+          console.log("[getSession] patientId loaded:", patientId);
           if (patientId) setUser({ ...appUser, patient_id: patientId });
         }
       }

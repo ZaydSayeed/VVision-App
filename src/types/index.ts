@@ -70,6 +70,16 @@ export interface TimelineEvent {
   count?: number;
 }
 
+// ── Patient Summary (caregiver multi-patient) ────────────
+export interface PatientSummary {
+  id: string;
+  name: string;
+  tasksTotal: number;
+  tasksDone: number;
+  medsTotal: number;
+  medsDone: number;
+}
+
 // ── Routine Tasks ────────────────────────────────────────
 export interface RoutineTask {
   id: string;

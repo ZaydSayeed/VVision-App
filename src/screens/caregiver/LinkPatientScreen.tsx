@@ -8,14 +8,17 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../config/supabase";
 import { fonts, spacing, radius } from "../../config/theme";
 
-export function LinkPatientScreen() {
+interface Props {
+  onLinked?: () => void;
+  onCancel?: () => void;
+}
+
+export function LinkPatientScreen({ onLinked, onCancel }: Props) {
   const { colors } = useTheme();
-  const { user, updateUser } = useAuth();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,10 +32,13 @@ export function LinkPatientScreen() {
     setLoading(true);
     setError("");
     try {
-      // Look up the patient by their link code
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not logged in");
+
+      // Look up the patient by their link code, also grab their name
       const { data: profile, error: lookupError } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, name")
         .eq("link_code", code.trim().toUpperCase())
         .single();
 
@@ -41,14 +47,18 @@ export function LinkPatientScreen() {
         return;
       }
 
-      // Save the patient_id to this caregiver's profile
+      // Insert into caregiver_patients (supports multiple patients)
       const { error: saveError } = await supabase
-        .from("profiles")
-        .upsert({ id: user!.id, patient_id: profile.id });
+        .from("caregiver_patients")
+        .upsert({
+          caregiver_id: user.id,
+          patient_id: profile.id,
+          patient_name: profile.name ?? "Patient",
+        });
 
       if (saveError) throw saveError;
 
-      updateUser({ ...user!, patient_id: profile.id });
+      onLinked?.();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -57,14 +67,21 @@ export function LinkPatientScreen() {
   }
 
   const styles = useMemo(() => StyleSheet.create({
-    safe: {
-      flex: 1,
-      backgroundColor: colors.bg,
-    },
+    safe: { flex: 1, backgroundColor: colors.bg },
     container: {
       flex: 1,
       paddingHorizontal: spacing.xxl,
       paddingTop: spacing.xxxxl,
+    },
+    backRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: spacing.xxl,
+    },
+    backText: {
+      fontSize: 15,
+      color: colors.violet,
+      ...fonts.medium,
     },
     headline: {
       fontSize: 36,
@@ -79,9 +96,7 @@ export function LinkPatientScreen() {
       lineHeight: 22,
       marginBottom: spacing.xxxl,
     },
-    fieldGroup: {
-      marginBottom: spacing.xl,
-    },
+    fieldGroup: { marginBottom: spacing.xl },
     fieldLabel: {
       fontSize: 10,
       color: colors.lavender,
@@ -117,23 +132,21 @@ export function LinkPatientScreen() {
       alignItems: "center",
       justifyContent: "center",
     },
-    btnDisabled: {
-      opacity: 0.7,
-    },
-    btnText: {
-      fontSize: 17,
-      color: "#F5F0E8",
-      ...fonts.medium,
-    },
+    btnDisabled: { opacity: 0.7 },
+    btnText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
   }), [colors]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <Text style={styles.headline}>Link to patient</Text>
+        {onCancel && (
+          <TouchableOpacity style={styles.backRow} onPress={onCancel}>
+            <Text style={styles.backText}>← Cancel</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headline}>Link a patient</Text>
         <Text style={styles.subtitle}>
-          Ask your patient to open their app and share their 6-character link
-          code with you.
+          Ask your patient to open their app and share their 6-character link code with you.
         </Text>
 
         <View style={styles.fieldGroup}>

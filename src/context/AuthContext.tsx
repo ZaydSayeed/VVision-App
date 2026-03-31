@@ -45,7 +45,6 @@ async function loadPatientId(userId: string): Promise<string | null> {
     .select("patient_id")
     .eq("id", userId)
     .single();
-  console.log("[loadPatientId] userId:", userId, "data:", data, "error:", error);
   return data?.patient_id ?? null;
 }
 
@@ -61,17 +60,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("[getSession] session exists:", !!session);
       if (session?.access_token) {
         setAuthToken(session.access_token);
         const appUser = sessionToUser(session);
         setUser(appUser);
-        console.log("[getSession] appUser:", appUser);
-        if (appUser) {
-          const patientId = await loadPatientId(appUser.id);
-          console.log("[getSession] patientId loaded:", patientId);
-          if (patientId) setUser({ ...appUser, patient_id: patientId });
-        }
       }
       setLoading(false);
     });
@@ -84,12 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (_event === "INITIAL_SESSION") return;
       if (session?.access_token) {
         setAuthToken(session.access_token);
-        const appUser = sessionToUser(session);
-        setUser(appUser);
-        if (appUser) {
-          const patientId = await loadPatientId(appUser.id);
-          if (patientId) setUser({ ...appUser, patient_id: patientId });
-        }
+        setUser(sessionToUser(session));
       } else {
         setAuthToken(null);
         setUser(null);
@@ -125,10 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Try to sync to glasses backend (non-fatal)
       try { await syncProfile(name, role); } catch {}
 
-      // Load patient_id from Supabase profiles table
+      // Store name in profiles so caregivers can see patient names
       if (appUser) {
-        const patientId = await loadPatientId(appUser.id);
-        if (patientId) setUser({ ...appUser, patient_id: patientId });
+        await supabase.from("profiles").upsert({ id: appUser.id, name });
       }
     },
     []
@@ -148,11 +134,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Try to sync to glasses backend (non-fatal)
     try { await syncProfile(appUser?.name ?? "", (appUser?.role as UserRole) ?? "caregiver"); } catch {}
 
-    // Load patient_id from Supabase profiles table
-    if (appUser) {
-      const patientId = await loadPatientId(appUser.id);
-      if (patientId) setUser({ ...appUser, patient_id: patientId });
-    }
   }, []);
 
   const logout = useCallback(async () => {

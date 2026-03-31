@@ -3,7 +3,6 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { LoginScreen } from "../screens/LoginScreen";
-import { LinkPatientScreen } from "../screens/caregiver/LinkPatientScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
 import { fonts, spacing } from "../config/theme";
@@ -23,16 +22,6 @@ export function RootNavigator() {
 
   if (!user) {
     return <LoginScreen />;
-  }
-
-  // Caregiver not yet linked to a patient
-  if (user.role === "caregiver" && !user.patient_id) {
-    return (
-      <View style={styles.root}>
-        <Header onLogout={logout} />
-        <LinkPatientScreen />
-      </View>
-    );
   }
 
   if (user.role === "caregiver") {

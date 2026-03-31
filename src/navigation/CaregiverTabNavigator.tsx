@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { TimelineScreen } from "../screens/TimelineScreen";
 import { PeopleScreen } from "../screens/PeopleScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
-import { PatientStatusScreen } from "../screens/caregiver/PatientStatusScreen";
+import { PatientsTab } from "../screens/caregiver/PatientsTab";
 import { AddCaregiverScreen } from "../screens/caregiver/AddCaregiverScreen";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { useHelpAlert } from "../hooks/useHelpAlert";
@@ -18,7 +18,7 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Timeline: "list-outline",
   People: "people-outline",
   Alerts: "notifications-outline",
-  Patient: "pulse-outline",
+  Patients: "pulse-outline",
   "Care Team": "person-add-outline",
 };
 
@@ -88,7 +88,7 @@ export function CaregiverTabNavigator() {
           <AlertsScreen alerts={alerts} loading={loading} onRefresh={refresh} />
         )}
       </Tab.Screen>
-      <Tab.Screen name="Patient" component={PatientStatusScreen} />
+      <Tab.Screen name="Patients" component={PatientsTab} />
       <Tab.Screen name="Care Team" component={AddCaregiverScreen} />
     </Tab.Navigator>
   );

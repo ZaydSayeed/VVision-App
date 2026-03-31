@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,8 @@ import { PersonCard } from "../components/PersonCard";
 import { SectionHeader } from "../components/shared/SectionHeader";
 import { EmptyState } from "../components/shared/EmptyState";
 import { enrollFace } from "../api/client";
-import { colors, spacing, fonts, radius } from "../config/theme";
+import { spacing, fonts, radius } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import { Person } from "../types";
 
 interface PeopleScreenProps {
@@ -26,6 +27,7 @@ interface PeopleScreenProps {
 }
 
 export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) {
+  const { colors } = useTheme();
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
@@ -78,6 +80,110 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
     setRelation("");
     setPhotoUri(null);
   }
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.xl, paddingBottom: 100 },
+    searchWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.sm,
+      paddingHorizontal: spacing.md,
+      marginBottom: spacing.lg,
+      height: 44,
+    },
+    searchIcon: { marginRight: spacing.sm },
+    searchInput: {
+      flex: 1,
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.regular,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(43,35,64,0.3)",
+      justifyContent: "flex-end",
+    },
+    modalSheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: spacing.xxl,
+      gap: spacing.sm,
+    },
+    modalTitle: { fontSize: 26, color: colors.text, ...fonts.display, marginBottom: spacing.sm },
+    photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
+    photoPlaceholder: {
+      height: 80,
+      backgroundColor: colors.violet50,
+      borderWidth: 1.5,
+      borderColor: colors.violet100,
+      borderStyle: "dashed",
+      borderRadius: radius.sm,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+    },
+    photoPlaceholderText: { fontSize: 16, color: colors.violet, ...fonts.medium },
+    photoTaken: {
+      height: 80,
+      backgroundColor: colors.violet50,
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      borderRadius: radius.sm,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+    },
+    photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
+    fieldLabel: {
+      fontSize: 10,
+      color: colors.lavender,
+      ...fonts.medium,
+      letterSpacing: 1.5,
+      textTransform: "uppercase",
+      marginTop: spacing.md,
+      marginBottom: spacing.xs,
+    },
+    input: {
+      height: 56,
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.sm,
+      paddingHorizontal: spacing.lg,
+      fontSize: 20,
+      color: colors.text,
+      ...fonts.regular,
+    },
+    error: { fontSize: 14, color: colors.violet, ...fonts.regular, marginTop: spacing.xs },
+    modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
+    btnOutline: {
+      flex: 1,
+      height: 56,
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    btnOutlineText: { fontSize: 17, color: colors.violet, ...fonts.medium },
+    btnPrimary: {
+      flex: 1,
+      height: 56,
+      backgroundColor: colors.violet,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    btnDisabled: { opacity: 0.6 },
+    btnPrimaryText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
+  }), [colors]);
 
   return (
     <View style={styles.container}>
@@ -190,107 +296,3 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.xl, paddingBottom: 100 },
-  searchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.lg,
-    height: 44,
-  },
-  searchIcon: { marginRight: spacing.sm },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text,
-    ...fonts.regular,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(43,35,64,0.3)",
-    justifyContent: "flex-end",
-  },
-  modalSheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: spacing.xxl,
-    gap: spacing.sm,
-  },
-  modalTitle: { fontSize: 26, color: colors.text, ...fonts.display, marginBottom: spacing.sm },
-  photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
-  photoPlaceholder: {
-    height: 80,
-    backgroundColor: colors.violet50,
-    borderWidth: 1.5,
-    borderColor: colors.violet100,
-    borderStyle: "dashed",
-    borderRadius: radius.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-  },
-  photoPlaceholderText: { fontSize: 16, color: colors.violet, ...fonts.medium },
-  photoTaken: {
-    height: 80,
-    backgroundColor: colors.violet50,
-    borderWidth: 1.5,
-    borderColor: colors.violet,
-    borderRadius: radius.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-  },
-  photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
-  fieldLabel: {
-    fontSize: 10,
-    color: colors.lavender,
-    ...fonts.medium,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    height: 56,
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.lg,
-    fontSize: 20,
-    color: colors.text,
-    ...fonts.regular,
-  },
-  error: { fontSize: 14, color: colors.violet, ...fonts.regular, marginTop: spacing.xs },
-  modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
-  btnOutline: {
-    flex: 1,
-    height: 56,
-    borderWidth: 1.5,
-    borderColor: colors.violet,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnOutlineText: { fontSize: 17, color: colors.violet, ...fonts.medium },
-  btnPrimary: {
-    flex: 1,
-    height: 56,
-    backgroundColor: colors.violet,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnPrimaryText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
-});

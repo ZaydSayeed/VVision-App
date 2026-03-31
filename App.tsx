@@ -13,6 +13,7 @@ import {
 } from "@expo-google-fonts/dm-sans";
 
 import { AuthProvider } from "./src/context/AuthContext";
+import { ThemeProvider } from "./src/context/ThemeContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { SplashScreen } from "./src/components/SplashScreen";
 
@@ -36,11 +37,12 @@ export default function App() {
   const appReady = fontsLoaded && minTimePassed;
 
   return (
+    <ThemeProvider>
     <SafeAreaProvider>
       {fontsLoaded && (
         <AuthProvider>
           <NavigationContainer>
-            <StatusBar style="dark" />
+            <StatusBar style="auto" />
             <RootNavigator />
           </NavigationContainer>
         </AuthProvider>
@@ -52,5 +54,6 @@ export default function App() {
         />
       )}
     </SafeAreaProvider>
+    </ThemeProvider>
   );
 }

@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, fonts, spacing, radius } from "../../config/theme";
+import { fonts, spacing, radius } from "../../config/theme";
+import { useTheme } from "../../context/ThemeContext";
 
 interface CheckRowProps {
   label: string;
@@ -12,6 +13,58 @@ interface CheckRowProps {
 }
 
 export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: CheckRowProps) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: spacing.sm,
+      gap: spacing.md,
+      minHeight: 56,
+    },
+    checkbox: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    checkboxChecked: {
+      backgroundColor: colors.violet,
+      borderColor: colors.violet,
+    },
+    checkmark: {},
+    labelWrap: {
+      flex: 1,
+    },
+    label: {
+      fontSize: 20,
+      color: colors.text,
+      ...fonts.regular,
+    },
+    labelChecked: {
+      textDecorationLine: "line-through",
+      color: colors.muted,
+    },
+    subLabel: {
+      fontSize: 14,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 2,
+    },
+    deleteBtn: {
+      width: 32,
+      height: 32,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    deleteText: {},
+  }), [colors]);
+
   return (
     <View style={styles.row}>
       <TouchableOpacity
@@ -37,53 +90,3 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: Check
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-    gap: spacing.md,
-    minHeight: 56,
-  },
-  checkbox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: colors.violet,
-    borderColor: colors.violet,
-  },
-  checkmark: {},
-  labelWrap: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 20,
-    color: colors.text,
-    ...fonts.regular,
-  },
-  labelChecked: {
-    textDecorationLine: "line-through",
-    color: colors.muted,
-  },
-  subLabel: {
-    fontSize: 14,
-    color: colors.muted,
-    ...fonts.regular,
-    marginTop: 2,
-  },
-  deleteBtn: {
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  deleteText: {},
-});

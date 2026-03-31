@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, radius, spacing, fonts, gradients } from "../config/theme";
+import { radius, spacing, fonts, gradients } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import { Person } from "../types";
 import { updateNotes, deletePerson } from "../api/client";
 import { formatRelativeTime, formatTimeShort } from "../hooks/useDashboardData";
@@ -20,6 +21,7 @@ interface PersonCardProps {
 }
 
 export function PersonCard({ person, onRefresh }: PersonCardProps) {
+  const { colors } = useTheme();
   const [editing, setEditing] = useState(false);
   const [noteText, setNoteText] = useState(person.notes ?? "");
   const [showHistory, setShowHistory] = useState(false);
@@ -64,6 +66,171 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       Alert.alert("Error", "Failed to save notes");
     }
   }
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 18,
+      marginBottom: spacing.md,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: spacing.sm + 2,
+    },
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    avatar: {
+      width: 42,
+      height: 42,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: {
+      fontSize: 15,
+      color: "#FAF8F4",
+      ...fonts.medium,
+    },
+    info: {
+      marginLeft: spacing.md,
+    },
+    name: {
+      fontSize: 18,
+      color: colors.text,
+      ...fonts.display,
+    },
+    relation: {
+      fontSize: 13,
+      color: colors.lavender,
+      marginTop: 1,
+      ...fonts.medium,
+    },
+    headerRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    seenBadge: {
+      backgroundColor: colors.violet50,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: colors.violet100,
+    },
+    seenBadgeText: {
+      fontSize: 12,
+      color: colors.violet,
+      ...fonts.medium,
+    },
+    meta: {
+      marginBottom: spacing.sm + 2,
+    },
+    metaText: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    metaValue: {
+      color: colors.subtext,
+      ...fonts.medium,
+    },
+    notesBox: {
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.sm,
+      padding: spacing.md,
+      minHeight: 38,
+    },
+    notesBoxEmpty: {},
+    notesText: {
+      fontSize: 14,
+      color: colors.text,
+      lineHeight: 20,
+      ...fonts.regular,
+    },
+    notesTextEmpty: {
+      color: colors.muted,
+      fontStyle: "italic",
+    },
+    notesInput: {
+      backgroundColor: colors.bg,
+      borderWidth: 1,
+      borderColor: colors.violet,
+      borderRadius: radius.sm,
+      padding: spacing.md,
+      color: colors.text,
+      fontSize: 14,
+      minHeight: 60,
+      textAlignVertical: "top",
+      ...fonts.regular,
+    },
+    notesActions: {
+      flexDirection: "row",
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    btnPrimary: {
+      backgroundColor: colors.violet,
+      paddingHorizontal: 22,
+      paddingVertical: 10,
+      borderRadius: radius.sm,
+    },
+    btnPrimaryText: {
+      color: "#F5F0E8",
+      fontSize: 13,
+      ...fonts.medium,
+    },
+    btnOutline: {
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      paddingHorizontal: 22,
+      paddingVertical: 10,
+      borderRadius: radius.sm,
+    },
+    btnOutlineText: {
+      color: colors.violet,
+      fontSize: 13,
+      ...fonts.medium,
+    },
+    historyToggle: {
+      marginTop: spacing.sm,
+      paddingVertical: 4,
+    },
+    historyToggleText: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    historyList: {
+      marginTop: spacing.sm,
+      backgroundColor: colors.bg,
+      borderRadius: radius.sm,
+      padding: spacing.sm + 2,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    historyItem: {
+      paddingVertical: 4,
+    },
+    historyItemBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    historyText: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+  }), [colors]);
 
   return (
     <View style={styles.card}>
@@ -179,168 +346,3 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: 18,
-    marginBottom: spacing.md,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: spacing.sm + 2,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    fontSize: 15,
-    color: "#FAF8F4",
-    ...fonts.medium,
-  },
-  info: {
-    marginLeft: spacing.md,
-  },
-  name: {
-    fontSize: 18,
-    color: colors.text,
-    ...fonts.display,
-  },
-  relation: {
-    fontSize: 13,
-    color: colors.lavender,
-    marginTop: 1,
-    ...fonts.medium,
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  seenBadge: {
-    backgroundColor: colors.violet50,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.violet100,
-  },
-  seenBadgeText: {
-    fontSize: 12,
-    color: colors.violet,
-    ...fonts.medium,
-  },
-  meta: {
-    marginBottom: spacing.sm + 2,
-  },
-  metaText: {
-    fontSize: 13,
-    color: colors.muted,
-    ...fonts.regular,
-  },
-  metaValue: {
-    color: colors.subtext,
-    ...fonts.medium,
-  },
-  notesBox: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    padding: spacing.md,
-    minHeight: 38,
-  },
-  notesBoxEmpty: {},
-  notesText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-    ...fonts.regular,
-  },
-  notesTextEmpty: {
-    color: colors.muted,
-    fontStyle: "italic",
-  },
-  notesInput: {
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.violet,
-    borderRadius: radius.sm,
-    padding: spacing.md,
-    color: colors.text,
-    fontSize: 14,
-    minHeight: 60,
-    textAlignVertical: "top",
-    ...fonts.regular,
-  },
-  notesActions: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  btnPrimary: {
-    backgroundColor: colors.violet,
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: radius.sm,
-  },
-  btnPrimaryText: {
-    color: "#F5F0E8",
-    fontSize: 13,
-    ...fonts.medium,
-  },
-  btnOutline: {
-    borderWidth: 1.5,
-    borderColor: colors.violet,
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: radius.sm,
-  },
-  btnOutlineText: {
-    color: colors.violet,
-    fontSize: 13,
-    ...fonts.medium,
-  },
-  historyToggle: {
-    marginTop: spacing.sm,
-    paddingVertical: 4,
-  },
-  historyToggleText: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-  },
-  historyList: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.bg,
-    borderRadius: radius.sm,
-    padding: spacing.sm + 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  historyItem: {
-    paddingVertical: 4,
-  },
-  historyItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  historyText: {
-    fontSize: 13,
-    color: colors.muted,
-    ...fonts.regular,
-  },
-});

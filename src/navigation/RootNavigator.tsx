@@ -1,14 +1,23 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { LoginScreen } from "../screens/LoginScreen";
 import { LinkPatientScreen } from "../screens/caregiver/LinkPatientScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
-import { colors, fonts, spacing } from "../config/theme";
+import { fonts, spacing } from "../config/theme";
 
 export function RootNavigator() {
   const { user, loading, logout } = useAuth();
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+  }), [colors]);
 
   if (loading) return null;
 
@@ -44,6 +53,57 @@ export function RootNavigator() {
 }
 
 function Header({ onLogout }: { onLogout: () => void }) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    header: {
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      paddingTop: 54,
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.md,
+    },
+    headerInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    logo: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    logoIcon: {
+      width: 32,
+      height: 32,
+    },
+    logoWordmark: {
+      borderLeftWidth: 0.4,
+      borderLeftColor: colors.lavender,
+      paddingLeft: 10,
+      marginLeft: 2,
+    },
+    logoText: {
+      fontSize: 20,
+      color: colors.text,
+      ...fonts.display,
+      letterSpacing: 0.2,
+    },
+    logoutBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    logoutText: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.medium,
+    },
+  }), [colors]);
+
   return (
     <View style={styles.header}>
       <View style={styles.headerInner}>
@@ -64,56 +124,3 @@ function Header({ onLogout }: { onLogout: () => void }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  header: {
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingTop: 54,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.md,
-  },
-  headerInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  logo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  logoIcon: {
-    width: 32,
-    height: 32,
-  },
-  logoWordmark: {
-    borderLeftWidth: 0.4,
-    borderLeftColor: colors.lavender,
-    paddingLeft: 10,
-    marginLeft: 2,
-  },
-  logoText: {
-    fontSize: 20,
-    color: colors.text,
-    ...fonts.display,
-    letterSpacing: 0.2,
-  },
-  logoutBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  logoutText: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.medium,
-  },
-});

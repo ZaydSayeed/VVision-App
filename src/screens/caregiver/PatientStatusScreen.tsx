@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
+import { useTheme } from "../../context/ThemeContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
-import { colors, fonts, spacing, radius } from "../../config/theme";
+import { fonts, spacing, radius } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
 export function PatientStatusScreen() {
+  const { colors } = useTheme();
   const { tasks, isCompletedToday } = useRoutine();
   const { meds, isTakenToday } = useMeds();
   const { alerts, dismissAlert } = useHelpAlert();
@@ -23,6 +25,112 @@ export function PatientStatusScreen() {
   const routineDone = tasks.filter(isCompletedToday).length;
   const medsDone = meds.filter(isTakenToday).length;
   const pendingHelp = alerts.filter((a) => !a.dismissed);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.xl, paddingBottom: 100 },
+    statsRow: {
+      flexDirection: "row",
+      gap: spacing.md,
+      marginBottom: spacing.xxl,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: spacing.lg,
+      alignItems: "center",
+    },
+    statValue: {
+      fontSize: 36,
+      color: colors.violet,
+      ...fonts.display,
+    },
+    statLabel: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.medium,
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      marginTop: 2,
+    },
+    helpCard: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.violet100,
+      borderRadius: radius.md,
+      padding: spacing.lg,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: spacing.sm,
+    },
+    helpTitle: {
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    helpTime: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 2,
+    },
+    dismissBtn: {
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      borderRadius: radius.sm,
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+    },
+    dismissText: {
+      fontSize: 12,
+      color: colors.violet,
+      ...fonts.medium,
+    },
+    section: { marginTop: spacing.xxl },
+    noItems: {
+      fontSize: 15,
+      color: colors.muted,
+      ...fonts.regular,
+      paddingVertical: spacing.md,
+    },
+    readRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: spacing.sm + 2,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      gap: spacing.md,
+      minHeight: 48,
+    },
+    dot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: colors.border,
+    },
+    dotDone: { backgroundColor: colors.violet },
+    readRowBody: { flex: 1 },
+    readLabel: {
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.regular,
+    },
+    readLabelDone: {
+      color: colors.muted,
+      textDecorationLine: "line-through",
+    },
+    readTime: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 2,
+    },
+    checkmark: {},
+  }), [colors]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -130,109 +238,3 @@ export function PatientStatusScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.xl, paddingBottom: 100 },
-  statsRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    marginBottom: spacing.xxl,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: 36,
-    color: colors.violet,
-    ...fonts.display,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: colors.muted,
-    ...fonts.medium,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  helpCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.violet100,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-  },
-  helpTitle: {
-    fontSize: 15,
-    color: colors.text,
-    ...fonts.medium,
-  },
-  helpTime: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-    marginTop: 2,
-  },
-  dismissBtn: {
-    borderWidth: 1.5,
-    borderColor: colors.violet,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  dismissText: {
-    fontSize: 12,
-    color: colors.violet,
-    ...fonts.medium,
-  },
-  section: { marginTop: spacing.xxl },
-  noItems: {
-    fontSize: 15,
-    color: colors.muted,
-    ...fonts.regular,
-    paddingVertical: spacing.md,
-  },
-  readRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    gap: spacing.md,
-    minHeight: 48,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.border,
-  },
-  dotDone: { backgroundColor: colors.violet },
-  readRowBody: { flex: 1 },
-  readLabel: {
-    fontSize: 15,
-    color: colors.text,
-    ...fonts.regular,
-  },
-  readLabelDone: {
-    color: colors.muted,
-    textDecorationLine: "line-through",
-  },
-  readTime: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-    marginTop: 2,
-  },
-  checkmark: {},
-});

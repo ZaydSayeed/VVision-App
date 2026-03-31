@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +7,8 @@ import { MedsScreen } from "../screens/patient/MedsScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
 import { HelpScreen } from "../screens/patient/HelpScreen";
 import { SettingsScreen } from "../screens/patient/SettingsScreen";
-import { colors, fonts } from "../config/theme";
+import { fonts } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 
 interface PatientTabNavigatorProps {
   patientName: string;
@@ -24,6 +25,26 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    tabBar: {
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      height: 85,
+      paddingTop: 8,
+      paddingBottom: 20,
+    },
+    tabLabel: {
+      fontSize: 11,
+      ...fonts.medium,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+    },
+    tabIcon: {},
+  }), [colors]);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -47,21 +68,3 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    height: 85,
-    paddingTop: 8,
-    paddingBottom: 20,
-  },
-  tabLabel: {
-    fontSize: 11,
-    ...fonts.medium,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  tabIcon: {},
-});

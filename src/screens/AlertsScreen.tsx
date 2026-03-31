@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import { dismissAlert } from "../api/client";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { SectionHeader } from "../components/shared/SectionHeader";
 import { EmptyState } from "../components/shared/EmptyState";
-import { colors, spacing, fonts, radius } from "../config/theme";
+import { spacing, fonts, radius } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import { Alert as AlertType } from "../types";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 
@@ -29,6 +30,7 @@ export function AlertsScreen({
   loading,
   onRefresh,
 }: AlertsScreenProps) {
+  const { colors } = useTheme();
   const { alerts: helpAlerts, dismissAlert: dismissHelp } = useHelpAlert();
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed);
 
@@ -41,6 +43,56 @@ export function AlertsScreen({
       // Silently fail — will refresh on next poll
     }
   }
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.xl, paddingBottom: 100 },
+    helpCard: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.violet100,
+      borderRadius: radius.md,
+      padding: spacing.lg,
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: spacing.sm,
+      gap: spacing.md,
+    },
+    helpIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.sm,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    helpIconText: {},
+    helpInfo: { flex: 1 },
+    helpTitle: {
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    helpTime: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 2,
+    },
+    dismissBtn: {
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      borderRadius: radius.sm,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    dismissText: {
+      fontSize: 12,
+      color: colors.violet,
+      ...fonts.medium,
+    },
+    section: { marginTop: spacing.xxl },
+  }), [colors]);
 
   return (
     <ScrollView
@@ -104,53 +156,3 @@ export function AlertsScreen({
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.xl, paddingBottom: 100 },
-  helpCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.violet100,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-    gap: spacing.md,
-  },
-  helpIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.sm,
-    backgroundColor: colors.violet50,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  helpIconText: {},
-  helpInfo: { flex: 1 },
-  helpTitle: {
-    fontSize: 15,
-    color: colors.text,
-    ...fonts.medium,
-  },
-  helpTime: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-    marginTop: 2,
-  },
-  dismissBtn: {
-    borderWidth: 1.5,
-    borderColor: colors.violet,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  dismissText: {
-    fontSize: 12,
-    color: colors.violet,
-    ...fonts.medium,
-  },
-  section: { marginTop: spacing.xxl },
-});

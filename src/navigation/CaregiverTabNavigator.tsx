@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,7 +9,8 @@ import { PatientStatusScreen } from "../screens/caregiver/PatientStatusScreen";
 import { AddCaregiverScreen } from "../screens/caregiver/AddCaregiverScreen";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { useHelpAlert } from "../hooks/useHelpAlert";
-import { colors, fonts } from "../config/theme";
+import { fonts } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 
 const Tab = createBottomTabNavigator();
 
@@ -22,8 +23,32 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function CaregiverTabNavigator() {
+  const { colors } = useTheme();
   const { people, alerts, stats, timeline, loading, refresh } = useDashboardData();
   const { pendingCount } = useHelpAlert();
+
+  const styles = useMemo(() => StyleSheet.create({
+    tabBar: {
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      height: 85,
+      paddingTop: 8,
+      paddingBottom: 20,
+    },
+    tabLabel: {
+      fontSize: 10,
+      ...fonts.medium,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+    },
+    tabIcon: {},
+    tabBadge: {
+      backgroundColor: colors.violet,
+      fontSize: 10,
+      ...fonts.medium,
+    },
+  }), [colors]);
 
   return (
     <Tab.Navigator
@@ -68,26 +93,3 @@ export function CaregiverTabNavigator() {
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    height: 85,
-    paddingTop: 8,
-    paddingBottom: 20,
-  },
-  tabLabel: {
-    fontSize: 10,
-    ...fonts.medium,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  tabIcon: {},
-  tabBadge: {
-    backgroundColor: colors.violet,
-    fontSize: 10,
-    ...fonts.medium,
-  },
-});

@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, radius, spacing, fonts } from "../config/theme";
+import { radius, spacing, fonts } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import { TimelineEvent } from "../types";
 import { formatTimeShort } from "../hooks/useDashboardData";
 
@@ -9,14 +10,54 @@ interface TimelineItemProps {
   event: TimelineEvent;
 }
 
-const iconConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; bgColor: string }> = {
-  seen: { icon: "eye-outline", bgColor: colors.violet50 },
-  interaction: { icon: "chatbubble-outline", bgColor: colors.violet50 },
-  alert: { icon: "warning-outline", bgColor: colors.violet100 },
-};
-
 export function TimelineItem({ event }: TimelineItemProps) {
+  const { colors } = useTheme();
+
+  const iconConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; bgColor: string }> = {
+    seen: { icon: "eye-outline", bgColor: colors.violet50 },
+    interaction: { icon: "chatbubble-outline", bgColor: colors.violet50 },
+    alert: { icon: "warning-outline", bgColor: colors.violet100 },
+  };
+
   const config = iconConfig[event.type];
+
+  const styles = useMemo(() => StyleSheet.create({
+    item: {
+      flexDirection: "row",
+      gap: 14,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      alignItems: "flex-start",
+    },
+    icon: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    body: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.display,
+      marginBottom: 2,
+    },
+    subtitle: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    time: {
+      fontSize: 11.5,
+      color: colors.muted,
+      marginTop: 2,
+      ...fonts.regular,
+    },
+  }), [colors]);
 
   return (
     <View style={styles.item}>
@@ -49,41 +90,3 @@ export function TimelineItem({ event }: TimelineItemProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  item: {
-    flexDirection: "row",
-    gap: 14,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    alignItems: "flex-start",
-  },
-  icon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  body: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 15,
-    color: colors.text,
-    ...fonts.display,
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-  },
-  time: {
-    fontSize: 11.5,
-    color: colors.muted,
-    marginTop: 2,
-    ...fonts.regular,
-  },
-});

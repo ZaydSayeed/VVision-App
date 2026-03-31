@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, radius, spacing, fonts } from "../config/theme";
+import { radius, spacing, fonts } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import { Alert as AlertType } from "../types";
 import { formatRelativeTime, formatTimeShort } from "../hooks/useDashboardData";
 
@@ -11,6 +12,63 @@ interface AlertCardProps {
 }
 
 export function AlertCard({ alert, onDismiss }: AlertCardProps) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.violet100,
+      borderRadius: radius.md,
+      padding: spacing.lg,
+      marginBottom: spacing.sm + 2,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    info: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      flex: 1,
+    },
+    iconWrap: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.sm,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    textWrap: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 14,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    time: {
+      fontSize: 11.5,
+      color: colors.muted,
+      marginTop: 2,
+      ...fonts.regular,
+    },
+    dismissBtn: {
+      backgroundColor: "transparent",
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: radius.sm,
+    },
+    dismissText: {
+      color: colors.violet,
+      fontSize: 11.5,
+      ...fonts.medium,
+    },
+  }), [colors]);
+
   return (
     <View style={styles.card}>
       <View style={styles.info}>
@@ -34,58 +92,3 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.violet100,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    marginBottom: spacing.sm + 2,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  info: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    flex: 1,
-  },
-  iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
-    backgroundColor: colors.violet50,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textWrap: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 14,
-    color: colors.text,
-    ...fonts.medium,
-  },
-  time: {
-    fontSize: 11.5,
-    color: colors.muted,
-    marginTop: 2,
-    ...fonts.regular,
-  },
-  dismissBtn: {
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: colors.violet,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-  },
-  dismissText: {
-    color: colors.violet,
-    fontSize: 11.5,
-    ...fonts.medium,
-  },
-});

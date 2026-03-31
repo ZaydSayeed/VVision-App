@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
 } from "react-native";
 import { StatChip } from "../components/StatChip";
 import { TimelineItem } from "../components/TimelineItem";
-import { colors, spacing, fonts } from "../config/theme";
+import { spacing, fonts } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import { DashboardStats, TimelineEvent } from "../types";
 
 interface TimelineScreenProps {
@@ -24,6 +25,46 @@ export function TimelineScreen({
   loading,
   onRefresh,
 }: TimelineScreenProps) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    content: {
+      paddingBottom: 100,
+    },
+    statsStrip: {
+      paddingVertical: 14,
+    },
+    statsContent: {
+      paddingHorizontal: spacing.xl,
+      gap: spacing.sm,
+    },
+    section: {
+      paddingHorizontal: spacing.xl,
+    },
+    sectionLabel: {
+      fontSize: 10,
+      color: colors.lavender,
+      textTransform: "uppercase",
+      letterSpacing: 1.5,
+      ...fonts.medium,
+      paddingVertical: spacing.sm,
+      paddingBottom: spacing.md,
+    },
+    empty: {
+      alignItems: "center",
+      paddingVertical: 48,
+    },
+    emptyText: {
+      color: colors.muted,
+      fontSize: 15,
+      ...fonts.regular,
+    },
+  }), [colors]);
+
   return (
     <ScrollView
       style={styles.container}
@@ -81,41 +122,3 @@ export function TimelineScreen({
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  content: {
-    paddingBottom: 100,
-  },
-  statsStrip: {
-    paddingVertical: 14,
-  },
-  statsContent: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.sm,
-  },
-  section: {
-    paddingHorizontal: spacing.xl,
-  },
-  sectionLabel: {
-    fontSize: 10,
-    color: colors.lavender,
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-    ...fonts.medium,
-    paddingVertical: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  empty: {
-    alignItems: "center",
-    paddingVertical: 48,
-  },
-  emptyText: {
-    color: colors.muted,
-    fontSize: 15,
-    ...fonts.regular,
-  },
-});

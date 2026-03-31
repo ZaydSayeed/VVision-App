@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import { useCaregiver } from "../../hooks/useCaregiver";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { getMyLinkCode } from "../../api/client";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
-import { colors, fonts, spacing, radius } from "../../config/theme";
+import { fonts, spacing, radius } from "../../config/theme";
 
 export function AddCaregiverScreen() {
+  const { colors } = useTheme();
   const { profiles, refresh } = useCaregiver();
   const { user } = useAuth();
   const [linkCode, setLinkCode] = useState<string | null>(null);
@@ -28,6 +30,78 @@ export function AddCaregiverScreen() {
         .catch(() => {});
     }
   }, [user?.role]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.xl, paddingBottom: 100 },
+    codeCard: {
+      backgroundColor: colors.violet50,
+      borderWidth: 1,
+      borderColor: colors.violet100,
+      borderRadius: radius.md,
+      padding: spacing.xl,
+      alignItems: "center",
+      marginBottom: spacing.xxl,
+    },
+    codeLabel: {
+      fontSize: 10,
+      color: colors.lavender,
+      ...fonts.medium,
+      letterSpacing: 1.5,
+      textTransform: "uppercase",
+      marginBottom: spacing.sm,
+    },
+    codeValue: {
+      fontSize: 36,
+      color: colors.violet,
+      ...fonts.medium,
+      letterSpacing: 8,
+      marginBottom: spacing.md,
+    },
+    codeHint: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      textAlign: "center",
+      lineHeight: 19,
+    },
+    profileCard: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: spacing.lg,
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: spacing.sm,
+      gap: spacing.md,
+    },
+    profileAvatar: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: colors.violet,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    profileInitial: {
+      fontSize: 18,
+      color: "#FAF8F4",
+      ...fonts.medium,
+    },
+    profileInfo: { flex: 1 },
+    profileName: {
+      fontSize: 16,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    profileMeta: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 2,
+    },
+  }), [colors]);
 
   return (
     <ScrollView
@@ -88,75 +162,3 @@ export function AddCaregiverScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.xl, paddingBottom: 100 },
-  codeCard: {
-    backgroundColor: colors.violet50,
-    borderWidth: 1,
-    borderColor: colors.violet100,
-    borderRadius: radius.md,
-    padding: spacing.xl,
-    alignItems: "center",
-    marginBottom: spacing.xxl,
-  },
-  codeLabel: {
-    fontSize: 10,
-    color: colors.lavender,
-    ...fonts.medium,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    marginBottom: spacing.sm,
-  },
-  codeValue: {
-    fontSize: 36,
-    color: colors.violet,
-    ...fonts.medium,
-    letterSpacing: 8,
-    marginBottom: spacing.md,
-  },
-  codeHint: {
-    fontSize: 13,
-    color: colors.muted,
-    ...fonts.regular,
-    textAlign: "center",
-    lineHeight: 19,
-  },
-  profileCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-    gap: spacing.md,
-  },
-  profileAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.violet,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  profileInitial: {
-    fontSize: 18,
-    color: "#FAF8F4",
-    ...fonts.medium,
-  },
-  profileInfo: { flex: 1 },
-  profileName: {
-    fontSize: 16,
-    color: colors.text,
-    ...fonts.medium,
-  },
-  profileMeta: {
-    fontSize: 13,
-    color: colors.muted,
-    ...fonts.regular,
-    marginTop: 2,
-  },
-});

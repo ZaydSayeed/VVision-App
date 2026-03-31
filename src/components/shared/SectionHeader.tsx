@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { colors, fonts, spacing } from "../../config/theme";
+import { fonts, spacing } from "../../config/theme";
+import { useTheme } from "../../context/ThemeContext";
 
 interface SectionHeaderProps {
   label: string;
@@ -8,6 +9,29 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ label, action }: SectionHeaderProps) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingBottom: spacing.md,
+    },
+    label: {
+      fontSize: 10,
+      color: colors.lavender,
+      textTransform: "uppercase",
+      letterSpacing: 1.5,
+      ...fonts.medium,
+    },
+    action: {
+      fontSize: 13,
+      color: colors.violet,
+      ...fonts.medium,
+    },
+  }), [colors]);
+
   return (
     <View style={styles.row}>
       <Text style={styles.label}>{label}</Text>
@@ -19,24 +43,3 @@ export function SectionHeader({ label, action }: SectionHeaderProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingBottom: spacing.md,
-  },
-  label: {
-    fontSize: 10,
-    color: colors.lavender,
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-    ...fonts.medium,
-  },
-  action: {
-    fontSize: 13,
-    color: colors.violet,
-    ...fonts.medium,
-  },
-});

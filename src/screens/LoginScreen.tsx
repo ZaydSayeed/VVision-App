@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { UserRole } from "../types";
 import { useAuth } from "../context/AuthContext";
-import { colors, fonts, spacing, radius } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
+import { fonts, spacing, radius } from "../config/theme";
 
 export function LoginScreen() {
+  const { colors } = useTheme();
   const { login, signup } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
@@ -63,6 +65,136 @@ export function LoginScreen() {
       setLoading(false);
     }
   }
+
+  const styles = useMemo(() => StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    container: {
+      flexGrow: 1,
+      paddingHorizontal: spacing.xxl,
+      paddingTop: spacing.xxxxl,
+      paddingBottom: spacing.xxxxl,
+    },
+    logoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: spacing.xxxxl,
+    },
+    logoIcon: {
+      width: 36,
+      height: 36,
+    },
+    logoText: {
+      fontSize: 22,
+      color: colors.text,
+      ...fonts.display,
+    },
+    headline: {
+      fontSize: 48,
+      color: colors.text,
+      ...fonts.displayLight,
+      marginBottom: spacing.sm,
+    },
+    tagline: {
+      fontSize: 16,
+      color: colors.muted,
+      ...fonts.regular,
+      marginBottom: spacing.xxxl,
+    },
+    fieldGroup: {
+      marginBottom: spacing.xl,
+    },
+    fieldLabel: {
+      fontSize: 10,
+      color: colors.lavender,
+      ...fonts.medium,
+      letterSpacing: 1.5,
+      textTransform: "uppercase",
+      marginBottom: spacing.sm,
+    },
+    input: {
+      height: 56,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.sm,
+      paddingHorizontal: spacing.lg,
+      fontSize: 18,
+      color: colors.text,
+      ...fonts.regular,
+    },
+    roleRow: {
+      flexDirection: "row",
+      gap: spacing.md,
+    },
+    roleCard: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: spacing.lg,
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    roleCardActive: {
+      borderColor: colors.violet,
+      backgroundColor: colors.violet50,
+    },
+    roleTitle: {
+      fontSize: 17,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    roleTitleActive: {
+      color: colors.violet,
+    },
+    roleSubtitle: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      textAlign: "center",
+    },
+    error: {
+      fontSize: 14,
+      color: colors.violet,
+      ...fonts.regular,
+      marginBottom: spacing.md,
+      textAlign: "center",
+    },
+    btn: {
+      height: 56,
+      backgroundColor: colors.violet,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: spacing.sm,
+    },
+    btnDisabled: {
+      opacity: 0.7,
+    },
+    btnText: {
+      fontSize: 17,
+      color: "#F5F0E8",
+      ...fonts.medium,
+    },
+    toggleRow: {
+      marginTop: spacing.xl,
+      alignItems: "center",
+    },
+    toggleText: {
+      fontSize: 14,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    toggleLink: {
+      color: colors.violet,
+      ...fonts.medium,
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -224,133 +356,3 @@ export function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  container: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xxl,
-    paddingTop: spacing.xxxxl,
-    paddingBottom: spacing.xxxxl,
-  },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: spacing.xxxxl,
-  },
-  logoIcon: {
-    width: 36,
-    height: 36,
-  },
-  logoText: {
-    fontSize: 22,
-    color: colors.text,
-    ...fonts.display,
-  },
-  headline: {
-    fontSize: 48,
-    color: colors.text,
-    ...fonts.displayLight,
-    marginBottom: spacing.sm,
-  },
-  tagline: {
-    fontSize: 16,
-    color: colors.muted,
-    ...fonts.regular,
-    marginBottom: spacing.xxxl,
-  },
-  fieldGroup: {
-    marginBottom: spacing.xl,
-  },
-  fieldLabel: {
-    fontSize: 10,
-    color: colors.lavender,
-    ...fonts.medium,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    marginBottom: spacing.sm,
-  },
-  input: {
-    height: 56,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.lg,
-    fontSize: 18,
-    color: colors.text,
-    ...fonts.regular,
-  },
-  roleRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
-  roleCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  roleCardActive: {
-    borderColor: colors.violet,
-    backgroundColor: colors.violet50,
-  },
-  roleTitle: {
-    fontSize: 17,
-    color: colors.text,
-    ...fonts.medium,
-  },
-  roleTitleActive: {
-    color: colors.violet,
-  },
-  roleSubtitle: {
-    fontSize: 12,
-    color: colors.muted,
-    ...fonts.regular,
-    textAlign: "center",
-  },
-  error: {
-    fontSize: 14,
-    color: colors.violet,
-    ...fonts.regular,
-    marginBottom: spacing.md,
-    textAlign: "center",
-  },
-  btn: {
-    height: 56,
-    backgroundColor: colors.violet,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
-  },
-  btnDisabled: {
-    opacity: 0.7,
-  },
-  btnText: {
-    fontSize: 17,
-    color: "#F5F0E8",
-    ...fonts.medium,
-  },
-  toggleRow: {
-    marginTop: spacing.xl,
-    alignItems: "center",
-  },
-  toggleText: {
-    fontSize: 14,
-    color: colors.muted,
-    ...fonts.regular,
-  },
-  toggleLink: {
-    color: colors.violet,
-    ...fonts.medium,
-  },
-});

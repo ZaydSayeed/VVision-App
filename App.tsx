@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -14,6 +14,9 @@ import {
 
 import { AuthProvider } from "./src/context/AuthContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
+import { SplashScreen } from "./src/components/SplashScreen";
+
+const MIN_SPLASH_MS = 2000;
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -22,17 +25,32 @@ export default function App() {
     DMSans_400Regular,
     DMSans_500Medium,
   });
+  const [minTimePassed, setMinTimePassed] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    const t = setTimeout(() => setMinTimePassed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  const appReady = fontsLoaded && minTimePassed;
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      {fontsLoaded && (
+        <AuthProvider>
+          <NavigationContainer>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </NavigationContainer>
+        </AuthProvider>
+      )}
+      {showSplash && (
+        <SplashScreen
+          appReady={appReady}
+          onDone={() => setShowSplash(false)}
+        />
+      )}
+    </SafeAreaProvider>
   );
 }

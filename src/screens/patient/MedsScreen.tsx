@@ -51,16 +51,22 @@ export function MedsScreen() {
           </View>
         )}
 
-        <SectionHeader
-          label="My Medications"
-          action={{ label: "+ Add Med", onPress: () => setShowModal(true) }}
-        />
+        <SectionHeader label="My Medications" />
 
         {meds.length === 0 ? (
-          <EmptyState
-            title="No medications"
-            subtitle="Tap '+ Add Med' to add your medications"
-          />
+          <View style={styles.emptyCTA}>
+            <TouchableOpacity
+              style={styles.bigAddBtn}
+              onPress={() => setShowModal(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.bigAddIcon}>+</Text>
+            </TouchableOpacity>
+            <Text style={styles.emptyCTATitle}>Add a Medication</Text>
+            <Text style={styles.emptyCTASubtitle}>
+              Track your daily medications{"\n"}and mark them as taken
+            </Text>
+          </View>
         ) : (
           meds.map((med) => (
             <CheckRow
@@ -74,6 +80,16 @@ export function MedsScreen() {
           ))
         )}
       </ScrollView>
+
+      {meds.length > 0 && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowModal(true)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.fabIcon}>+</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Add Med Modal */}
       <Modal visible={showModal} transparent animationType="slide">
@@ -132,7 +148,64 @@ export function MedsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.xl, paddingBottom: 100 },
+  content: { padding: spacing.xl, paddingBottom: 120 },
+  emptyCTA: {
+    alignItems: "center",
+    paddingTop: 60,
+    gap: spacing.md,
+  },
+  bigAddBtn: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.violet,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.violet,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: spacing.sm,
+  },
+  bigAddIcon: {
+    fontSize: 44,
+    color: "#FAF8F4",
+    lineHeight: 50,
+  },
+  emptyCTATitle: {
+    fontSize: 24,
+    color: colors.text,
+    ...fonts.display,
+  },
+  emptyCTASubtitle: {
+    fontSize: 15,
+    color: colors.muted,
+    ...fonts.regular,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 32,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.violet,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.violet,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  fabIcon: {
+    fontSize: 30,
+    color: "#FAF8F4",
+    lineHeight: 34,
+  },
   doneBanner: {
     backgroundColor: colors.violet50,
     borderWidth: 1,

@@ -55,16 +55,22 @@ export function RoutineScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <SectionHeader
-          label="My Daily Routine"
-          action={{ label: "+ Add Task", onPress: () => setShowModal(true) }}
-        />
+        <SectionHeader label="My Daily Routine" />
 
         {tasks.length === 0 ? (
-          <EmptyState
-            title="No tasks yet"
-            subtitle="Tap '+ Add Task' to add your daily routine"
-          />
+          <View style={styles.emptyCTA}>
+            <TouchableOpacity
+              style={styles.bigAddBtn}
+              onPress={() => setShowModal(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.bigAddIcon}>+</Text>
+            </TouchableOpacity>
+            <Text style={styles.emptyCTATitle}>Add a Task</Text>
+            <Text style={styles.emptyCTASubtitle}>
+              Build your daily routine{"\n"}and track what you've done
+            </Text>
+          </View>
         ) : (
           tasks.map((task) => (
             <CheckRow
@@ -78,6 +84,16 @@ export function RoutineScreen() {
           ))
         )}
       </ScrollView>
+
+      {tasks.length > 0 && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowModal(true)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.fabIcon}>+</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Add Task Modal */}
       <Modal visible={showModal} transparent animationType="slide">
@@ -127,6 +143,63 @@ export function RoutineScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  emptyCTA: {
+    alignItems: "center",
+    paddingTop: 60,
+    gap: spacing.md,
+  },
+  bigAddBtn: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.violet,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.violet,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: spacing.sm,
+  },
+  bigAddIcon: {
+    fontSize: 44,
+    color: "#FAF8F4",
+    lineHeight: 50,
+  },
+  emptyCTATitle: {
+    fontSize: 24,
+    color: colors.text,
+    ...fonts.display,
+  },
+  emptyCTASubtitle: {
+    fontSize: 15,
+    color: colors.muted,
+    ...fonts.regular,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 32,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.violet,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: colors.violet,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  fabIcon: {
+    fontSize: 30,
+    color: "#FAF8F4",
+    lineHeight: 34,
+  },
   clockBox: {
     backgroundColor: colors.surface,
     borderBottomWidth: 1,

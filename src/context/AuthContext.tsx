@@ -59,10 +59,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.access_token) {
         setAuthToken(session.access_token);
-        setUser(sessionToUser(session));
+        const appUser = sessionToUser(session);
+        setUser(appUser);
+        if (appUser) {
+          const patientId = await loadPatientId(appUser.id);
+          if (patientId) setUser({ ...appUser, patient_id: patientId });
+        }
       }
       setLoading(false);
     });

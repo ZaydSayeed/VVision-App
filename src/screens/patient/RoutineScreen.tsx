@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -64,7 +65,7 @@ export function RoutineScreen() {
               onPress={() => setShowModal(true)}
               activeOpacity={0.85}
             >
-              <Text style={styles.bigAddIcon}>+</Text>
+              <Ionicons name="add" size={52} color="#FAF8F4" />
             </TouchableOpacity>
             <Text style={styles.emptyCTATitle}>Add a Task</Text>
             <Text style={styles.emptyCTASubtitle}>
@@ -91,7 +92,7 @@ export function RoutineScreen() {
           onPress={() => setShowModal(true)}
           activeOpacity={0.85}
         >
-          <Text style={styles.fabIcon}>+</Text>
+          <Ionicons name="add" size={36} color="#FAF8F4" />
         </TouchableOpacity>
       )}
 
@@ -162,11 +163,6 @@ const styles = StyleSheet.create({
     elevation: 8,
     marginBottom: spacing.sm,
   },
-  bigAddIcon: {
-    fontSize: 44,
-    color: "#FAF8F4",
-    lineHeight: 50,
-  },
   emptyCTATitle: {
     fontSize: 24,
     color: colors.text,
@@ -194,11 +190,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
-  },
-  fabIcon: {
-    fontSize: 50,
-    color: "#FAF8F4",
-    lineHeight: 54,
   },
   clockBox: {
     backgroundColor: colors.surface,

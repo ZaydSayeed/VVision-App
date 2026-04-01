@@ -9,6 +9,8 @@ import {
   Modal,
   ActivityIndicator,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -234,7 +236,10 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
 
       {/* Add Person Modal */}
       <Modal visible={showModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Add a Person</Text>
 
@@ -291,7 +296,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

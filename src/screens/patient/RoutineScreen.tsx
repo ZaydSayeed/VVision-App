@@ -8,6 +8,8 @@ import {
   TextInput,
   Modal,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRoutine } from "../../hooks/useRoutine";
 import { CheckRow } from "../../components/shared/CheckRow";
@@ -237,7 +239,10 @@ export function RoutineScreen() {
 
       {/* Add Task Modal */}
       <Modal visible={showModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Add a Task</Text>
 
@@ -275,7 +280,7 @@ export function RoutineScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

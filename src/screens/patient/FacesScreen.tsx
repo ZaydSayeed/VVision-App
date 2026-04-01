@@ -8,6 +8,8 @@ import {
   Modal,
   ActivityIndicator,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -334,7 +336,10 @@ export function FacesScreen() {
 
       {/* Add Face Modal */}
       <Modal visible={showModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Add a Face</Text>
 
@@ -391,7 +396,7 @@ export function FacesScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

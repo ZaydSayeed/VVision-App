@@ -14,8 +14,10 @@ import {
 
 import { AuthProvider } from "./src/context/AuthContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
+import { NetworkProvider } from "./src/context/NetworkContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { SplashScreen } from "./src/components/SplashScreen";
+import { ErrorBoundary } from "./src/components/ErrorBoundary";
 
 const MIN_SPLASH_MS = 2000;
 
@@ -38,14 +40,17 @@ export default function App() {
 
   return (
     <ThemeProvider>
+    <NetworkProvider>
     <SafeAreaProvider>
       {fontsLoaded && (
-        <AuthProvider>
-          <NavigationContainer>
-            <StatusBar style="auto" />
-            <RootNavigator />
-          </NavigationContainer>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <NavigationContainer>
+              <StatusBar style="auto" />
+              <RootNavigator />
+            </NavigationContainer>
+          </AuthProvider>
+        </ErrorBoundary>
       )}
       {showSplash && (
         <SplashScreen
@@ -54,6 +59,7 @@ export default function App() {
         />
       )}
     </SafeAreaProvider>
+    </NetworkProvider>
     </ThemeProvider>
   );
 }

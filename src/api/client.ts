@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../config/api";
 import {
   Person,
@@ -11,6 +12,7 @@ import {
 // ── Token management ──────────────────────────────────────
 let authToken: string | null = null;
 let onAuthExpired: (() => void) | null = null;
+let onNetworkChange: ((offline: boolean) => void) | null = null;
 
 export function setAuthToken(token: string | null) {
   authToken = token;
@@ -20,10 +22,43 @@ export function setOnAuthExpired(cb: () => void) {
   onAuthExpired = cb;
 }
 
+export function setOnNetworkChange(cb: (offline: boolean) => void) {
+  onNetworkChange = cb;
+}
+
+// ── Offline cache helpers ─────────────────────────────────
+const CACHE_PREFIX = "@vela/api_cache:";
+
+async function getCached<T>(path: string): Promise<T | null> {
+  try {
+    const raw = await AsyncStorage.getItem(CACHE_PREFIX + path);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function setCache<T>(path: string, data: T): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CACHE_PREFIX + path, JSON.stringify(data));
+  } catch {
+    // Cache write failure is non-critical
+  }
+}
+
+function isNetworkError(error: unknown): boolean {
+  if (error instanceof TypeError && error.message === "Network request failed") return true;
+  if (error instanceof DOMException && error.name === "AbortError") return true;
+  return false;
+}
+
 // ── Base request helper ───────────────────────────────────
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
+  const isGet = !options?.method || options.method === "GET";
+
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -47,8 +82,29 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       const body = await res.text();
       throw new Error(body || `API error ${res.status}`);
     }
+
+    // Successful response — we're online
+    onNetworkChange?.(false);
+
     if (res.status === 204) return undefined as T;
-    return res.json();
+    const data: T = await res.json();
+
+    // Cache successful GET responses
+    if (isGet) {
+      setCache(path, data);
+    }
+
+    return data;
+  } catch (error) {
+    if (isGet && isNetworkError(error)) {
+      // Try to serve cached data when offline
+      const cached = await getCached<T>(path);
+      if (cached !== null) {
+        onNetworkChange?.(true);
+        return cached;
+      }
+    }
+    throw error;
   } finally {
     clearTimeout(timeout);
   }

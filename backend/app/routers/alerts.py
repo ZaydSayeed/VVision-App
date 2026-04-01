@@ -12,13 +12,7 @@ router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 async def list_alerts(patient_id: str = Depends(resolve_patient_id)):
     """Get the 20 most recent unrecognized face alerts for this patient."""
     db = get_db()
-    # Include both scoped and legacy (unscoped) alerts
-    query = {
-        "$or": [
-            {"patient_id": patient_id},
-            {"patient_id": {"$exists": False}},
-        ]
-    }
+    query = {"patient_id": patient_id}
     docs = (
         await db["alerts"]
         .find(query)

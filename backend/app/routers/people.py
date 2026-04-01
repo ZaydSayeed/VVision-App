@@ -34,13 +34,7 @@ def _doc_to_person(doc: dict) -> PersonOut:
 async def list_people(patient_id: str = Depends(resolve_patient_id)):
     """List all people in the patient's contact database."""
     db = get_db()
-    # Return people scoped to this patient, or unscoped ones (legacy from glasses)
-    query = {
-        "$or": [
-            {"patient_id": patient_id},
-            {"patient_id": {"$exists": False}},
-        ]
-    }
+    query = {"patient_id": patient_id}
     docs = await db["people"].find(query, {"embedding": 0}).to_list(length=500)
     return [_doc_to_person(d) for d in docs]
 

@@ -1,7 +1,10 @@
-// Base URL for the D-Vision FastAPI backend.
-// Update this to your deployed backend URL.
+// Base URL for the Vela Vision FastAPI backend.
+// Configured via app.json > expo.extra.apiBaseUrl.
 // For local dev, use your machine's LAN IP (not localhost) so the phone can reach it.
-export const API_BASE_URL = "http://10.178.191.116:8000";
+import Constants from "expo-constants";
+
+export const API_BASE_URL: string =
+  Constants.expoConfig?.extra?.apiBaseUrl ?? "http://localhost:8000";
 
 // MongoDB Atlas connection (for direct Atlas Data API usage — optional)
 export const MONGODB_DB_NAME = "dvision";

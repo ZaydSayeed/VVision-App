@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import { PatientStatusScreen } from "../screens/caregiver/PatientStatusScreen";
 import { RoutineScreen } from "../screens/patient/RoutineScreen";
 import { MedsScreen } from "../screens/patient/MedsScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
@@ -17,6 +18,7 @@ interface PatientTabNavigatorProps {
 const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Status: "home-outline",
   Routine: "calendar-outline",
   Medications: "medkit-outline",
   Faces: "person-outline",
@@ -58,6 +60,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         ),
       })}
     >
+      <Tab.Screen name="Status" component={PatientStatusScreen} />
       <Tab.Screen name="Routine" component={RoutineScreen} />
       <Tab.Screen name="Medications" component={MedsScreen} />
       <Tab.Screen name="Faces" component={FacesScreen} />

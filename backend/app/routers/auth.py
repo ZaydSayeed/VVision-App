@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..core.database import get_db
-from ..core.security import get_current_user
+from ..core.security import get_current_user, get_auth_info, AuthInfo
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -39,11 +39,12 @@ def _generate_link_code(length: int = 6) -> str:
 
 
 @router.post("/sync", response_model=UserOut)
-async def sync_profile(body: SyncRequest, supabase_uid: str = Depends(get_current_user)):
+async def sync_profile(body: SyncRequest, auth: AuthInfo = Depends(get_auth_info)):
     """
     Called after Supabase signup/login.
     Creates the MongoDB user doc if it doesn't exist, returns the profile.
     """
+    supabase_uid = auth.user_id
     db = get_db()
     users = db["users"]
 
@@ -60,18 +61,17 @@ async def sync_profile(body: SyncRequest, supabase_uid: str = Depends(get_curren
             patient_id=str(user["patient_id"]) if user.get("patient_id") else None,
         )
 
-    # Get email from Supabase
+    # Get email from Supabase using the actual access token
     import httpx
     from ..core.config import settings
 
     email = ""
     try:
-        # We have the token in the request, reuse it
         async with httpx.AsyncClient() as client:
             res = await client.get(
                 f"{settings.supabase_url}/auth/v1/user",
                 headers={
-                    "Authorization": f"Bearer {supabase_uid}",
+                    "Authorization": f"Bearer {auth.token}",
                     "apikey": settings.supabase_anon_key,
                 },
                 timeout=5.0,

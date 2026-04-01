@@ -1,15 +1,24 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useNetwork } from "../context/NetworkContext";
+import { setOnNetworkChange } from "../api/client";
 import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
+import { OfflineBanner } from "../components/OfflineBanner";
 import { fonts, spacing } from "../config/theme";
 
 export function RootNavigator() {
   const { user, loading, logout } = useAuth();
   const { colors } = useTheme();
+  const { setOffline } = useNetwork();
+
+  // Bridge API client network status to React context
+  useEffect(() => {
+    setOnNetworkChange(setOffline);
+  }, [setOffline]);
 
   const styles = useMemo(() => StyleSheet.create({
     root: {
@@ -28,6 +37,7 @@ export function RootNavigator() {
     return (
       <View style={styles.root}>
         <Header onLogout={logout} />
+        <OfflineBanner />
         <CaregiverTabNavigator />
       </View>
     );
@@ -36,6 +46,7 @@ export function RootNavigator() {
   return (
     <View style={styles.root}>
       <Header onLogout={logout} />
+      <OfflineBanner />
       <PatientTabNavigator patientName={user.name} />
     </View>
   );

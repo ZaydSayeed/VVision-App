@@ -6,6 +6,8 @@ Supabase access_token as a Bearer header and validates it by calling
 Supabase's /auth/v1/user endpoint.
 """
 
+from dataclasses import dataclass
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -14,22 +16,28 @@ from .config import settings
 bearer_scheme = HTTPBearer()
 
 # Cache to avoid hitting Supabase on every request (simple in-memory)
-_user_cache: dict[str, dict] = {}
+_user_cache: dict[str, str] = {}
 
 
-async def get_current_user(
+@dataclass
+class AuthInfo:
+    """Holds the validated Supabase user ID and the raw access token."""
+    user_id: str
+    token: str
+
+
+async def get_auth_info(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> str:
+) -> AuthInfo:
     """
-    Dependency that validates a Supabase access token and returns the user ID.
-
-    Calls Supabase /auth/v1/user to validate the token and get user info.
+    Dependency that validates a Supabase access token and returns
+    both the user ID and the raw token.
     """
     token = credentials.credentials
 
     # Check cache first (tokens are valid for ~1 hour)
     if token in _user_cache:
-        return _user_cache[token]
+        return AuthInfo(user_id=_user_cache[token], token=token)
 
     import httpx
 
@@ -65,7 +73,7 @@ async def get_current_user(
         if len(_user_cache) > 1000:
             _user_cache.clear()
 
-        return user_id
+        return AuthInfo(user_id=user_id, token=token)
 
     except HTTPException:
         raise
@@ -74,3 +82,10 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate token",
         )
+
+
+async def get_current_user(
+    auth: AuthInfo = Depends(get_auth_info),
+) -> str:
+    """Convenience dependency that returns just the Supabase user ID."""
+    return auth.user_id

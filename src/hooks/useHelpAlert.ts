@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Alert as RNAlert } from "react-native";
 import * as Haptics from "expo-haptics";
 import { HelpAlert } from "../types";
 import {
@@ -15,7 +16,7 @@ export function useHelpAlert() {
       const data = await fetchHelpAlerts();
       setAlerts(data);
     } catch {
-      // Keep current state on error
+      // Keep current state on error (cached data may have been returned)
     }
   }, []);
 
@@ -24,14 +25,22 @@ export function useHelpAlert() {
   }, [load]);
 
   const sendHelp = useCallback(async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    const alert = await createHelpAlert();
-    setAlerts((prev) => [alert, ...prev]);
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const alert = await createHelpAlert();
+      setAlerts((prev) => [alert, ...prev]);
+    } catch {
+      RNAlert.alert("Offline", "Unable to send help request. Please check your connection and try again.");
+    }
   }, []);
 
   const dismissAlert = useCallback(async (id: string) => {
-    const updated = await dismissHelpAlert(id);
-    setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    try {
+      const updated = await dismissHelpAlert(id);
+      setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    } catch {
+      RNAlert.alert("Offline", "Unable to dismiss alert. Please check your connection.");
+    }
   }, []);
 
   const pendingCount = alerts.filter((a) => !a.dismissed).length;

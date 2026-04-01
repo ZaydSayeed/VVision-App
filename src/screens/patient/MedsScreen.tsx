@@ -8,6 +8,8 @@ import {
   TextInput,
   Modal,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useMeds } from "../../hooks/useMeds";
 import { CheckRow } from "../../components/shared/CheckRow";
@@ -221,7 +223,10 @@ export function MedsScreen() {
 
       {/* Add Med Modal */}
       <Modal visible={showModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Add Medication</Text>
 
@@ -268,7 +273,7 @@ export function MedsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

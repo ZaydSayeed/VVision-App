@@ -22,9 +22,13 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
   const [sent, setSent] = useState(false);
 
   async function handlePress() {
-    await sendHelp();
-    setSent(true);
-    setTimeout(() => setSent(false), 2500);
+    try {
+      await sendHelp();
+      setSent(true);
+      setTimeout(() => setSent(false), 2500);
+    } catch {
+      // Keep button enabled so user can retry
+    }
   }
 
   const recent = alerts.slice(0, 3);

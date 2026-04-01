@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { PatientStatusScreen } from "../screens/caregiver/PatientStatusScreen";
@@ -41,7 +41,6 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
     tabLabel: {
       fontSize: 11,
       ...fonts.medium,
-      textTransform: "uppercase",
       letterSpacing: 0.8,
     },
     tabIcon: {},
@@ -54,7 +53,11 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: colors.violet,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabel: ({ color }) => (
+          <Text style={[styles.tabLabel, { color }]}>
+            {route.name.toUpperCase()}
+          </Text>
+        ),
         tabBarIcon: ({ color }) => (
           <Ionicons name={iconNames[route.name]} size={22} color={color} />
         ),

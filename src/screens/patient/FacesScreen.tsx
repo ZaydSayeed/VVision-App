@@ -84,7 +84,7 @@ export function FacesScreen() {
 
   async function handleDelete(person: Person) {
     try {
-      await deletePerson(person.name);
+      await deletePerson(person.id ?? person._id);
       await load();
     } catch {}
   }

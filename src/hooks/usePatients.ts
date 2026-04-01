@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../config/supabase";
 import { PatientSummary } from "../types";
-
-function today(): string {
-  return new Date().toISOString().split("T")[0];
-}
+import { today } from "../config/storage";
 
 export function usePatients() {
   const [patients, setPatients] = useState<PatientSummary[]>([]);

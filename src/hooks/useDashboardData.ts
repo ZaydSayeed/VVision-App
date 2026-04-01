@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchPeople, fetchAlerts } from "../api/client";
 import { Person, Alert, DashboardStats, TimelineEvent } from "../types";
+import { today } from "../config/storage";
 
 const POLL_INTERVAL = 5000;
 
@@ -10,8 +11,11 @@ export function useDashboardData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const loadingRef = useRef(false);
 
   const load = useCallback(async () => {
+    if (loadingRef.current) return; // prevent overlapping requests
+    loadingRef.current = true;
     try {
       const [p, a] = await Promise.all([fetchPeople(), fetchAlerts()]);
       setPeople(p);
@@ -21,6 +25,7 @@ export function useDashboardData() {
       setError(e.message ?? "Failed to load data");
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   }, []);
 
@@ -39,9 +44,9 @@ export function useDashboardData() {
 }
 
 function computeStats(people: Person[], alerts: Alert[]): DashboardStats {
-  const today = new Date().toISOString().split("T")[0];
+  const todayStr = today();
   const seenToday = people.filter(
-    (p) => p.last_seen && p.last_seen.startsWith(today)
+    (p) => p.last_seen && p.last_seen.startsWith(todayStr)
   ).length;
 
   const mostFrequent = people.length

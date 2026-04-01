@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { TimelineScreen } from "../screens/TimelineScreen";
@@ -39,14 +39,11 @@ export function CaregiverTabNavigator() {
     tabLabel: {
       fontSize: 10,
       ...fonts.medium,
-      textTransform: "uppercase",
       letterSpacing: 0.8,
     },
     tabIcon: {},
     tabBadge: {
       backgroundColor: colors.violet,
-      fontSize: 10,
-      ...fonts.medium,
     },
   }), [colors]);
 
@@ -57,7 +54,11 @@ export function CaregiverTabNavigator() {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: colors.violet,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabel: ({ color }) => (
+          <Text style={[styles.tabLabel, { color }]}>
+            {route.name.toUpperCase()}
+          </Text>
+        ),
         tabBarIcon: ({ color, size }) => (
           <Ionicons name={iconNames[route.name]} size={22} color={color} />
         ),

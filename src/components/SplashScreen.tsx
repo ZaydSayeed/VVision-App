@@ -74,8 +74,7 @@ export function SplashScreen({ appReady, onDone }: SplashScreenProps) {
 
   return (
     <Animated.View
-      style={[styles.container, { opacity: splashOpacity }]}
-      pointerEvents="none"
+      style={[styles.container, { opacity: splashOpacity, pointerEvents: 'none' }]}
     >
       {/* Icon with pulse */}
       <Animated.View style={{ transform: [{ scale: Animated.multiply(iconScale, pulseScale) }] }}>

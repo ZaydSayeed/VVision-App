@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../config/supabase";
 import { RoutineTask } from "../types";
-
-function today(): string {
-  return new Date().toISOString().split("T")[0];
-}
+import { today, isDoneToday } from "../config/storage";
 
 export function useRoutine(patientId?: string) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
@@ -56,8 +53,7 @@ export function useRoutine(patientId?: string) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const isCompletedToday = (task: RoutineTask) =>
-    task.completed_date === today();
+  const isCompletedToday = (task: RoutineTask) => isDoneToday(task.completed_date);
 
   return { tasks, addTask, toggleComplete, deleteTask, isCompletedToday };
 }

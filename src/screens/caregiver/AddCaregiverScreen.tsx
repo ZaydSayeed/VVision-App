@@ -10,7 +10,7 @@ import {
 import { useCaregiver } from "../../hooks/useCaregiver";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getMyLinkCode } from "../../api/client";
+import { getMyLinkCode, syncProfile } from "../../api/client";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
 import { fonts, spacing, radius } from "../../config/theme";
@@ -22,12 +22,18 @@ export function AddCaregiverScreen() {
   const [linkCode, setLinkCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // If user is a patient, fetch link code
+  // If user is a patient, fetch link code (retry sync if needed)
   useEffect(() => {
     if (user?.role === "patient") {
       getMyLinkCode()
         .then((res) => setLinkCode(res.link_code))
-        .catch(() => {});
+        .catch(async () => {
+          try {
+            await syncProfile(user.name, user.role);
+            const res = await getMyLinkCode();
+            setLinkCode(res.link_code);
+          } catch {}
+        });
     }
   }, [user?.role]);
 

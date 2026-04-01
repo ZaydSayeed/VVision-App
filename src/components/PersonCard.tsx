@@ -46,7 +46,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
           style: "destructive",
           onPress: async () => {
             try {
-              await deletePerson(person.name);
+              await deletePerson(person.id ?? person._id);
               onRefresh();
             } catch {
               Alert.alert("Error", "Could not remove person. Make sure you're on the same network as the glasses system.");
@@ -59,7 +59,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
 
   async function handleSaveNotes() {
     try {
-      await updateNotes(person.name, noteText);
+      await updateNotes(person.id ?? person._id, noteText);
       setEditing(false);
       onRefresh();
     } catch {

@@ -26,6 +26,10 @@ export function setOnNetworkChange(cb: (offline: boolean) => void) {
   onNetworkChange = cb;
 }
 
+function authHeaders(): Record<string, string> {
+  return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+}
+
 // ── Offline cache helpers ─────────────────────────────────
 const CACHE_PREFIX = "@vela/api_cache:";
 
@@ -62,11 +66,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      ...authHeaders(),
       ...(options?.headers as Record<string, string>),
     };
-    if (authToken) {
-      headers["Authorization"] = `Bearer ${authToken}`;
-    }
 
     const res = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
@@ -172,16 +174,15 @@ export async function enrollFace(
     type: "image/jpeg",
   } as any);
 
-  const headers: Record<string, string> = {};
-  if (authToken) {
-    headers["Authorization"] = `Bearer ${authToken}`;
-  }
-
   const res = await fetch(`${API_BASE_URL}/api/people/enroll`, {
     method: "POST",
     body: formData,
-    headers,
+    headers: authHeaders(),
   });
+  if (res.status === 401 && onAuthExpired) {
+    onAuthExpired();
+    throw new Error("Session expired");
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `API error ${res.status}`);

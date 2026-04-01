@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../config/supabase";
 import { Medication } from "../types";
-
-function today(): string {
-  return new Date().toISOString().split("T")[0];
-}
+import { today, isDoneToday } from "../config/storage";
 
 export function useMeds(patientId?: string) {
   const [meds, setMeds] = useState<Medication[]>([]);
@@ -56,7 +53,7 @@ export function useMeds(patientId?: string) {
     setMeds((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  const isTakenToday = (med: Medication) => med.taken_date === today();
+  const isTakenToday = (med: Medication) => isDoneToday(med.taken_date);
 
   return { meds, addMed, toggleTaken, deleteMed, isTakenToday };
 }

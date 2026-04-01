@@ -39,15 +39,6 @@ function sessionToUser(
   };
 }
 
-async function loadPatientId(userId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("patient_id")
-    .eq("id", userId)
-    .single();
-  return data?.patient_id ?? null;
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);

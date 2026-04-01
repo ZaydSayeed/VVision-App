@@ -9,14 +9,9 @@ import {
   StyleSheet,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
-import { supabase } from "../../config/supabase";
+import { getMyLinkCode, syncProfile } from "../../api/client";
 import { fonts, spacing, radius } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
-
-function generateCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-}
 
 export function SettingsScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -25,24 +20,25 @@ export function SettingsScreen() {
   const [codeLoading, setCodeLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchOrCreateCode() {
+    async function fetchCode() {
       if (!user) return;
-      const { data } = await supabase
-        .from("profiles")
-        .select("link_code")
-        .eq("id", user.id)
-        .single();
-
-      if (data?.link_code) {
-        setLinkCode(data.link_code);
-      } else {
-        const code = generateCode();
-        await supabase.from("profiles").upsert({ id: user.id, link_code: code });
-        setLinkCode(code);
+      try {
+        const { link_code } = await getMyLinkCode();
+        setLinkCode(link_code || null);
+      } catch {
+        // Profile may not be synced to backend yet — retry sync then fetch again
+        try {
+          await syncProfile(user.name, user.role);
+          const { link_code } = await getMyLinkCode();
+          setLinkCode(link_code || null);
+        } catch {
+          setLinkCode(null);
+        }
+      } finally {
+        setCodeLoading(false);
       }
-      setCodeLoading(false);
     }
-    fetchOrCreateCode();
+    fetchCode();
   }, [user]);
 
   const styles = useMemo(() => StyleSheet.create({

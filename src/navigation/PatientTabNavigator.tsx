@@ -20,7 +20,7 @@ const Tab = createBottomTabNavigator();
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Status: "home-outline",
   Routine: "calendar-outline",
-  Medications: "medkit-outline",
+  Meds: "medkit-outline",
   Faces: "person-outline",
   Help: "alert-circle-outline",
   Profile: "person-circle-outline",
@@ -65,7 +65,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
     >
       <Tab.Screen name="Status" component={PatientStatusScreen} />
       <Tab.Screen name="Routine" component={RoutineScreen} />
-      <Tab.Screen name="Medications" component={MedsScreen} />
+      <Tab.Screen name="Meds" component={MedsScreen} />
       <Tab.Screen name="Faces" component={FacesScreen} />
       <Tab.Screen name="Help">
         {() => <HelpScreen patientName={patientName} />}

@@ -27,7 +27,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:8000",
+      "apiBaseUrl": "http://172.30.4.213:8000",
       "supabaseUrl": "https://xqqihmzbbqztfrvsbsnx.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcWlobXpiYnF6dGZydnNic254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTgzMjAsImV4cCI6MjA5MDQ3NDMyMH0.bstOKmv5I8kLmfKOtT2Ll58muLw4anhitQflzD1Iz4Y"
     },

@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { supabase } from "../../config/supabase";
-import { linkPatient } from "../../api/client";
 import { fonts, spacing, radius } from "../../config/theme";
 
 interface Props {
@@ -36,30 +35,31 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not logged in");
 
-      // Link via backend API (looks up code in MongoDB)
-      const patient = await linkPatient(code.trim().toUpperCase());
+      // Look up patient by link code in Supabase profiles table
+      const { data: profile, error: lookupError } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .eq("link_code", code.trim().toUpperCase())
+        .single();
 
-      // Also insert into Supabase caregiver_patients for the dashboard hook
+      if (lookupError || !profile) {
+        setError("Invalid or expired code. Please try again.");
+        return;
+      }
+
       const { error: saveError } = await supabase
         .from("caregiver_patients")
         .upsert({
           caregiver_id: user.id,
-          patient_id: patient.id,
-          patient_name: patient.name ?? "Patient",
+          patient_id: profile.id,
+          patient_name: profile.name ?? "Patient",
         });
 
       if (saveError) throw saveError;
 
       onLinked?.();
-    } catch (err: any) {
-      const msg = err?.message ?? "";
-      if (msg.includes("404") || msg.includes("Invalid link code")) {
-        setError("Invalid or expired code. Please try again.");
-      } else if (msg.includes("409") || msg.includes("already linked")) {
-        setError("You are already linked to a patient.");
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

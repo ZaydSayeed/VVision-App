@@ -1,21 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "../config/supabase";
 import { Medication } from "../types";
-import { today, isDoneToday } from "../config/storage";
+import { isDoneToday } from "../config/storage";
+import {
+  fetchMedications,
+  createMedication,
+  updateMedication,
+  deleteMedication,
+} from "../api/client";
 
 export function useMeds(patientId?: string) {
   const [meds, setMeds] = useState<Medication[]>([]);
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const targetId = patientId ?? user.id;
-    const { data } = await supabase
-      .from("medications")
-      .select("*")
-      .eq("patient_id", targetId)
-      .order("created_at");
-    if (data) setMeds(data);
+    try {
+      const data = await fetchMedications();
+      setMeds(data);
+    } catch {}
   }, [patientId]);
 
   useEffect(() => {
@@ -23,33 +23,24 @@ export function useMeds(patientId?: string) {
   }, [load]);
 
   const addMed = useCallback(async (name: string, dosage: string, time: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not logged in");
-    const { data, error } = await supabase
-      .from("medications")
-      .insert({ patient_id: user.id, name, dosage, time })
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
+    const data = await createMedication(name, dosage, time);
     setMeds((prev) => [...prev, data]);
   }, []);
 
-  const toggleTaken = useCallback(async (id: string) => {
-    const med = meds.find((m) => m.id === id);
-    if (!med) return;
-    const newDate = med.taken_date === today() ? null : today();
-    const { data, error } = await supabase
-      .from("medications")
-      .update({ taken_date: newDate })
-      .eq("id", id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    setMeds((prev) => prev.map((m) => (m.id === id ? data : m)));
-  }, [meds]);
+  const toggleTaken = useCallback(
+    async (id: string) => {
+      const med = meds.find((m) => m.id === id);
+      if (!med) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const newDate = med.taken_date === today ? null : today;
+      const data = await updateMedication(id, { taken_date: newDate });
+      setMeds((prev) => prev.map((m) => (m.id === id ? data : m)));
+    },
+    [meds]
+  );
 
   const deleteMed = useCallback(async (id: string) => {
-    await supabase.from("medications").delete().eq("id", id);
+    await deleteMedication(id);
     setMeds((prev) => prev.filter((m) => m.id !== id));
   }, []);
 

@@ -7,6 +7,7 @@ import {
   Medication,
   HelpAlert,
   UserRole,
+  PatientSummary,
 } from "../types";
 
 // ── Token management ──────────────────────────────────────
@@ -135,6 +136,10 @@ export async function linkPatient(
 
 export async function getMyLinkCode(): Promise<{ link_code: string }> {
   return request("/api/patients/mine/link-code");
+}
+
+export async function fetchLinkedPatients(): Promise<PatientSummary[]> {
+  return request<PatientSummary[]>("/api/patients/linked");
 }
 
 // ── People (face recognition database) ───────────────────

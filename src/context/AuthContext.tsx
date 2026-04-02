@@ -113,11 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
 
       setUser(appUser);
-
-      // Store name in profiles so caregivers can see patient names
-      if (appUser) {
-        await supabase.from("profiles").upsert({ id: appUser.id, name });
-      }
     },
     []
   );

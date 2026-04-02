@@ -1,21 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "../config/supabase";
 import { RoutineTask } from "../types";
-import { today, isDoneToday } from "../config/storage";
+import { isDoneToday } from "../config/storage";
+import {
+  fetchRoutines,
+  createRoutine,
+  updateRoutine,
+  deleteRoutine,
+} from "../api/client";
 
 export function useRoutine(patientId?: string) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const targetId = patientId ?? user.id;
-    const { data } = await supabase
-      .from("routine_tasks")
-      .select("*")
-      .eq("patient_id", targetId)
-      .order("created_at");
-    if (data) setTasks(data);
+    try {
+      const data = await fetchRoutines();
+      setTasks(data);
+    } catch {}
   }, [patientId]);
 
   useEffect(() => {
@@ -23,33 +23,24 @@ export function useRoutine(patientId?: string) {
   }, [load]);
 
   const addTask = useCallback(async (label: string, time: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not logged in");
-    const { data, error } = await supabase
-      .from("routine_tasks")
-      .insert({ patient_id: user.id, label, time })
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
+    const data = await createRoutine(label, time);
     setTasks((prev) => [...prev, data]);
   }, []);
 
-  const toggleComplete = useCallback(async (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-    const newDate = task.completed_date === today() ? null : today();
-    const { data, error } = await supabase
-      .from("routine_tasks")
-      .update({ completed_date: newDate })
-      .eq("id", id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    setTasks((prev) => prev.map((t) => (t.id === id ? data : t)));
-  }, [tasks]);
+  const toggleComplete = useCallback(
+    async (id: string) => {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const newDate = task.completed_date === today ? null : today;
+      const data = await updateRoutine(id, { completed_date: newDate });
+      setTasks((prev) => prev.map((t) => (t.id === id ? data : t)));
+    },
+    [tasks]
+  );
 
   const deleteTask = useCallback(async (id: string) => {
-    await supabase.from("routine_tasks").delete().eq("id", id);
+    await deleteRoutine(id);
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }, []);
 

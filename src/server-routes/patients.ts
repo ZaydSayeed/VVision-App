@@ -94,7 +94,20 @@ router.get("/mine/link-code", authMiddleware, async (req, res) => {
 router.post("/link", authMiddleware, async (req, res) => {
   try {
     const db = getDb();
-    const user = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+    let user = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+
+    // Auto-create user doc if missing (e.g. signed up before backend sync was working)
+    if (!user) {
+      const result = await db.collection("users").insertOne({
+        supabase_uid: req.auth!.userId,
+        email: "",
+        name: "",
+        role: "caregiver",
+        patient_id: null,
+      });
+      user = await db.collection("users").findOne({ _id: result.insertedId });
+    }
+
     if (!user || user.role !== "caregiver") {
       res.status(403).json({ detail: "Only caregivers can link to a patient" });
       return;
@@ -128,6 +141,48 @@ router.post("/link", authMiddleware, async (req, res) => {
     res.json(patientOut(updated));
   } catch (err) {
     console.error("link error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+// GET /api/patients/linked — caregiver's linked patients with summaries
+router.get("/linked", authMiddleware, async (req, res) => {
+  try {
+    const db = getDb();
+    const user = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+    if (!user) {
+      res.status(404).json({ detail: "Profile not found" });
+      return;
+    }
+    if (!user.patient_id) {
+      res.json([]);
+      return;
+    }
+
+    const patient = await db.collection("patients").findOne({ _id: new ObjectId(String(user.patient_id)) });
+    if (!patient) {
+      res.json([]);
+      return;
+    }
+
+    const patientId = String(patient._id);
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    const [routines, medications] = await Promise.all([
+      db.collection("routines").find({ patient_id: patientId }).toArray(),
+      db.collection("medications").find({ patient_id: patientId }).toArray(),
+    ]);
+
+    res.json([{
+      id: patientId,
+      name: patient.name ?? "Unknown",
+      tasksTotal: routines.length,
+      tasksDone: routines.filter((r: any) => r.completed_date === todayStr).length,
+      medsTotal: medications.length,
+      medsDone: medications.filter((m: any) => m.taken_date === todayStr).length,
+    }]);
+  } catch (err) {
+    console.error("linked patients error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });

@@ -43,6 +43,29 @@ router.post("/sync", authMiddleware, async (req, res) => {
     // Check if user already exists
     const existing = await users.findOne({ supabase_uid: supabaseUid });
     if (existing) {
+      // If patient role but patient_id is missing, create the patient record now
+      if (existing.role === "patient" && !existing.patient_id) {
+        let linkCode = generateLinkCode();
+        while (await db.collection("patients").findOne({ link_code: linkCode })) {
+          linkCode = generateLinkCode();
+        }
+        const patientDoc = {
+          name: existing.name,
+          age: null,
+          diagnosis: null,
+          notes: "",
+          caregiver_id: "",
+          caregiver_ids: [] as string[],
+          link_code: linkCode,
+        };
+        const patientResult = await db.collection("patients").insertOne(patientDoc);
+        const patientId = String(patientResult.insertedId);
+        await users.updateOne(
+          { _id: existing._id },
+          { $set: { patient_id: patientId } }
+        );
+        existing.patient_id = patientId;
+      }
       res.json(userOut(existing));
       return;
     }

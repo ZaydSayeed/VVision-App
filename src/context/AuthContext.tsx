@@ -54,6 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.access_token) {
         setAuthToken(session.access_token);
         const appUser = sessionToUser(session);
+        // Sync with backend to ensure patient_id is resolved
+        if (appUser) {
+          try {
+            const sync = await syncProfile(appUser.name, (appUser.role as UserRole) ?? "caregiver");
+            if (sync?.patient_id) appUser.patient_id = sync.patient_id;
+          } catch {}
+        }
         setUser(appUser);
       }
       setLoading(false);
@@ -98,10 +105,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setAuthToken(data.session.access_token);
       const appUser = sessionToUser(data.session);
-      setUser(appUser);
 
-      // Try to sync to glasses backend (non-fatal)
-      try { await syncProfile(name, role); } catch {}
+      // Sync to glasses backend and capture patient_id
+      try {
+        const sync = await syncProfile(name, role);
+        if (sync?.patient_id && appUser) appUser.patient_id = sync.patient_id;
+      } catch {}
+
+      setUser(appUser);
 
       // Store name in profiles so caregivers can see patient names
       if (appUser) {
@@ -120,10 +131,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setAuthToken(data.session.access_token);
     const appUser = sessionToUser(data.session);
-    setUser(appUser);
 
-    // Try to sync to glasses backend (non-fatal)
-    try { await syncProfile(appUser?.name ?? "", (appUser?.role as UserRole) ?? "caregiver"); } catch {}
+    // Sync to glasses backend and capture patient_id
+    try {
+      const sync = await syncProfile(appUser?.name ?? "", (appUser?.role as UserRole) ?? "caregiver");
+      if (sync?.patient_id && appUser) appUser.patient_id = sync.patient_id;
+    } catch {}
+
+    setUser(appUser);
 
   }, []);
 

@@ -19,10 +19,9 @@ export function SectionHeader({ label, action }: SectionHeaderProps) {
       paddingBottom: spacing.md,
     },
     label: {
-      fontSize: 10,
-      color: colors.lavender,
-      textTransform: "uppercase",
-      letterSpacing: 1.5,
+      fontSize: 13,
+      color: colors.text,
+      letterSpacing: 0.2,
       ...fonts.medium,
     },
     action: {

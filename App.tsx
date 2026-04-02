@@ -4,10 +4,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
-  CormorantGaramond_300Light,
-  CormorantGaramond_400Regular,
-} from "@expo-google-fonts/cormorant-garamond";
-import {
   DMSans_400Regular,
   DMSans_500Medium,
 } from "@expo-google-fonts/dm-sans";
@@ -23,8 +19,6 @@ const MIN_SPLASH_MS = 2000;
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    CormorantGaramond_300Light,
-    CormorantGaramond_400Regular,
     DMSans_400Regular,
     DMSans_500Medium,
   });

@@ -38,12 +38,15 @@ export function SettingsScreen() {
     content: { padding: spacing.xl, paddingBottom: 100 },
     profileCard: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       padding: spacing.xl,
       alignItems: "center",
       marginBottom: spacing.xxl,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     avatar: {
       width: 72,
@@ -56,13 +59,13 @@ export function SettingsScreen() {
     },
     avatarText: {
       fontSize: 30,
-      color: "#FAF8F4",
+      color: "#FFFFFF",
       ...fonts.medium,
     },
     profileName: {
       fontSize: 22,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     profileEmail: {
       fontSize: 14,
@@ -71,24 +74,25 @@ export function SettingsScreen() {
       marginTop: spacing.xs,
     },
     sectionLabel: {
-      fontSize: 10,
-      color: colors.lavender,
+      fontSize: 13,
+      color: colors.text,
       ...fonts.medium,
-      letterSpacing: 1.5,
-      textTransform: "uppercase",
       marginBottom: spacing.sm,
     },
     codeCard: {
-      backgroundColor: colors.violet50,
-      borderWidth: 1,
-      borderColor: colors.violet100,
+      backgroundColor: colors.surface,
       borderRadius: radius.md,
       padding: spacing.xl,
       alignItems: "center",
       marginBottom: spacing.xxl,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     codeValue: {
-      fontSize: 40,
+      fontSize: 36,
       color: colors.violet,
       ...fonts.medium,
       letterSpacing: 10,
@@ -103,11 +107,14 @@ export function SettingsScreen() {
     },
     settingsCard: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       marginBottom: spacing.xxl,
       overflow: "hidden",
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     settingsRow: {
       flexDirection: "row",
@@ -123,15 +130,14 @@ export function SettingsScreen() {
     },
     logoutBtn: {
       height: 56,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      borderRadius: radius.sm,
+      backgroundColor: "rgba(123,92,231,0.08)",
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
     logoutText: {
       fontSize: 17,
-      color: colors.muted,
+      color: colors.violet,
       ...fonts.medium,
     },
   }), [colors]);
@@ -175,7 +181,7 @@ export function SettingsScreen() {
             value={isDark}
             onValueChange={toggleTheme}
             trackColor={{ false: "#D1C9E0", true: colors.violet }}
-            thumbColor="#FAF8F4"
+            thumbColor="#FFFFFF"
           />
         </View>
       </View>

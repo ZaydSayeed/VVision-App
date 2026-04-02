@@ -17,14 +17,17 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
   const styles = useMemo(() => StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.violet100,
       borderRadius: radius.md,
       padding: spacing.lg,
       marginBottom: spacing.sm + 2,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 3,
     },
     info: {
       flexDirection: "row",
@@ -35,7 +38,7 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
     iconWrap: {
       width: 38,
       height: 38,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       backgroundColor: colors.violet50,
       alignItems: "center",
       justifyContent: "center",
@@ -60,7 +63,7 @@ export function AlertCard({ alert, onDismiss }: AlertCardProps) {
       borderColor: colors.violet,
       paddingHorizontal: 14,
       paddingVertical: 6,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
     },
     dismissText: {
       color: colors.violet,

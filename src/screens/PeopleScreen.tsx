@@ -90,12 +90,15 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       paddingHorizontal: spacing.md,
       marginBottom: spacing.lg,
       height: 44,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 6,
+      elevation: 1,
     },
     searchIcon: { marginRight: spacing.sm },
     searchInput: {
@@ -116,15 +119,15 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       padding: spacing.xxl,
       gap: spacing.sm,
     },
-    modalTitle: { fontSize: 26, color: colors.text, ...fonts.display, marginBottom: spacing.sm },
+    modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
     photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
     photoPlaceholder: {
       height: 80,
       backgroundColor: colors.violet50,
       borderWidth: 1.5,
-      borderColor: colors.violet100,
+      borderColor: colors.violet,
       borderStyle: "dashed",
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -136,7 +139,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       backgroundColor: colors.violet50,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -145,7 +148,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
     photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
     fieldLabel: {
       fontSize: 10,
-      color: colors.lavender,
+      color: colors.muted,
       ...fonts.medium,
       letterSpacing: 1.5,
       textTransform: "uppercase",
@@ -157,7 +160,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       backgroundColor: colors.bg,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       paddingHorizontal: spacing.lg,
       fontSize: 20,
       color: colors.text,
@@ -170,7 +173,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       height: 56,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -179,12 +182,12 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       flex: 1,
       height: 56,
       backgroundColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
     btnDisabled: { opacity: 0.6 },
-    btnPrimaryText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
+    btnPrimaryText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
@@ -289,7 +292,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
                 disabled={uploading}
               >
                 {uploading ? (
-                  <ActivityIndicator color="#FAF8F4" />
+                  <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text style={styles.btnPrimaryText}>Add</Text>
                 )}

@@ -70,11 +70,14 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
   const styles = useMemo(() => StyleSheet.create({
     card: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       padding: 18,
       marginBottom: spacing.md,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     header: {
       flexDirection: "row",
@@ -89,13 +92,13 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
     avatar: {
       width: 42,
       height: 42,
-      borderRadius: radius.sm,
+      borderRadius: 21,
       alignItems: "center",
       justifyContent: "center",
     },
     avatarText: {
       fontSize: 15,
-      color: "#FAF8F4",
+      color: "#FFFFFF",
       ...fonts.medium,
     },
     info: {
@@ -104,7 +107,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
     name: {
       fontSize: 18,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     relation: {
       fontSize: 13,
@@ -122,8 +125,6 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       paddingHorizontal: 10,
       paddingVertical: 3,
       borderRadius: radius.pill,
-      borderWidth: 1,
-      borderColor: colors.violet100,
     },
     seenBadgeText: {
       fontSize: 12,
@@ -182,10 +183,10 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       backgroundColor: colors.violet,
       paddingHorizontal: 22,
       paddingVertical: 10,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
     },
     btnPrimaryText: {
-      color: "#F5F0E8",
+      color: "#FFFFFF",
       fontSize: 13,
       ...fonts.medium,
     },
@@ -194,7 +195,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       borderColor: colors.violet,
       paddingHorizontal: 22,
       paddingVertical: 10,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
     },
     btnOutlineText: {
       color: colors.violet,

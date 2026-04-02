@@ -33,31 +33,34 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       marginBottom: spacing.xl,
     },
     title: {
-      fontSize: 28,
+      fontSize: 26,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     addBtn: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
       gap: spacing.xs,
     },
     addBtnText: {
       fontSize: 14,
-      color: "#FAF8F4",
+      color: "#FFFFFF",
       ...fonts.medium,
     },
     card: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       padding: spacing.xl,
       marginBottom: spacing.md,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     cardTop: {
       flexDirection: "row",
@@ -75,13 +78,13 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
     },
     avatarText: {
       fontSize: 20,
-      color: "#FAF8F4",
+      color: "#FFFFFF",
       ...fonts.medium,
     },
     patientName: {
       fontSize: 20,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     statsRow: {
       flexDirection: "row",
@@ -97,7 +100,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
     statValue: {
       fontSize: 22,
       color: colors.violet,
-      ...fonts.display,
+      ...fonts.medium,
     },
     statLabel: {
       fontSize: 10,
@@ -121,7 +124,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
     emptyTitle: {
       fontSize: 24,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     emptySub: {
       fontSize: 15,
@@ -158,7 +161,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
         <Text style={styles.title}>My Patients</Text>
         {patients.length > 0 && (
           <TouchableOpacity style={styles.addBtn} onPress={onAddPatient} activeOpacity={0.85}>
-            <Ionicons name="add" size={16} color="#FAF8F4" />
+            <Ionicons name="add" size={16} color="#FFFFFF" />
             <Text style={styles.addBtnText}>Add Patient</Text>
           </TouchableOpacity>
         )}
@@ -169,7 +172,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       ) : patients.length === 0 ? (
         <View style={styles.emptyWrap}>
           <TouchableOpacity style={styles.bigAddBtn} onPress={onAddPatient} activeOpacity={0.85}>
-            <Ionicons name="add" size={52} color="#FAF8F4" />
+            <Ionicons name="add" size={52} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.emptyTitle}>Add a Patient</Text>
           <Text style={styles.emptySub}>

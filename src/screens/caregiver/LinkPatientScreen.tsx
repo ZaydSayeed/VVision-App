@@ -66,9 +66,9 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
       ...fonts.medium,
     },
     headline: {
-      fontSize: 36,
+      fontSize: 32,
       color: colors.text,
-      ...fonts.displayLight,
+      ...fonts.medium,
       marginBottom: spacing.sm,
     },
     subtitle: {
@@ -81,7 +81,7 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
     fieldGroup: { marginBottom: spacing.xl },
     fieldLabel: {
       fontSize: 10,
-      color: colors.lavender,
+      color: colors.muted,
       ...fonts.medium,
       letterSpacing: 1.5,
       textTransform: "uppercase",
@@ -90,9 +90,9 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
     input: {
       height: 64,
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.violet,
+      borderRadius: radius.md,
       paddingHorizontal: spacing.lg,
       fontSize: 28,
       color: colors.text,
@@ -110,12 +110,12 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
     btn: {
       height: 56,
       backgroundColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
     btnDisabled: { opacity: 0.7 },
-    btnText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
+    btnText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
@@ -156,7 +156,7 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
           activeOpacity={0.85}
         >
           {loading ? (
-            <ActivityIndicator color="#F5F0E8" />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.btnText}>Connect</Text>
           )}

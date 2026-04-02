@@ -129,7 +129,7 @@ export function FacesScreen() {
     emptyCTATitle: {
       fontSize: 24,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     emptyCTASubtitle: {
       fontSize: 15,
@@ -162,12 +162,15 @@ export function FacesScreen() {
     faceCard: {
       width: "47%",
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       padding: spacing.lg,
       alignItems: "center",
       gap: spacing.xs,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
     },
     faceInitials: {
       width: 80,
@@ -178,7 +181,7 @@ export function FacesScreen() {
       justifyContent: "center",
       marginBottom: spacing.xs,
     },
-    faceInitialsText: { fontSize: 28, color: "#FAF8F4", ...fonts.medium },
+    faceInitialsText: { fontSize: 28, color: "#FFFFFF", ...fonts.medium },
     faceName: { fontSize: 16, color: colors.text, ...fonts.medium, textAlign: "center" },
     faceRelation: { fontSize: 13, color: colors.lavender, ...fonts.regular, textAlign: "center" },
     faceHint: { fontSize: 11, color: colors.muted, ...fonts.regular },
@@ -196,15 +199,15 @@ export function FacesScreen() {
       padding: spacing.xxl,
       gap: spacing.sm,
     },
-    modalTitle: { fontSize: 26, color: colors.text, ...fonts.display, marginBottom: spacing.sm },
+    modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
     photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
     photoPlaceholder: {
       height: 80,
       backgroundColor: colors.violet50,
       borderWidth: 1.5,
-      borderColor: colors.violet100,
+      borderColor: colors.violet,
       borderStyle: "dashed",
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -216,7 +219,7 @@ export function FacesScreen() {
       backgroundColor: colors.violet50,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -225,7 +228,7 @@ export function FacesScreen() {
     photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
     fieldLabel: {
       fontSize: 10,
-      color: colors.lavender,
+      color: colors.muted,
       ...fonts.medium,
       letterSpacing: 1.5,
       textTransform: "uppercase",
@@ -237,7 +240,7 @@ export function FacesScreen() {
       backgroundColor: colors.bg,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       paddingHorizontal: spacing.lg,
       fontSize: 20,
       color: colors.text,
@@ -250,7 +253,7 @@ export function FacesScreen() {
       height: 56,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -259,12 +262,12 @@ export function FacesScreen() {
       flex: 1,
       height: 56,
       backgroundColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
     btnDisabled: { opacity: 0.6 },
-    btnPrimaryText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
+    btnPrimaryText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
@@ -287,7 +290,7 @@ export function FacesScreen() {
               onPress={() => setShowModal(true)}
               activeOpacity={0.85}
             >
-              <Ionicons name="add" size={40} color="#FAF8F4" />
+              <Ionicons name="add" size={40} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.emptyCTATitle}>Add a Face</Text>
             <Text style={styles.emptyCTASubtitle}>
@@ -330,7 +333,7 @@ export function FacesScreen() {
           onPress={() => setShowModal(true)}
           activeOpacity={0.85}
         >
-          <Ionicons name="add" size={28} color="#FAF8F4" />
+          <Ionicons name="add" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       )}
 
@@ -389,7 +392,7 @@ export function FacesScreen() {
                 disabled={uploading}
               >
                 {uploading ? (
-                  <ActivityIndicator color="#FAF8F4" />
+                  <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text style={styles.btnPrimaryText}>Add</Text>
                 )}

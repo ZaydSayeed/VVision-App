@@ -1,5 +1,7 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
@@ -8,14 +10,15 @@ import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
 import { OfflineBanner } from "../components/OfflineBanner";
-import { fonts, spacing } from "../config/theme";
+import { SideDrawer } from "../components/SideDrawer";
+import { fonts, spacing, gradients } from "../config/theme";
 
 export function RootNavigator() {
   const { user, loading, logout } = useAuth();
   const { colors } = useTheme();
   const { setOffline } = useNetwork();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Bridge API client network status to React context
   useEffect(() => {
     setOnNetworkChange(setOffline);
   }, [setOffline]);
@@ -36,91 +39,86 @@ export function RootNavigator() {
   if (user.role === "caregiver") {
     return (
       <View style={styles.root}>
-        <Header onLogout={logout} />
+        <Header onOpenDrawer={() => setDrawerOpen(true)} />
         <OfflineBanner />
         <CaregiverTabNavigator />
+        <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       </View>
     );
   }
 
   return (
     <View style={styles.root}>
-      <Header onLogout={logout} />
+      <Header onOpenDrawer={() => setDrawerOpen(true)} />
       <OfflineBanner />
       <PatientTabNavigator patientName={user.name} />
+      <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </View>
   );
 }
 
-function Header({ onLogout }: { onLogout: () => void }) {
-  const { colors } = useTheme();
+function Header({ onOpenDrawer }: { onOpenDrawer: () => void }) {
+  const { isDark } = useTheme();
 
-  const styles = useMemo(() => StyleSheet.create({
-    header: {
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      paddingTop: 54,
-      paddingHorizontal: spacing.xl,
-      paddingBottom: spacing.md,
-    },
-    headerInner: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    logo: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-    },
-    logoIcon: {
-      width: 32,
-      height: 32,
-    },
-    logoWordmark: {
-      borderLeftWidth: 0.4,
-      borderLeftColor: colors.lavender,
-      paddingLeft: 10,
-      marginLeft: 2,
-    },
-    logoText: {
-      fontSize: 20,
-      color: colors.text,
-      ...fonts.display,
-      letterSpacing: 0.2,
-    },
-    logoutBtn: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 999,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    logoutText: {
-      fontSize: 12,
-      color: colors.muted,
-      ...fonts.medium,
-    },
-  }), [colors]);
+  const gradientColors = isDark ? gradients.dark : gradients.primary;
 
   return (
-    <View style={styles.header}>
-      <View style={styles.headerInner}>
-        <View style={styles.logo}>
+    <LinearGradient
+      colors={[...gradientColors]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={headerStyles.gradient}
+    >
+      <View style={headerStyles.inner}>
+        <TouchableOpacity
+          style={headerStyles.logo}
+          onPress={onOpenDrawer}
+          activeOpacity={0.8}
+        >
           <Image
             source={require("../../assets/icon.png")}
-            style={styles.logoIcon}
+            style={headerStyles.logoIcon}
             resizeMode="contain"
           />
-          <View style={styles.logoWordmark}>
-            <Text style={styles.logoText}>Vela Vision</Text>
+          <View style={headerStyles.logoWordmark}>
+            <Text style={headerStyles.logoText}>Vela Vision</Text>
           </View>
-        </View>
-        <TouchableOpacity onPress={onLogout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Sign out</Text>
+          <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.7)" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
+
+const headerStyles = StyleSheet.create({
+  gradient: {
+    paddingTop: 54,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.md,
+  },
+  inner: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  logoIcon: {
+    width: 32,
+    height: 32,
+  },
+  logoWordmark: {
+    borderLeftWidth: 0.4,
+    borderLeftColor: "rgba(255,255,255,0.4)",
+    paddingLeft: 10,
+    marginLeft: 2,
+  },
+  logoText: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    ...fonts.medium,
+    letterSpacing: 0.2,
+  },
+});

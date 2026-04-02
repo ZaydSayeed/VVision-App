@@ -19,17 +19,26 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: Check
     row: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: spacing.sm,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
       gap: spacing.md,
       minHeight: 56,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      marginBottom: spacing.sm,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 6,
+      elevation: 2,
     },
     checkbox: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       borderWidth: 2,
       borderColor: colors.border,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.bg,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -72,7 +81,7 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: Check
         onPress={onToggle}
         activeOpacity={0.8}
       >
-        {checked && <Ionicons name="checkmark" size={16} color="#FAF8F4" />}
+        {checked && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.labelWrap} onPress={onToggle} activeOpacity={0.8}>

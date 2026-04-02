@@ -20,7 +20,7 @@ export function OfflineBanner() {
     },
     text: {
       fontSize: 12,
-      color: "#FAF8F4",
+      color: "#FFFFFF",
       ...fonts.medium,
       letterSpacing: 0.3,
     },
@@ -30,7 +30,7 @@ export function OfflineBanner() {
 
   return (
     <View style={styles.banner}>
-      <Ionicons name="cloud-offline-outline" size={14} color="#FAF8F4" />
+      <Ionicons name="cloud-offline-outline" size={14} color="#FFFFFF" />
       <Text style={styles.text}>Offline — showing cached data</Text>
     </View>
   );

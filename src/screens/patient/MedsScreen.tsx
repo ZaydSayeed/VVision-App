@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   View,
@@ -11,17 +11,27 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useMeds } from "../../hooks/useMeds";
 import { CheckRow } from "../../components/shared/CheckRow";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
-import { fonts, spacing, radius } from "../../config/theme";
+import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 
 export function MedsScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { meds, addMed, toggleTaken, deleteMed, isTakenToday } = useMeds();
   const [showModal, setShowModal] = useState(false);
+  const [clock, setClock] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setClock(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const timeStr = clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const dateStr = clock.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [time, setTime] = useState("");
@@ -49,6 +59,22 @@ export function MedsScreen() {
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 120 },
+    topBar: {
+      alignItems: "center",
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xl,
+    },
+    topBarTitle: {
+      fontSize: 32,
+      color: "#FFFFFF",
+      ...fonts.medium,
+    },
+    topBarSub: {
+      fontSize: 13,
+      color: "rgba(255,255,255,0.8)",
+      ...fonts.regular,
+      marginTop: 2,
+    },
     emptyCTA: {
       alignItems: "center",
       paddingTop: 60,
@@ -71,7 +97,7 @@ export function MedsScreen() {
     emptyCTATitle: {
       fontSize: 24,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     emptyCTASubtitle: {
       fontSize: 15,
@@ -97,17 +123,15 @@ export function MedsScreen() {
       elevation: 8,
     },
     doneBanner: {
-      backgroundColor: colors.violet50,
-      borderWidth: 1,
-      borderColor: colors.violet100,
       borderRadius: radius.md,
       padding: spacing.lg,
       marginBottom: spacing.lg,
       alignItems: "center",
+      overflow: "hidden",
     },
     doneBannerText: {
       fontSize: 17,
-      color: colors.violet,
+      color: "#FFFFFF",
       ...fonts.medium,
     },
     modalOverlay: {
@@ -123,14 +147,14 @@ export function MedsScreen() {
       gap: spacing.sm,
     },
     modalTitle: {
-      fontSize: 26,
+      fontSize: 22,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
       marginBottom: spacing.sm,
     },
     fieldLabel: {
       fontSize: 10,
-      color: colors.lavender,
+      color: colors.muted,
       ...fonts.medium,
       letterSpacing: 1.5,
       textTransform: "uppercase",
@@ -142,7 +166,7 @@ export function MedsScreen() {
       backgroundColor: colors.bg,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       paddingHorizontal: spacing.lg,
       fontSize: 20,
       color: colors.text,
@@ -155,7 +179,7 @@ export function MedsScreen() {
       height: 56,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -164,21 +188,35 @@ export function MedsScreen() {
       flex: 1,
       height: 56,
       backgroundColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
-    btnPrimaryText: { fontSize: 17, color: "#F5F0E8", ...fonts.medium },
+    btnPrimaryText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={isDark ? [...gradients.dark] : [...gradients.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.topBar}
+      >
+        <Text style={styles.topBarTitle}>{timeStr}</Text>
+        <Text style={styles.topBarSub}>{dateStr}</Text>
+      </LinearGradient>
       <ScrollView contentContainerStyle={styles.content}>
         {/* All done banner */}
         {allDone && (
-          <View style={styles.doneBanner}>
-            <Text style={styles.doneBannerText}>All medications taken today!</Text>
-          </View>
+          <LinearGradient
+            colors={[...gradients.primary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.doneBanner}
+          >
+            <Text style={styles.doneBannerText}>✓ All medications taken today!</Text>
+          </LinearGradient>
         )}
 
         <SectionHeader label="My Medications" />
@@ -190,7 +228,7 @@ export function MedsScreen() {
               onPress={() => setShowModal(true)}
               activeOpacity={0.85}
             >
-              <Ionicons name="add" size={52} color="#FAF8F4" />
+              <Ionicons name="add" size={52} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.emptyCTATitle}>Add a Medication</Text>
             <Text style={styles.emptyCTASubtitle}>
@@ -217,7 +255,7 @@ export function MedsScreen() {
           onPress={() => setShowModal(true)}
           activeOpacity={0.85}
         >
-          <Ionicons name="add" size={36} color="#FAF8F4" />
+          <Ionicons name="add" size={36} color="#FFFFFF" />
         </TouchableOpacity>
       )}
 

@@ -42,9 +42,9 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
       paddingHorizontal: spacing.xxl,
     },
     greeting: {
-      fontSize: 36,
+      fontSize: 32,
       color: colors.text,
-      ...fonts.displayLight,
+      ...fonts.medium,
     },
     sub: {
       fontSize: 18,
@@ -61,7 +61,7 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
       borderRadius: 120,
       overflow: "hidden",
       elevation: 4,
-      shadowColor: "#6B5AE0",
+      shadowColor: "#7B5CE7",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 12,
@@ -76,13 +76,13 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
     },
     btnLabel: {
       fontSize: 26,
-      color: "#FAF8F4",
-      ...fonts.display,
+      color: "#FFFFFF",
+      ...fonts.medium,
     },
     btnLabelSent: {
       fontSize: 20,
-      color: "#FAF8F4",
-      ...fonts.display,
+      color: "#FFFFFF",
+      ...fonts.medium,
       textAlign: "center",
       paddingHorizontal: spacing.lg,
     },
@@ -98,11 +98,9 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
       alignSelf: "stretch",
     },
     recentLabel: {
-      fontSize: 10,
-      color: colors.lavender,
+      fontSize: 13,
+      color: colors.text,
       ...fonts.medium,
-      letterSpacing: 1.5,
-      textTransform: "uppercase",
       marginBottom: spacing.md,
     },
     recentRow: {
@@ -141,12 +139,12 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
           >
             {sent ? (
               <>
-                <Ionicons name="checkmark-circle-outline" size={64} color="#FAF8F4" />
+                <Ionicons name="checkmark-circle-outline" size={64} color="#FFFFFF" />
                 <Text style={styles.btnLabelSent}>Help is on the way!</Text>
               </>
             ) : (
               <>
-                <Ionicons name="alert-circle-outline" size={64} color="#FAF8F4" />
+                <Ionicons name="alert-circle-outline" size={64} color="#FFFFFF" />
                 <Text style={styles.btnLabel}>I Need Help</Text>
               </>
             )}

@@ -37,6 +37,7 @@ export function TimelineScreen({
     },
     statsStrip: {
       paddingVertical: 14,
+      backgroundColor: colors.surface,
     },
     statsContent: {
       paddingHorizontal: spacing.xl,
@@ -46,10 +47,8 @@ export function TimelineScreen({
       paddingHorizontal: spacing.xl,
     },
     sectionLabel: {
-      fontSize: 10,
-      color: colors.lavender,
-      textTransform: "uppercase",
-      letterSpacing: 1.5,
+      fontSize: 13,
+      color: colors.text,
       ...fonts.medium,
       paddingVertical: spacing.sm,
       paddingBottom: spacing.md,

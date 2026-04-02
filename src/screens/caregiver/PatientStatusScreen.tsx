@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,16 +14,27 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
-import { fonts, spacing, radius } from "../../config/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
 export function PatientStatusScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
   const { tasks, isCompletedToday } = useRoutine(patientId);
   const { meds, isTakenToday } = useMeds(patientId);
   const { alerts, dismissAlert } = useHelpAlert();
+
+  const [clock, setClock] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setClock(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const timeStr = clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const dateStr = clock.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
   const routineDone = tasks.filter(isCompletedToday).length;
   const medsDone = meds.filter(isTakenToday).length;
@@ -32,6 +43,22 @@ export function PatientStatusScreen() {
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 100 },
+    topBar: {
+      alignItems: "center",
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xl,
+    },
+    topBarTitle: {
+      fontSize: 32,
+      color: "#FFFFFF",
+      ...fonts.medium,
+    },
+    topBarSub: {
+      fontSize: 13,
+      color: "rgba(255,255,255,0.8)",
+      ...fonts.regular,
+      marginTop: 2,
+    },
     statsRow: {
       flexDirection: "row",
       gap: spacing.md,
@@ -40,16 +67,19 @@ export function PatientStatusScreen() {
     statCard: {
       flex: 1,
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       padding: spacing.lg,
       alignItems: "center",
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     statValue: {
       fontSize: 36,
       color: colors.violet,
-      ...fonts.display,
+      ...fonts.medium,
     },
     statLabel: {
       fontSize: 11,
@@ -61,14 +91,17 @@ export function PatientStatusScreen() {
     },
     helpCard: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.violet100,
       borderRadius: radius.md,
       padding: spacing.lg,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: spacing.sm,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
     },
     helpTitle: {
       fontSize: 15,
@@ -84,7 +117,7 @@ export function PatientStatusScreen() {
     dismissBtn: {
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       paddingHorizontal: 14,
       paddingVertical: 6,
     },
@@ -105,7 +138,7 @@ export function PatientStatusScreen() {
       alignItems: "center",
       paddingVertical: spacing.sm + 2,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      borderBottomColor: colors.surface,
       gap: spacing.md,
       minHeight: 48,
     },
@@ -136,7 +169,17 @@ export function PatientStatusScreen() {
   }), [colors]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
+    <LinearGradient
+      colors={isDark ? [...gradients.dark] : [...gradients.primary]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.topBar}
+    >
+      <Text style={styles.topBarTitle}>{timeStr}</Text>
+      <Text style={styles.topBarSub}>{dateStr}</Text>
+    </LinearGradient>
+    <ScrollView contentContainerStyle={styles.content}>
       {/* Stat Cards */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
@@ -152,27 +195,6 @@ export function PatientStatusScreen() {
           <Text style={styles.statLabel}>Meds Taken</Text>
         </View>
       </View>
-
-      {/* Help Alerts */}
-      <SectionHeader label="Help Requests" />
-      {pendingHelp.length === 0 ? (
-        <EmptyState title="All clear" subtitle="No help requests from patient" />
-      ) : (
-        pendingHelp.map((alert) => (
-          <View key={alert.id} style={styles.helpCard}>
-            <View>
-              <Text style={styles.helpTitle}>Patient needs help</Text>
-              <Text style={styles.helpTime}>{formatRelativeTime(alert.timestamp)}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.dismissBtn}
-              onPress={() => dismissAlert(alert.id)}
-            >
-              <Text style={styles.dismissText}>Dismiss</Text>
-            </TouchableOpacity>
-          </View>
-        ))
-      )}
 
       {/* Routine Tasks (read-only) */}
       <View style={styles.section}>
@@ -239,5 +261,6 @@ export function PatientStatusScreen() {
         )}
       </View>
     </ScrollView>
+    </View>
   );
 }

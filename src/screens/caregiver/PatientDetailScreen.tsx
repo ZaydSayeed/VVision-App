@@ -7,13 +7,14 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { useTheme } from "../../context/ThemeContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
-import { fonts, spacing, radius } from "../../config/theme";
+import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
 interface Props {
@@ -39,20 +40,17 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       alignItems: "center",
       paddingHorizontal: spacing.xl,
       paddingVertical: spacing.md,
-      backgroundColor: colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
       gap: spacing.sm,
     },
     backText: {
       fontSize: 15,
-      color: colors.violet,
+      color: "#FFFFFF",
       ...fonts.medium,
     },
     patientTitle: {
       fontSize: 20,
-      color: colors.text,
-      ...fonts.display,
+      color: "#FFFFFF",
+      ...fonts.medium,
       marginLeft: spacing.sm,
     },
     content: { padding: spacing.xl, paddingBottom: 100 },
@@ -64,16 +62,19 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
     statCard: {
       flex: 1,
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       padding: spacing.lg,
       alignItems: "center",
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     statValue: {
       fontSize: 36,
       color: colors.violet,
-      ...fonts.display,
+      ...fonts.medium,
     },
     statLabel: {
       fontSize: 11,
@@ -85,14 +86,17 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
     },
     helpCard: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.violet100,
       borderRadius: radius.md,
       padding: spacing.lg,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: spacing.sm,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
     },
     helpTitle: {
       fontSize: 15,
@@ -108,7 +112,7 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
     dismissBtn: {
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.pill,
       paddingHorizontal: 14,
       paddingVertical: 6,
     },
@@ -129,7 +133,7 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       alignItems: "center",
       paddingVertical: spacing.sm + 2,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      borderBottomColor: colors.surface,
       gap: spacing.md,
       minHeight: 48,
     },
@@ -160,13 +164,18 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backBar}>
+      <LinearGradient
+        colors={[...gradients.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.backBar}
+      >
         <TouchableOpacity onPress={onBack} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={22} color={colors.violet} />
+          <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.backText}>Patients</Text>
         <Text style={styles.patientTitle}>{patientName}</Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.statsRow}>

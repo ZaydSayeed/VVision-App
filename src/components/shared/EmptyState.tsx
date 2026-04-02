@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { fonts, spacing } from "../../config/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { fonts, spacing, radius } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 
 interface EmptyStateProps {
@@ -16,15 +17,24 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
     container: {
       alignItems: "center",
       paddingVertical: spacing.xxxxl,
-      gap: spacing.sm,
+      gap: spacing.md,
+    },
+    iconCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: radius.pill,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: spacing.sm,
     },
     title: {
-      fontSize: 22,
+      fontSize: 20,
       color: colors.text,
-      ...fonts.display,
+      ...fonts.medium,
     },
     subtitle: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
@@ -33,6 +43,9 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.iconCircle}>
+        <Ionicons name="layers-outline" size={28} color={colors.violet} />
+      </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
     </View>

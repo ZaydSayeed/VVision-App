@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { PatientStatusScreen } from "../screens/caregiver/PatientStatusScreen";
@@ -31,19 +31,36 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
-      backgroundColor: colors.surface,
+      backgroundColor: "#FFFFFF",
       borderTopWidth: 1,
       borderTopColor: colors.border,
-      height: 85,
+      height: 88,
       paddingTop: 8,
       paddingBottom: 20,
     },
     tabLabel: {
-      fontSize: 11,
+      fontSize: 10,
       ...fonts.medium,
-      letterSpacing: 0.8,
     },
-    tabIcon: {},
+    fabWrapper: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fabButton: {
+      top: -20,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: colors.violet,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.4,
+      shadowRadius: 10,
+      elevation: 8,
+    },
   }), [colors]);
 
   return (
@@ -65,12 +82,25 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
     >
       <Tab.Screen name="Status" component={PatientStatusScreen} />
       <Tab.Screen name="Routine" component={RoutineScreen} />
-      <Tab.Screen name="Meds" component={MedsScreen} />
-      <Tab.Screen name="Faces" component={FacesScreen} />
-      <Tab.Screen name="Help">
+      <Tab.Screen
+        name="Help"
+        options={{
+          tabBarButton: (props) => (
+            <View style={styles.fabWrapper}>
+              <TouchableOpacity
+                onPress={props.onPress}
+                style={styles.fabButton}
+              >
+                <Ionicons name="alert-circle-outline" size={28} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          ),
+        }}
+      >
         {() => <HelpScreen patientName={patientName} />}
       </Tab.Screen>
-      <Tab.Screen name="Profile" component={SettingsScreen} />
+      <Tab.Screen name="Meds" component={MedsScreen} />
+      <Tab.Screen name="Faces" component={FacesScreen} />
     </Tab.Navigator>
   );
 }

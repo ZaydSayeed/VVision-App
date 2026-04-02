@@ -29,10 +29,10 @@ export function CaregiverTabNavigator() {
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
-      backgroundColor: colors.surface,
+      backgroundColor: "#FFFFFF",
       borderTopWidth: 1,
       borderTopColor: colors.border,
-      height: 85,
+      height: 88,
       paddingTop: 8,
       paddingBottom: 20,
     },

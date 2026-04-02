@@ -15,17 +15,20 @@ export function StatChip({ value, label, color }: StatChipProps) {
   const styles = useMemo(() => StyleSheet.create({
     chip: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
       borderRadius: radius.md,
       paddingVertical: spacing.sm + 2,
       paddingHorizontal: spacing.lg,
       minWidth: 110,
       gap: 2,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
     },
     value: {
-      fontSize: 22,
-      ...fonts.display,
+      fontSize: 24,
+      ...fonts.medium,
     },
     label: {
       fontSize: 10,

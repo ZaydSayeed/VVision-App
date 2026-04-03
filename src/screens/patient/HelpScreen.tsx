@@ -8,7 +8,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
-import { fonts, spacing, gradients } from "../../config/theme";
+import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
@@ -37,45 +37,60 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
     container: {
       flex: 1,
       backgroundColor: colors.bg,
-      alignItems: "center",
-      paddingTop: spacing.xxxxl,
-      paddingHorizontal: spacing.xxl,
     },
-    greeting: {
-      fontSize: 32,
+    // Header section
+    headerSection: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
+    },
+    headerTitle: {
+      fontSize: 28,
       color: colors.text,
       ...fonts.medium,
     },
-    sub: {
-      fontSize: 18,
+    headerSub: {
+      fontSize: 15,
       color: colors.muted,
       ...fonts.regular,
-      marginTop: spacing.sm,
-      textAlign: "center",
+      marginTop: spacing.xs,
     },
-    btnWrap: {
-      marginTop: spacing.xxxxl,
+
+    // Button area
+    btnArea: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingBottom: spacing.xxl,
+    },
+    btnRing: {
+      width: 260,
+      height: 260,
+      borderRadius: 130,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: spacing.xl,
     },
     btnOuter: {
-      borderRadius: 120,
+      borderRadius: 110,
       overflow: "hidden",
-      elevation: 4,
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.4,
+      shadowRadius: 20,
+      elevation: 12,
     },
     btnGradient: {
-      width: 240,
-      height: 240,
-      borderRadius: 120,
+      width: 220,
+      height: 220,
+      borderRadius: 110,
       alignItems: "center",
       justifyContent: "center",
       gap: spacing.sm,
     },
     btnLabel: {
-      fontSize: 26,
+      fontSize: 24,
       color: "#FFFFFF",
       ...fonts.medium,
     },
@@ -87,85 +102,104 @@ export function HelpScreen({ patientName }: HelpScreenProps) {
       paddingHorizontal: spacing.lg,
     },
     hint: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
       paddingHorizontal: spacing.xl,
     },
+
+    // Recent section
     recentSection: {
-      marginTop: spacing.xxxxl,
-      alignSelf: "stretch",
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.xxxxl,
     },
     recentLabel: {
-      fontSize: 13,
+      fontSize: 18,
       color: colors.text,
       ...fonts.medium,
       marginBottom: spacing.md,
     },
-    recentRow: {
+    recentCard: {
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
       flexDirection: "row",
-      gap: spacing.sm,
-      paddingVertical: spacing.xs,
+      alignItems: "center",
+      gap: spacing.md,
+      marginBottom: spacing.sm,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
     },
     recentDot: {
-      fontSize: 18,
-      color: colors.muted,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.violet,
     },
     recentTime: {
-      fontSize: 16,
+      fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
+      flex: 1,
     },
   }), [colors]);
 
   return (
     <View style={styles.container}>
-      {/* Greeting */}
-      <Text style={styles.greeting}>Hi, {patientName}.</Text>
-      <Text style={styles.sub}>Press the button if you need help.</Text>
-
-      {/* Big Help Button */}
-      <View style={styles.btnWrap}>
-        <TouchableOpacity
-          onPress={handlePress}
-          activeOpacity={0.85}
-          disabled={sent}
-          style={styles.btnOuter}
-        >
-          <LinearGradient
-            colors={[gradients.primary[0], gradients.primary[1]]}
-            style={styles.btnGradient}
-          >
-            {sent ? (
-              <>
-                <Ionicons name="checkmark-circle-outline" size={64} color="#FFFFFF" />
-                <Text style={styles.btnLabelSent}>Help is on the way!</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="alert-circle-outline" size={64} color="#FFFFFF" />
-                <Text style={styles.btnLabel}>I Need Help</Text>
-              </>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+      {/* Header */}
+      <View style={styles.headerSection}>
+        <Text style={styles.headerTitle}>
+          {sent ? "Help is coming!" : "Need help?"}
+        </Text>
+        <Text style={styles.headerSub}>
+          {sent ? "Your caregiver has been notified." : `Press the button, ${patientName}.`}
+        </Text>
       </View>
 
-      <Text style={styles.hint}>
-        Your caregiver will be notified immediately.
-      </Text>
+      {/* Big Help Button */}
+      <View style={styles.btnArea}>
+        <View style={styles.btnRing}>
+          <TouchableOpacity
+            onPress={handlePress}
+            activeOpacity={0.88}
+            disabled={sent}
+            style={styles.btnOuter}
+          >
+            <LinearGradient
+              colors={[gradients.primary[0], gradients.primary[1]]}
+              style={styles.btnGradient}
+            >
+              {sent ? (
+                <>
+                  <Ionicons name="checkmark-circle" size={72} color="#FFFFFF" />
+                  <Text style={styles.btnLabelSent}>Help is on{"\n"}the way!</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="hand-left" size={72} color="#FFFFFF" />
+                  <Text style={styles.btnLabel}>I Need Help</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+        {!sent && (
+          <Text style={styles.hint}>Tap to alert your caregiver immediately</Text>
+        )}
+      </View>
 
       {/* Recent Alerts */}
       {recent.length > 0 && (
         <View style={styles.recentSection}>
-          <Text style={styles.recentLabel}>RECENT REQUESTS</Text>
+          <Text style={styles.recentLabel}>Recent Requests</Text>
           {recent.map((a) => (
-            <View key={a.id} style={styles.recentRow}>
-              <Text style={styles.recentDot}>·</Text>
-              <Text style={styles.recentTime}>
-                {formatRelativeTime(a.timestamp)}
-              </Text>
+            <View key={a.id} style={styles.recentCard}>
+              <View style={styles.recentDot} />
+              <Text style={styles.recentTime}>{formatRelativeTime(a.timestamp)}</Text>
             </View>
           ))}
         </View>

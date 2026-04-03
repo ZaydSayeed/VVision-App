@@ -74,4 +74,30 @@ export const fonts = {
   displayLight: { fontFamily: "DMSans_400Regular" },
 };
 
+export const typography = {
+  hero: 34,
+  title: 22,
+  subtitle: 18,
+  body: 15,
+  small: 13,
+  caption: 11,
+};
+
+export const shadow = {
+  card: {
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  fab: {
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+};
+
 export type AppColors = typeof lightColors;

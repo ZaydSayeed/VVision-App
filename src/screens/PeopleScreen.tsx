@@ -86,6 +86,36 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 100 },
+
+    // Screen header
+    screenHeader: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    screenTitle: {
+      fontSize: 28,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    addBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.violet,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      gap: spacing.xs,
+    },
+    addBtnText: {
+      fontSize: 13,
+      color: "#FFFFFF",
+      ...fonts.medium,
+    },
+
     searchWrap: {
       flexDirection: "row",
       alignItems: "center",
@@ -93,10 +123,10 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       borderRadius: radius.pill,
       paddingHorizontal: spacing.md,
       marginBottom: spacing.lg,
-      height: 44,
+      height: 48,
       shadowColor: "#7B5CE7",
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
+      shadowOpacity: 0.04,
       shadowRadius: 6,
       elevation: 1,
     },
@@ -113,11 +143,24 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       justifyContent: "flex-end",
     },
     modalSheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
       padding: spacing.xxl,
       gap: spacing.sm,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 20,
+    },
+    modalHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      alignSelf: "center",
+      marginBottom: spacing.lg,
     },
     modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
     photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
@@ -127,19 +170,19 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
       borderWidth: 1.5,
       borderColor: colors.violet,
       borderStyle: "dashed",
-      borderRadius: radius.md,
+      borderRadius: radius.lg,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: spacing.sm,
     },
-    photoPlaceholderText: { fontSize: 16, color: colors.violet, ...fonts.medium },
+    photoPlaceholderText: { fontSize: 15, color: colors.violet, ...fonts.medium },
     photoTaken: {
       height: 80,
       backgroundColor: colors.violet50,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.md,
+      borderRadius: radius.lg,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -147,61 +190,64 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
     },
     photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
     fieldLabel: {
-      fontSize: 10,
+      fontSize: 11,
       color: colors.muted,
       ...fonts.medium,
-      letterSpacing: 1.5,
+      letterSpacing: 1.2,
       textTransform: "uppercase",
       marginTop: spacing.md,
       marginBottom: spacing.xs,
     },
     input: {
-      height: 56,
-      backgroundColor: colors.bg,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.md,
+      height: 54,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
       paddingHorizontal: spacing.lg,
-      fontSize: 20,
+      fontSize: 16,
       color: colors.text,
       ...fonts.regular,
     },
-    error: { fontSize: 14, color: colors.violet, ...fonts.regular, marginTop: spacing.xs },
+    error: { fontSize: 13, color: "#E05050", ...fonts.regular, marginTop: spacing.xs },
     modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
     btnOutline: {
       flex: 1,
-      height: 56,
+      height: 54,
       borderWidth: 1.5,
-      borderColor: colors.violet,
+      borderColor: colors.border,
       borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
-    btnOutlineText: { fontSize: 17, color: colors.violet, ...fonts.medium },
+    btnOutlineText: { fontSize: 16, color: colors.text, ...fonts.medium },
     btnPrimary: {
       flex: 1,
-      height: 56,
+      height: 54,
       backgroundColor: colors.violet,
       borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
     btnDisabled: { opacity: 0.6 },
-    btnPrimaryText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
+    btnPrimaryText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
     <View style={styles.container}>
+      {/* Screen Header */}
+      <View style={styles.screenHeader}>
+        <Text style={styles.screenTitle}>People</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)} activeOpacity={0.85}>
+          <Ionicons name="add" size={16} color="#FFFFFF" />
+          <Text style={styles.addBtnText}>Add</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={colors.violet} />
         }
       >
-        <SectionHeader
-          label="Known People"
-          action={{ label: "+ Add Person", onPress: () => setShowModal(true) }}
-        />
 
         {/* Search */}
         <View style={styles.searchWrap}>
@@ -244,6 +290,7 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Add a Person</Text>
 
             <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>

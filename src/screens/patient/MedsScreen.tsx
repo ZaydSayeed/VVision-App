@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   View,
@@ -20,18 +20,10 @@ import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 
 export function MedsScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { meds, addMed, toggleTaken, deleteMed, isTakenToday } = useMeds();
   const [showModal, setShowModal] = useState(false);
-  const [clock, setClock] = useState(new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => setClock(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const timeStr = clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const dateStr = clock.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+  const dateStr = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [time, setTime] = useState("");
@@ -59,31 +51,34 @@ export function MedsScreen() {
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 120 },
-    topBar: {
-      alignItems: "center",
-      paddingVertical: spacing.md,
+
+    // Screen header
+    screenHeader: {
       paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.xl,
     },
-    topBarTitle: {
-      fontSize: 32,
-      color: "#FFFFFF",
+    screenTitle: {
+      fontSize: 28,
+      color: colors.text,
       ...fonts.medium,
     },
-    topBarSub: {
-      fontSize: 13,
-      color: "rgba(255,255,255,0.8)",
+    screenSubtitle: {
+      fontSize: 14,
+      color: colors.muted,
       ...fonts.regular,
-      marginTop: 2,
+      marginTop: 4,
     },
+
     emptyCTA: {
       alignItems: "center",
       paddingTop: 60,
       gap: spacing.md,
     },
     bigAddBtn: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
+      width: 88,
+      height: 88,
+      borderRadius: 44,
       backgroundColor: colors.violet,
       alignItems: "center",
       justifyContent: "center",
@@ -95,12 +90,12 @@ export function MedsScreen() {
       marginBottom: spacing.sm,
     },
     emptyCTATitle: {
-      fontSize: 24,
+      fontSize: 22,
       color: colors.text,
       ...fonts.medium,
     },
     emptyCTASubtitle: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
@@ -123,28 +118,47 @@ export function MedsScreen() {
       elevation: 8,
     },
     doneBanner: {
-      borderRadius: radius.md,
-      padding: spacing.lg,
-      marginBottom: spacing.lg,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      marginBottom: spacing.xl,
       alignItems: "center",
       overflow: "hidden",
+      gap: spacing.xs,
     },
-    doneBannerText: {
-      fontSize: 17,
+    doneBannerTitle: {
+      fontSize: 20,
       color: "#FFFFFF",
       ...fonts.medium,
     },
+    doneBannerSub: {
+      fontSize: 14,
+      color: "rgba(255,255,255,0.85)",
+      ...fonts.regular,
+    },
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(43,35,64,0.3)",
+      backgroundColor: "rgba(30,27,58,0.45)",
       justifyContent: "flex-end",
     },
     modalSheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
       padding: spacing.xxl,
       gap: spacing.sm,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 20,
+    },
+    modalHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      alignSelf: "center",
+      marginBottom: spacing.lg,
     },
     modalTitle: {
       fontSize: 22,
@@ -153,59 +167,54 @@ export function MedsScreen() {
       marginBottom: spacing.sm,
     },
     fieldLabel: {
-      fontSize: 10,
+      fontSize: 11,
       color: colors.muted,
       ...fonts.medium,
-      letterSpacing: 1.5,
+      letterSpacing: 1.2,
       textTransform: "uppercase",
       marginTop: spacing.md,
       marginBottom: spacing.xs,
     },
     input: {
-      height: 56,
-      backgroundColor: colors.bg,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.md,
+      height: 54,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
       paddingHorizontal: spacing.lg,
-      fontSize: 20,
+      fontSize: 16,
       color: colors.text,
       ...fonts.regular,
     },
-    error: { fontSize: 14, color: colors.violet, ...fonts.regular },
+    error: { fontSize: 13, color: "#E05050", ...fonts.regular },
     modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
     btnOutline: {
       flex: 1,
-      height: 56,
+      height: 54,
       borderWidth: 1.5,
-      borderColor: colors.violet,
+      borderColor: colors.border,
       borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
-    btnOutlineText: { fontSize: 17, color: colors.violet, ...fonts.medium },
+    btnOutlineText: { fontSize: 16, color: colors.text, ...fonts.medium },
     btnPrimary: {
       flex: 1,
-      height: 56,
+      height: 54,
       backgroundColor: colors.violet,
       borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
-    btnPrimaryText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
+    btnPrimaryText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={isDark ? [...gradients.dark] : [...gradients.primary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.topBar}
-      >
-        <Text style={styles.topBarTitle}>{timeStr}</Text>
-        <Text style={styles.topBarSub}>{dateStr}</Text>
-      </LinearGradient>
+      {/* Screen Header */}
+      <View style={styles.screenHeader}>
+        <Text style={styles.screenTitle}>My Medications</Text>
+        <Text style={styles.screenSubtitle}>{dateStr}</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.content}>
         {/* All done banner */}
         {allDone && (
@@ -215,11 +224,13 @@ export function MedsScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.doneBanner}
           >
-            <Text style={styles.doneBannerText}>✓ All medications taken today!</Text>
+            <Ionicons name="checkmark-circle" size={32} color="#FFFFFF" />
+            <Text style={styles.doneBannerTitle}>All done!</Text>
+            <Text style={styles.doneBannerSub}>All medications taken today</Text>
           </LinearGradient>
         )}
 
-        <SectionHeader label="My Medications" />
+        <SectionHeader label="Medications" />
 
         {meds.length === 0 ? (
           <View style={styles.emptyCTA}>
@@ -266,6 +277,7 @@ export function MedsScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Add Medication</Text>
 
             <Text style={styles.fieldLabel}>MEDICATION NAME</Text>

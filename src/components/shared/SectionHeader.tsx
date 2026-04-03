@@ -17,9 +17,10 @@ export function SectionHeader({ label, action }: SectionHeaderProps) {
       justifyContent: "space-between",
       alignItems: "center",
       paddingBottom: spacing.md,
+      paddingVertical: spacing.xs,
     },
     label: {
-      fontSize: 13,
+      fontSize: 18,
       color: colors.text,
       letterSpacing: 0.2,
       ...fonts.medium,

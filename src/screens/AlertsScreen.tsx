@@ -47,24 +47,37 @@ export function AlertsScreen({
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 100 },
+
+    // Screen header
+    screenHeader: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
+    },
+    screenTitle: {
+      fontSize: 28,
+      color: colors.text,
+      ...fonts.medium,
+    },
+
     helpCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
       padding: spacing.lg,
       flexDirection: "row",
       alignItems: "center",
       marginBottom: spacing.sm,
       gap: spacing.md,
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
       elevation: 3,
     },
     helpIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: colors.violet50,
       alignItems: "center",
       justifyContent: "center",
@@ -83,23 +96,27 @@ export function AlertsScreen({
       marginTop: 2,
     },
     dismissBtn: {
-      borderWidth: 1.5,
-      borderColor: colors.violet,
+      backgroundColor: colors.violet50,
       borderRadius: radius.pill,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
     },
     dismissText: {
       fontSize: 12,
       color: colors.violet,
       ...fonts.medium,
     },
-    section: { marginTop: spacing.xxl },
+    section: { marginTop: spacing.xl },
   }), [colors]);
 
   return (
+    <View style={styles.container}>
+      {/* Screen Header */}
+      <View style={styles.screenHeader}>
+        <Text style={styles.screenTitle}>Alerts</Text>
+      </View>
     <ScrollView
-      style={styles.container}
+      style={{ flex: 1 }}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
@@ -157,5 +174,6 @@ export function AlertsScreen({
         )}
       </View>
     </ScrollView>
+    </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { UserRole } from "../types";
 import { useAuth } from "../context/AuthContext";
@@ -66,263 +65,309 @@ export function LoginScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={["#2B2340", "#4A3B8C", "#7B5CE7"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0.3, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safe}>
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo */}
-          <View style={styles.logoRow}>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo + Branding */}
+        <View style={styles.brandSection}>
+          <View style={styles.logoCircle}>
             <Image
               source={require("../../assets/icon.png")}
               style={styles.logoIcon}
               resizeMode="contain"
             />
-            <Text style={styles.logoText}>Vela Vision</Text>
           </View>
+          <Text style={styles.logoText}>Vela Vision</Text>
+          <Text style={styles.tagline}>Care made calm and simple.</Text>
+        </View>
 
-          {/* Headline */}
-          <Text style={styles.headline}>
-            {mode === "login" ? "Welcome back." : "Get started."}
-          </Text>
-          <Text style={styles.tagline}>
-            Faces remembered. Connections preserved.
-          </Text>
+        {/* Mode toggle pill */}
+        <View style={styles.modeToggle}>
+          <TouchableOpacity
+            style={[styles.modeBtn, mode === "login" && styles.modeBtnActive]}
+            onPress={() => { setMode("login"); setError(""); }}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.modeBtnText, mode === "login" && styles.modeBtnTextActive]}>Sign In</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeBtn, mode === "signup" && styles.modeBtnActive]}
+            onPress={() => { setMode("signup"); setError(""); }}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.modeBtnText, mode === "signup" && styles.modeBtnTextActive]}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Name (signup only) */}
-          {mode === "signup" && (
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>YOUR NAME</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g. Sarah Johnson"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                autoCapitalize="words"
-                returnKeyType="next"
-              />
-            </View>
-          )}
+        {/* Headline */}
+        <Text style={styles.headline}>
+          {mode === "login" ? "Welcome back." : "Create your account."}
+        </Text>
 
-          {/* Email */}
+        {/* Name (signup only) */}
+        {mode === "signup" && (
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>EMAIL</Text>
+            <Text style={styles.fieldLabel}>YOUR NAME</Text>
             <TextInput
               style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              autoCapitalize="none"
-              keyboardType="email-address"
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Sarah Johnson"
+              placeholderTextColor="#B0AABF"
+              autoCapitalize="words"
               returnKeyType="next"
             />
           </View>
+        )}
 
-          {/* Password */}
+        {/* Email */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>EMAIL</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor="#B0AABF"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            returnKeyType="next"
+          />
+        </View>
+
+        {/* Password */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>PASSWORD</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            placeholderTextColor="#B0AABF"
+            secureTextEntry
+            returnKeyType={mode === "login" ? "go" : "next"}
+            onSubmitEditing={mode === "login" ? handleSubmit : undefined}
+          />
+        </View>
+
+        {/* Role Selection (signup only) */}
+        {mode === "signup" && (
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>PASSWORD</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              placeholderTextColor="rgba(255,255,255,0.5)"
-              secureTextEntry
-              returnKeyType={mode === "login" ? "go" : "next"}
-              onSubmitEditing={mode === "login" ? handleSubmit : undefined}
-            />
-          </View>
+            <Text style={styles.fieldLabel}>I AM A</Text>
+            <View style={styles.roleRow}>
+              <TouchableOpacity
+                style={[styles.roleCard, role === "patient" && styles.roleCardActive]}
+                onPress={() => setRole("patient")}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.roleTitle, role === "patient" && styles.roleTitleActive]}>
+                  Patient
+                </Text>
+                <Text style={[styles.roleSubtitle, role === "patient" && styles.roleSubtitleActive]}>
+                  Daily routines & reminders
+                </Text>
+              </TouchableOpacity>
 
-          {/* Role Selection (signup only) */}
-          {mode === "signup" && (
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>I AM A</Text>
-              <View style={styles.roleRow}>
-                <TouchableOpacity
-                  style={[styles.roleCard, role === "patient" && styles.roleCardActive]}
-                  onPress={() => setRole("patient")}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.roleTitle, role === "patient" && styles.roleTitleActive]}>
-                    Patient
-                  </Text>
-                  <Text style={styles.roleSubtitle}>
-                    Daily routines{"\n"}& reminders
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.roleCard, role === "caregiver" && styles.roleCardActive]}
-                  onPress={() => setRole("caregiver")}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.roleTitle, role === "caregiver" && styles.roleTitleActive]}>
-                    Caregiver
-                  </Text>
-                  <Text style={styles.roleSubtitle}>
-                    Monitor &{"\n"}manage care
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.roleCard, role === "caregiver" && styles.roleCardActive]}
+                onPress={() => setRole("caregiver")}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.roleTitle, role === "caregiver" && styles.roleTitleActive]}>
+                  Caregiver
+                </Text>
+                <Text style={[styles.roleSubtitle, role === "caregiver" && styles.roleSubtitleActive]}>
+                  Monitor & manage care
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
+          </View>
+        )}
 
-          {/* Error */}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+        {/* Error */}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[styles.btn, loading && styles.btnDisabled]}
-            onPress={handleSubmit}
-            activeOpacity={0.85}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#7B5CE7" />
-            ) : (
-              <Text style={styles.btnText}>
-                {mode === "login" ? "Sign in" : "Create account"}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Toggle mode */}
-          <TouchableOpacity
-            style={styles.toggleRow}
-            onPress={() => {
-              setMode(mode === "login" ? "signup" : "login");
-              setError("");
-            }}
-          >
-            <Text style={styles.toggleText}>
-              {mode === "login"
-                ? "Don't have an account? "
-                : "Already have an account? "}
-              <Text style={styles.toggleLink}>
-                {mode === "login" ? "Sign up" : "Sign in"}
-              </Text>
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.btn, loading && styles.btnDisabled]}
+          onPress={handleSubmit}
+          activeOpacity={0.88}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.btnText}>
+              {mode === "login" ? "Sign in" : "Create account"}
             </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  safe: { flex: 1 },
+  safe: { flex: 1, backgroundColor: "#FFFFFF" },
   container: {
     flexGrow: 1,
     paddingHorizontal: spacing.xxl,
     paddingTop: spacing.xxxxl,
     paddingBottom: spacing.xxxxl,
+    backgroundColor: "#FFFFFF",
   },
-  logoRow: {
-    flexDirection: "row",
+
+  // Brand
+  brandSection: {
     alignItems: "center",
-    gap: 10,
-    marginBottom: spacing.xxxxl,
-  },
-  logoIcon: { width: 36, height: 36 },
-  logoText: {
-    fontSize: 20,
-    color: "#FFFFFF",
-    ...fonts.medium,
-  },
-  headline: {
-    fontSize: 36,
-    color: "#FFFFFF",
-    ...fonts.medium,
-    marginBottom: spacing.sm,
-  },
-  tagline: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.7)",
-    ...fonts.regular,
     marginBottom: spacing.xxxl,
   },
-  fieldGroup: { marginBottom: spacing.xl },
-  fieldLabel: {
-    fontSize: 10,
-    color: "rgba(255,255,255,0.6)",
+  logoCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#F0EEFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  logoIcon: { width: 44, height: 44 },
+  logoText: {
+    fontSize: 22,
+    color: "#1E1B3A",
     ...fonts.medium,
-    letterSpacing: 1.5,
+    letterSpacing: 0.3,
+  },
+  tagline: {
+    fontSize: 15,
+    color: "#9590B0",
+    ...fonts.regular,
+    marginTop: spacing.xs,
+    textAlign: "center",
+  },
+
+  // Mode toggle
+  modeToggle: {
+    flexDirection: "row",
+    backgroundColor: "#F0EEFF",
+    borderRadius: radius.pill,
+    padding: 4,
+    marginBottom: spacing.xxl,
+  },
+  modeBtn: {
+    flex: 1,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.pill,
+  },
+  modeBtnActive: {
+    backgroundColor: "#7B5CE7",
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modeBtnText: {
+    fontSize: 15,
+    color: "#9590B0",
+    ...fonts.medium,
+  },
+  modeBtnTextActive: {
+    color: "#FFFFFF",
+  },
+
+  headline: {
+    fontSize: 26,
+    color: "#1E1B3A",
+    ...fonts.medium,
+    marginBottom: spacing.xl,
+  },
+
+  fieldGroup: { marginBottom: spacing.lg },
+  fieldLabel: {
+    fontSize: 11,
+    color: "#9590B0",
+    ...fonts.medium,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
     marginBottom: spacing.sm,
   },
   input: {
-    height: 56,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    borderRadius: radius.md,
+    height: 54,
+    backgroundColor: "#F7F5FF",
+    borderRadius: radius.lg,
     paddingHorizontal: spacing.lg,
-    fontSize: 18,
-    color: "#FFFFFF",
+    fontSize: 16,
+    color: "#1E1B3A",
     ...fonts.regular,
   },
+
   roleRow: { flexDirection: "row", gap: spacing.md },
   roleCard: {
     flex: 1,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.2)",
-    borderRadius: radius.md,
+    backgroundColor: "#F7F5FF",
+    borderWidth: 2,
+    borderColor: "#E8E4F5",
+    borderRadius: radius.lg,
     padding: spacing.lg,
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   roleCardActive: {
-    backgroundColor: "rgba(123,92,231,0.4)",
-    borderColor: "#FFFFFF",
+    backgroundColor: "#F0EEFF",
+    borderColor: "#7B5CE7",
   },
   roleTitle: {
-    fontSize: 17,
-    color: "rgba(255,255,255,0.8)",
+    fontSize: 16,
+    color: "#9590B0",
     ...fonts.medium,
   },
-  roleTitleActive: { color: "#FFFFFF" },
+  roleTitleActive: { color: "#7B5CE7" },
   roleSubtitle: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.6)",
+    color: "#B0AABF",
     ...fonts.regular,
     textAlign: "center",
   },
+  roleSubtitleActive: {
+    color: "#9590B0",
+  },
+
   error: {
-    fontSize: 14,
-    color: "#FFB4B4",
+    fontSize: 13,
+    color: "#E05050",
     ...fonts.regular,
     marginBottom: spacing.md,
     textAlign: "center",
   },
+
   btn: {
     height: 56,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#7B5CE7",
     borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
     marginTop: spacing.sm,
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   btnDisabled: { opacity: 0.7 },
   btnText: {
     fontSize: 17,
-    color: "#7B5CE7",
+    color: "#FFFFFF",
     ...fonts.medium,
   },
-  toggleRow: { marginTop: spacing.xl, alignItems: "center" },
-  toggleText: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-    ...fonts.regular,
-  },
-  toggleLink: { color: "#FFFFFF", ...fonts.medium },
 });

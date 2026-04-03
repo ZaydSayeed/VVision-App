@@ -20,8 +20,8 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
       gap: spacing.md,
     },
     iconCircle: {
-      width: 64,
-      height: 64,
+      width: 72,
+      height: 72,
       borderRadius: radius.pill,
       backgroundColor: colors.violet50,
       alignItems: "center",
@@ -38,13 +38,15 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
       color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
+      lineHeight: 20,
+      maxWidth: 260,
     },
   }), [colors]);
 
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <Ionicons name="layers-outline" size={28} color={colors.violet} />
+        <Ionicons name="layers-outline" size={32} color={colors.violet} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>

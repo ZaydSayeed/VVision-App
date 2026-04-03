@@ -7,14 +7,13 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { useTheme } from "../../context/ThemeContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
-import { fonts, spacing, radius, gradients } from "../../config/theme";
+import { fonts, spacing, radius } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
 interface Props {
@@ -35,23 +34,33 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
+    // Back bar (white)
     backBar: {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: spacing.xl,
-      paddingVertical: spacing.md,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.md,
       gap: spacing.sm,
     },
+    backBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     backText: {
-      fontSize: 15,
-      color: "#FFFFFF",
-      ...fonts.medium,
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
     },
     patientTitle: {
       fontSize: 20,
-      color: "#FFFFFF",
+      color: colors.text,
       ...fonts.medium,
-      marginLeft: spacing.sm,
+      flex: 1,
     },
     content: { padding: spacing.xl, paddingBottom: 100 },
     statsRow: {
@@ -61,18 +70,27 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
     },
     statCard: {
       flex: 1,
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
       padding: spacing.lg,
       alignItems: "center",
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 2,
+      shadowRadius: 12,
+      elevation: 3,
+    },
+    statIconCircle: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: spacing.sm,
     },
     statValue: {
-      fontSize: 36,
+      fontSize: 28,
       color: colors.violet,
       ...fonts.medium,
     },
@@ -81,22 +99,22 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       color: colors.muted,
       ...fonts.medium,
       textTransform: "uppercase",
-      letterSpacing: 1,
+      letterSpacing: 0.8,
       marginTop: 2,
     },
     helpCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
       padding: spacing.lg,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: spacing.sm,
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 2,
+      shadowRadius: 12,
+      elevation: 3,
     },
     helpTitle: {
       fontSize: 15,
@@ -110,20 +128,19 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       marginTop: 2,
     },
     dismissBtn: {
-      borderWidth: 1.5,
-      borderColor: colors.violet,
+      backgroundColor: colors.violet50,
       borderRadius: radius.pill,
       paddingHorizontal: 14,
-      paddingVertical: 6,
+      paddingVertical: 7,
     },
     dismissText: {
       fontSize: 12,
       color: colors.violet,
       ...fonts.medium,
     },
-    section: { marginTop: spacing.xxl },
+    section: { marginTop: spacing.xl },
     noItems: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
       paddingVertical: spacing.md,
@@ -131,24 +148,32 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
     readRow: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: spacing.sm + 2,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.surface,
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.sm,
       gap: spacing.md,
-      minHeight: 48,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
     },
-    dot: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: colors.border,
+    dotCircle: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
     },
-    dotDone: { backgroundColor: colors.violet },
+    dotCircleDone: { backgroundColor: colors.violet },
     readRowBody: { flex: 1 },
     readLabel: {
       fontSize: 15,
       color: colors.text,
-      ...fonts.regular,
+      ...fonts.medium,
     },
     readLabelDone: {
       color: colors.muted,
@@ -164,26 +189,27 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[...gradients.primary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.backBar}
-      >
-        <TouchableOpacity onPress={onBack} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+      {/* White back bar */}
+      <View style={styles.backBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.backText}>Patients</Text>
         <Text style={styles.patientTitle}>{patientName}</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
+            <View style={styles.statIconCircle}>
+              <Ionicons name="calendar-clear-outline" size={16} color={colors.violet} />
+            </View>
             <Text style={styles.statValue}>{routineDone}/{tasks.length}</Text>
             <Text style={styles.statLabel}>Routine Done</Text>
           </View>
           <View style={styles.statCard}>
+            <View style={styles.statIconCircle}>
+              <Ionicons name="medkit-outline" size={16} color={colors.violet} />
+            </View>
             <Text style={styles.statValue}>{medsDone}/{meds.length}</Text>
             <Text style={styles.statLabel}>Meds Taken</Text>
           </View>
@@ -213,16 +239,15 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
           ) : (
             tasks.map((task) => (
               <View key={task.id} style={styles.readRow}>
-                <View style={[styles.dot, isCompletedToday(task) && styles.dotDone]} />
+                <View style={[styles.dotCircle, isCompletedToday(task) && styles.dotCircleDone]}>
+                  {isCompletedToday(task) && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                </View>
                 <View style={styles.readRowBody}>
                   <Text style={[styles.readLabel, isCompletedToday(task) && styles.readLabelDone]}>
                     {task.label}
                   </Text>
                   <Text style={styles.readTime}>{task.time}</Text>
                 </View>
-                {isCompletedToday(task) && (
-                  <Ionicons name="checkmark" size={16} color={colors.violet} />
-                )}
               </View>
             ))
           )}
@@ -235,16 +260,15 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
           ) : (
             meds.map((med) => (
               <View key={med.id} style={styles.readRow}>
-                <View style={[styles.dot, isTakenToday(med) && styles.dotDone]} />
+                <View style={[styles.dotCircle, isTakenToday(med) && styles.dotCircleDone]}>
+                  {isTakenToday(med) && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                </View>
                 <View style={styles.readRowBody}>
                   <Text style={[styles.readLabel, isTakenToday(med) && styles.readLabelDone]}>
                     {med.name}
                   </Text>
                   <Text style={styles.readTime}>{med.dosage} · {med.time}</Text>
                 </View>
-                {isTakenToday(med) && (
-                  <Ionicons name="checkmark" size={16} color={colors.violet} />
-                )}
               </View>
             ))
           )}

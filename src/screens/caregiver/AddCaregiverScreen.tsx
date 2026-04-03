@@ -40,29 +40,44 @@ export function AddCaregiverScreen() {
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 100 },
-    codeCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      padding: spacing.xl,
-      alignItems: "center",
-      marginBottom: spacing.xxl,
-      shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 2,
+
+    // Screen header
+    screenHeader: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
     },
-    codeLabel: {
-      fontSize: 13,
+    screenTitle: {
+      fontSize: 28,
       color: colors.text,
       ...fonts.medium,
-      marginBottom: spacing.sm,
+    },
+
+    codeCard: {
+      backgroundColor: colors.bg,
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      alignItems: "center",
+      marginBottom: spacing.xl,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 3,
+    },
+    codeLabel: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.medium,
+      letterSpacing: 1.2,
+      textTransform: "uppercase",
+      marginBottom: spacing.md,
     },
     codeValue: {
-      fontSize: 36,
+      fontSize: 34,
       color: colors.violet,
       ...fonts.medium,
-      letterSpacing: 8,
+      letterSpacing: 10,
       marginBottom: spacing.md,
     },
     codeHint: {
@@ -73,30 +88,30 @@ export function AddCaregiverScreen() {
       lineHeight: 19,
     },
     profileCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
       padding: spacing.lg,
       flexDirection: "row",
       alignItems: "center",
       marginBottom: spacing.sm,
       gap: spacing.md,
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 1,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.07,
+      shadowRadius: 10,
+      elevation: 2,
     },
     profileAvatar: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor: colors.violet,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.violet50,
       alignItems: "center",
       justifyContent: "center",
     },
     profileInitial: {
       fontSize: 18,
-      color: "#FFFFFF",
+      color: colors.violet,
       ...fonts.medium,
     },
     profileInfo: { flex: 1 },
@@ -114,8 +129,12 @@ export function AddCaregiverScreen() {
   }), [colors]);
 
   return (
+    <View style={styles.container}>
+    <View style={styles.screenHeader}>
+      <Text style={styles.screenTitle}>Care Team</Text>
+    </View>
     <ScrollView
-      style={styles.container}
+      style={{ flex: 1 }}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
@@ -170,5 +189,6 @@ export function AddCaregiverScreen() {
         ))
       )}
     </ScrollView>
+    </View>
   );
 }

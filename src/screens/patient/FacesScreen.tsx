@@ -102,9 +102,30 @@ export function FacesScreen() {
   const showFAB = !loading && (offline || people.length > 0);
   const showEmptyCTA = !loading && !offline && people.length === 0;
 
+  // Colors for avatar backgrounds — cycles through a palette
+  const avatarColors = ["#7B5CE7", "#5A40D0", "#A695F5", "#8B6ED0", "#6B4FC8"];
+
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 120 },
+
+    // Screen header
+    screenHeader: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.xl,
+    },
+    screenTitle: {
+      fontSize: 28,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    screenSubtitle: {
+      fontSize: 14,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 4,
+    },
 
     /* Empty CTA */
     emptyCTA: {
@@ -113,9 +134,9 @@ export function FacesScreen() {
       gap: spacing.md,
     },
     bigAddBtn: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
+      width: 88,
+      height: 88,
+      borderRadius: 44,
       backgroundColor: colors.violet,
       alignItems: "center",
       justifyContent: "center",
@@ -127,12 +148,12 @@ export function FacesScreen() {
       marginBottom: spacing.sm,
     },
     emptyCTATitle: {
-      fontSize: 24,
+      fontSize: 22,
       color: colors.text,
       ...fonts.medium,
     },
     emptyCTASubtitle: {
-      fontSize: 15,
+      fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
@@ -161,43 +182,55 @@ export function FacesScreen() {
     grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
     faceCard: {
       width: "47%",
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
+      backgroundColor: colors.bg,
+      borderRadius: radius.xl,
       padding: spacing.lg,
       alignItems: "center",
       gap: spacing.xs,
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
-      shadowRadius: 8,
-      elevation: 2,
+      shadowRadius: 12,
+      elevation: 3,
     },
     faceInitials: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: colors.violet,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: spacing.xs,
+      marginBottom: spacing.sm,
     },
-    faceInitialsText: { fontSize: 28, color: "#FFFFFF", ...fonts.medium },
-    faceName: { fontSize: 16, color: colors.text, ...fonts.medium, textAlign: "center" },
-    faceRelation: { fontSize: 13, color: colors.lavender, ...fonts.regular, textAlign: "center" },
-    faceHint: { fontSize: 11, color: colors.muted, ...fonts.regular },
+    faceInitialsText: { fontSize: 26, color: "#FFFFFF", ...fonts.medium },
+    faceName: { fontSize: 15, color: colors.text, ...fonts.medium, textAlign: "center" },
+    faceRelation: { fontSize: 12, color: colors.violet, ...fonts.regular, textAlign: "center" },
+    faceHint: { fontSize: 11, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
 
     /* Modal */
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(43,35,64,0.3)",
+      backgroundColor: "rgba(30,27,58,0.45)",
       justifyContent: "flex-end",
     },
     modalSheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
       padding: spacing.xxl,
       gap: spacing.sm,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 20,
+    },
+    modalHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      alignSelf: "center",
+      marginBottom: spacing.lg,
     },
     modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
     photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
@@ -207,19 +240,19 @@ export function FacesScreen() {
       borderWidth: 1.5,
       borderColor: colors.violet,
       borderStyle: "dashed",
-      borderRadius: radius.md,
+      borderRadius: radius.lg,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: spacing.sm,
     },
-    photoPlaceholderText: { fontSize: 16, color: colors.violet, ...fonts.medium },
+    photoPlaceholderText: { fontSize: 15, color: colors.violet, ...fonts.medium },
     photoTaken: {
       height: 80,
       backgroundColor: colors.violet50,
       borderWidth: 1.5,
       borderColor: colors.violet,
-      borderRadius: radius.md,
+      borderRadius: radius.lg,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
@@ -227,53 +260,55 @@ export function FacesScreen() {
     },
     photoTakenText: { fontSize: 14, color: colors.violet, ...fonts.medium },
     fieldLabel: {
-      fontSize: 10,
+      fontSize: 11,
       color: colors.muted,
       ...fonts.medium,
-      letterSpacing: 1.5,
+      letterSpacing: 1.2,
       textTransform: "uppercase",
       marginTop: spacing.md,
       marginBottom: spacing.xs,
     },
     input: {
-      height: 56,
-      backgroundColor: colors.bg,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.md,
+      height: 54,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
       paddingHorizontal: spacing.lg,
-      fontSize: 20,
+      fontSize: 16,
       color: colors.text,
       ...fonts.regular,
     },
-    error: { fontSize: 14, color: colors.violet, ...fonts.regular, marginTop: spacing.xs },
+    error: { fontSize: 13, color: "#E05050", ...fonts.regular, marginTop: spacing.xs },
     modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
     btnOutline: {
       flex: 1,
-      height: 56,
+      height: 54,
       borderWidth: 1.5,
-      borderColor: colors.violet,
+      borderColor: colors.border,
       borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
-    btnOutlineText: { fontSize: 17, color: colors.violet, ...fonts.medium },
+    btnOutlineText: { fontSize: 16, color: colors.text, ...fonts.medium },
     btnPrimary: {
       flex: 1,
-      height: 56,
+      height: 54,
       backgroundColor: colors.violet,
       borderRadius: radius.pill,
       alignItems: "center",
       justifyContent: "center",
     },
     btnDisabled: { opacity: 0.6 },
-    btnPrimaryText: { fontSize: 17, color: "#FFFFFF", ...fonts.medium },
+    btnPrimaryText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (
     <View style={styles.container}>
+      {/* Screen Header */}
+      <View style={styles.screenHeader}>
+        <Text style={styles.screenTitle}>Known Faces</Text>
+        <Text style={styles.screenSubtitle}>People the glasses will recognize</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <SectionHeader label="People I Know" />
 
         {loading ? (
           <ActivityIndicator color={colors.violet} style={{ marginTop: 40 }} />
@@ -299,13 +334,14 @@ export function FacesScreen() {
           </View>
         ) : (
           <View style={styles.grid}>
-            {people.map((person) => {
+            {people.map((person, idx) => {
               const initials = person.name
                 .split(" ")
                 .map((w) => w[0])
                 .join("")
                 .slice(0, 2)
                 .toUpperCase();
+              const bgColor = avatarColors[idx % avatarColors.length];
               return (
                 <TouchableOpacity
                   key={person.id ?? person._id}
@@ -313,7 +349,7 @@ export function FacesScreen() {
                   onLongPress={() => handleDelete(person)}
                   activeOpacity={0.85}
                 >
-                  <View style={styles.faceInitials}>
+                  <View style={[styles.faceInitials, { backgroundColor: bgColor }]}>
                     <Text style={styles.faceInitialsText}>{initials}</Text>
                   </View>
                   <Text style={styles.faceName}>{person.name}</Text>
@@ -344,6 +380,7 @@ export function FacesScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Add a Face</Text>
 
             <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>

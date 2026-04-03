@@ -69,15 +69,15 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
 
   const styles = useMemo(() => StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      padding: 18,
+      backgroundColor: colors.bg,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
       marginBottom: spacing.md,
       shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 2,
+      shadowRadius: 12,
+      elevation: 3,
     },
     header: {
       flexDirection: "row",

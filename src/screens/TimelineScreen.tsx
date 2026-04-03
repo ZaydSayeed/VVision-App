@@ -35,19 +35,37 @@ export function TimelineScreen({
     content: {
       paddingBottom: 100,
     },
+    // Screen header
+    screenHeader: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
+    },
+    screenTitle: {
+      fontSize: 28,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    screenSubtitle: {
+      fontSize: 14,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 4,
+    },
     statsStrip: {
-      paddingVertical: 14,
-      backgroundColor: colors.surface,
+      paddingVertical: spacing.md,
+      backgroundColor: colors.bg,
     },
     statsContent: {
       paddingHorizontal: spacing.xl,
-      gap: spacing.sm,
+      gap: spacing.md,
     },
     section: {
       paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
     },
     sectionLabel: {
-      fontSize: 13,
+      fontSize: 18,
       color: colors.text,
       ...fonts.medium,
       paddingVertical: spacing.sm,
@@ -76,6 +94,12 @@ export function TimelineScreen({
         />
       }
     >
+      {/* Screen Header */}
+      <View style={styles.screenHeader}>
+        <Text style={styles.screenTitle}>Timeline</Text>
+        <Text style={styles.screenSubtitle}>{new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}</Text>
+      </View>
+
       {/* Stats Strip */}
       <ScrollView
         horizontal

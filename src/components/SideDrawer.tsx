@@ -16,8 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { getMyLinkCode } from "../api/client";
-import { fonts, spacing, radius, gradients } from "../config/theme";
-import { LinearGradient } from "expo-linear-gradient";
+import { fonts, spacing, radius } from "../config/theme";
 
 const DRAWER_WIDTH = Dimensions.get("window").width * 0.78;
 
@@ -28,7 +27,7 @@ interface SideDrawerProps {
 
 export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const { user, logout } = useAuth();
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors, toggleTheme, isDark } = useTheme();
   const [linkCode, setLinkCode] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
 
@@ -74,21 +73,18 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
         </TouchableWithoutFeedback>
 
         <Animated.View
-          style={[styles.drawer, { transform: [{ translateX: slideAnim }] }]}
+          style={[styles.drawer, { backgroundColor: colors.bg, transform: [{ translateX: slideAnim }] }]}
         >
           {/* Header */}
-          <LinearGradient
-            colors={isDark ? [...gradients.dark] : [...gradients.primary]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.drawerHeader}
-          >
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>{initials}</Text>
+          <View style={[styles.drawerHeader, { borderBottomColor: colors.border }]}>
+            <View style={[styles.avatarCircle, { backgroundColor: colors.violet50 }]}>
+              <Text style={[styles.avatarText, { color: colors.violet }]}>{initials}</Text>
             </View>
-            <Text style={styles.userName}>{user?.name}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
-          </LinearGradient>
+            <View style={styles.userInfo}>
+              <Text style={[styles.userName, { color: colors.text }]}>{user?.name}</Text>
+              <Text style={[styles.userEmail, { color: colors.muted }]}>{user?.email}</Text>
+            </View>
+          </View>
 
           <ScrollView style={[styles.drawerBody, { backgroundColor: colors.bg }]}>
             {/* Link code (patient only) */}
@@ -149,7 +145,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   drawer: {
     position: "absolute",
@@ -157,39 +153,42 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: DRAWER_WIDTH,
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
+    shadowOffset: { width: 6, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
     elevation: 16,
   },
   drawerHeader: {
-    paddingTop: 60,
+    paddingTop: 64,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
   },
   avatarCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.md,
   },
   avatarText: {
-    fontSize: 22,
-    color: "#FFFFFF",
+    fontSize: 20,
     ...fonts.medium,
   },
+  userInfo: { flex: 1 },
   userName: {
-    fontSize: 20,
-    color: "#FFFFFF",
+    fontSize: 18,
     ...fonts.medium,
   },
   userEmail: {
     fontSize: 13,
-    color: "rgba(255,255,255,0.75)",
     ...fonts.regular,
     marginTop: 2,
   },
@@ -206,7 +205,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   linkCode: {
-    fontSize: 28,
+    fontSize: 26,
     ...fonts.medium,
     letterSpacing: 8,
     marginBottom: spacing.xs,

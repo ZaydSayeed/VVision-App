@@ -19,10 +19,10 @@ const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Status: "home-outline",
-  Routine: "calendar-outline",
+  Routine: "calendar-clear-outline",
   Meds: "medkit-outline",
-  Faces: "person-outline",
-  Help: "alert-circle-outline",
+  Faces: "people-outline",
+  Help: "hand-left-outline",
   Profile: "person-circle-outline",
 };
 
@@ -32,15 +32,20 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
       backgroundColor: "#FFFFFF",
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-      height: 88,
+      borderTopWidth: 0,
+      height: 84,
       paddingTop: 8,
       paddingBottom: 20,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 12,
+      elevation: 8,
     },
     tabLabel: {
       fontSize: 10,
       ...fonts.medium,
+      letterSpacing: 0.5,
     },
     fabWrapper: {
       flex: 1,
@@ -48,7 +53,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       justifyContent: "center",
     },
     fabButton: {
-      top: -20,
+      top: -18,
       width: 60,
       height: 60,
       borderRadius: 30,
@@ -56,10 +61,10 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       alignItems: "center",
       justifyContent: "center",
       shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.4,
-      shadowRadius: 10,
-      elevation: 8,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.45,
+      shadowRadius: 14,
+      elevation: 10,
     },
   }), [colors]);
 
@@ -76,7 +81,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
           </Text>
         ),
         tabBarIcon: ({ color }) => (
-          <Ionicons name={iconNames[route.name]} size={22} color={color} />
+          <Ionicons name={iconNames[route.name]} size={24} color={color} />
         ),
       })}
     >

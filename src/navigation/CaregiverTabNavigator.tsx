@@ -30,16 +30,20 @@ export function CaregiverTabNavigator() {
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
       backgroundColor: "#FFFFFF",
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-      height: 88,
+      borderTopWidth: 0,
+      height: 84,
       paddingTop: 8,
       paddingBottom: 20,
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 12,
+      elevation: 8,
     },
     tabLabel: {
       fontSize: 10,
       ...fonts.medium,
-      letterSpacing: 0.8,
+      letterSpacing: 0.5,
     },
     tabIcon: {},
     tabBadge: {
@@ -60,7 +64,7 @@ export function CaregiverTabNavigator() {
           </Text>
         ),
         tabBarIcon: ({ color, size }) => (
-          <Ionicons name={iconNames[route.name]} size={22} color={color} />
+          <Ionicons name={iconNames[route.name]} size={24} color={color} />
         ),
         tabBarBadge:
           route.name === "Alerts" && (alerts.length + pendingCount) > 0

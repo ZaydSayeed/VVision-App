@@ -58,18 +58,21 @@ export function RootNavigator() {
 }
 
 function Header({ onOpenDrawer }: { onOpenDrawer: () => void }) {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
+  const [clock, setClock] = useState(new Date());
 
-  const gradientColors = isDark ? gradients.dark : gradients.primary;
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const timeStr = clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const dateStr = clock.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
 
   return (
-    <LinearGradient
-      colors={[...gradientColors]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={headerStyles.gradient}
-    >
-      <View style={headerStyles.inner}>
+    <View style={[headerStyles.wrap, { backgroundColor: colors.bg }]}>
+      {/* Logo row */}
+      <View style={[headerStyles.bar, { shadowColor: colors.border }]}>
         <TouchableOpacity
           style={headerStyles.logo}
           onPress={onOpenDrawer}
@@ -80,45 +83,74 @@ function Header({ onOpenDrawer }: { onOpenDrawer: () => void }) {
             style={headerStyles.logoIcon}
             resizeMode="contain"
           />
-          <View style={headerStyles.logoWordmark}>
-            <Text style={headerStyles.logoText}>Vela Vision</Text>
-          </View>
-          <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.7)" style={{ marginLeft: 4 }} />
+          <Text style={[headerStyles.logoText, { color: colors.text }]}>Vela Vision</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onOpenDrawer} activeOpacity={0.7} style={headerStyles.menuBtn}>
+          <Ionicons name="menu-outline" size={26} color={colors.text} />
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+
+      {/* Time banner */}
+      <LinearGradient
+        colors={isDark ? [...gradients.dark] : [...gradients.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={headerStyles.timeBanner}
+      >
+        <Text style={headerStyles.timeText}>{timeStr}</Text>
+        <Text style={headerStyles.dateText}>{dateStr}</Text>
+      </LinearGradient>
+    </View>
   );
 }
 
 const headerStyles = StyleSheet.create({
-  gradient: {
+  wrap: {
+    zIndex: 10,
+  },
+  bar: {
     paddingTop: 54,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.md,
-  },
-  inner: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   logo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   logoIcon: {
-    width: 32,
-    height: 32,
-  },
-  logoWordmark: {
-    borderLeftWidth: 0.4,
-    borderLeftColor: "rgba(255,255,255,0.4)",
-    paddingLeft: 10,
-    marginLeft: 2,
+    width: 28,
+    height: 28,
   },
   logoText: {
-    fontSize: 18,
-    color: "#FFFFFF",
+    fontSize: 17,
     ...fonts.medium,
     letterSpacing: 0.2,
+  },
+  menuBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timeBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  timeText: {
+    fontSize: 22,
+    color: "#FFFFFF",
+    ...fonts.medium,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.85)",
+    ...fonts.regular,
   },
 });

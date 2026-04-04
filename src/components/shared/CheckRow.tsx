@@ -10,19 +10,21 @@ interface CheckRowProps {
   checked: boolean;
   onToggle: () => void;
   onDelete?: () => void;
+  accentColor?: string;
 }
 
-export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: CheckRowProps) {
+export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentColor }: CheckRowProps) {
   const { colors } = useTheme();
+  const accent = accentColor ?? colors.violet;
 
   const styles = useMemo(() => StyleSheet.create({
     row: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: spacing.lg,
+      paddingVertical: 18,
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
-      minHeight: 64,
+      minHeight: 72,
       backgroundColor: colors.bg,
       borderRadius: radius.lg,
       marginBottom: spacing.md,
@@ -33,69 +35,66 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete }: Check
       elevation: 3,
     },
     checkbox: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: 44,
+      height: 44,
+      borderRadius: 14,
       borderWidth: 2,
       borderColor: colors.border,
       backgroundColor: colors.surface,
       alignItems: "center",
       justifyContent: "center",
     },
-    checkboxChecked: {
-      backgroundColor: colors.violet,
-      borderColor: colors.violet,
-    },
-    checkmark: {},
     labelWrap: {
       flex: 1,
     },
     label: {
-      fontSize: 16,
+      fontSize: 20,
       color: colors.text,
       ...fonts.medium,
+      lineHeight: 26,
     },
     labelChecked: {
       textDecorationLine: "line-through",
       color: colors.muted,
     },
     subLabel: {
-      fontSize: 13,
+      fontSize: 16,
       color: colors.muted,
       ...fonts.regular,
-      marginTop: 2,
+      marginTop: 3,
+    },
+    subLabelChecked: {
+      opacity: 0.45,
     },
     deleteBtn: {
-      width: 32,
-      height: 32,
+      width: 36,
+      height: 36,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.surface,
-      borderRadius: 16,
+      borderRadius: 18,
     },
-    deleteText: {},
   }), [colors]);
+
+  const checkboxStyle = [
+    styles.checkbox,
+    checked && { backgroundColor: accent, borderColor: accent },
+  ];
 
   return (
     <View style={styles.row}>
-      <TouchableOpacity
-        style={[styles.checkbox, checked && styles.checkboxChecked]}
-        onPress={onToggle}
-        activeOpacity={0.8}
-      >
-        {checked && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+      <TouchableOpacity style={checkboxStyle} onPress={onToggle} activeOpacity={0.8}>
+        {checked && <Ionicons name="checkmark" size={22} color="#FFFFFF" />}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.labelWrap} onPress={onToggle} activeOpacity={0.8}>
         <Text style={[styles.label, checked && styles.labelChecked]}>{label}</Text>
-        {subLabel ? (
-          <Text style={styles.subLabel}>{subLabel}</Text>
-        ) : null}
+        {subLabel ? <Text style={[styles.subLabel, checked && styles.subLabelChecked]}>{subLabel}</Text> : null}
       </TouchableOpacity>
 
       {onDelete ? (
         <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-          <Ionicons name="close" size={16} color={colors.muted} />
+          <Ionicons name="close" size={18} color={colors.muted} />
         </TouchableOpacity>
       ) : null}
     </View>

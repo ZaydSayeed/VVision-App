@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { getMyLinkCode } from "../api/client";
-import { fonts, spacing, radius } from "../config/theme";
+import { fonts, spacing, radius, colors } from "../config/theme";
 
 const DRAWER_WIDTH = Dimensions.get("window").width * 0.78;
 
@@ -156,9 +156,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     borderBottomRightRadius: 24,
     overflow: "hidden",
-    shadowColor: "#000",
+    shadowColor: colors.violet,
     shadowOffset: { width: 6, height: 0 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 20,
     elevation: 16,
   },

@@ -2,12 +2,10 @@ import React, { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { PatientStatusScreen } from "../screens/caregiver/PatientStatusScreen";
-import { RoutineScreen } from "../screens/patient/RoutineScreen";
-import { MedsScreen } from "../screens/patient/MedsScreen";
+import { LinearGradient } from "expo-linear-gradient";
+import { TodayScreen } from "../screens/patient/TodayScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
 import { HelpScreen } from "../screens/patient/HelpScreen";
-import { SettingsScreen } from "../screens/patient/SettingsScreen";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 
@@ -18,12 +16,9 @@ interface PatientTabNavigatorProps {
 const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Status: "home-outline",
-  Routine: "calendar-clear-outline",
-  Meds: "medkit-outline",
-  Faces: "people-outline",
-  Help: "hand-left-outline",
-  Profile: "person-circle-outline",
+  Today: "home",
+  Faces: "people",
+  Help: "hand-left",
 };
 
 export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
@@ -31,21 +26,20 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
-      backgroundColor: "#FFFFFF",
+      backgroundColor: colors.warm,
       borderTopWidth: 0,
-      height: 84,
+      height: 88,
       paddingTop: 8,
-      paddingBottom: 20,
-      shadowColor: "#7B5CE7",
+      paddingBottom: 22,
+      shadowColor: "#000",
       shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.06,
+      shadowOpacity: 0.05,
       shadowRadius: 12,
       elevation: 8,
     },
     tabLabel: {
-      fontSize: 10,
+      fontSize: 13,
       ...fonts.medium,
-      letterSpacing: 0.5,
     },
     fabWrapper: {
       flex: 1,
@@ -53,18 +47,25 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       justifyContent: "center",
     },
     fabButton: {
-      top: -18,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: colors.violet,
+      top: -20,
+      width: 64,
+      height: 64,
+      borderRadius: 32,
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: colors.violet,
+      shadowColor: colors.coral,
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.45,
       shadowRadius: 14,
       elevation: 10,
+      overflow: "hidden",
+    },
+    fabGradient: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: "center",
+      justifyContent: "center",
     },
   }), [colors]);
 
@@ -77,26 +78,29 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         tabBarInactiveTintColor: colors.muted,
         tabBarLabel: ({ color }) => (
           <Text style={[styles.tabLabel, { color }]}>
-            {route.name.toUpperCase()}
+            {route.name}
           </Text>
         ),
         tabBarIcon: ({ color }) => (
-          <Ionicons name={iconNames[route.name]} size={24} color={color} />
+          <Ionicons name={iconNames[route.name]} size={28} color={color} />
         ),
       })}
     >
-      <Tab.Screen name="Status" component={PatientStatusScreen} />
-      <Tab.Screen name="Routine" component={RoutineScreen} />
+      <Tab.Screen name="Today" component={TodayScreen} />
       <Tab.Screen
         name="Help"
         options={{
           tabBarButton: (props) => (
             <View style={styles.fabWrapper}>
-              <TouchableOpacity
-                onPress={props.onPress}
-                style={styles.fabButton}
-              >
-                <Ionicons name="alert-circle-outline" size={28} color="#FFFFFF" />
+              <TouchableOpacity onPress={props.onPress} style={styles.fabButton}>
+                <LinearGradient
+                  colors={["#D95F5F", "#E87878"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.fabGradient}
+                >
+                  <Ionicons name="hand-left" size={28} color="#FFFFFF" />
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           ),
@@ -104,7 +108,6 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       >
         {() => <HelpScreen patientName={patientName} />}
       </Tab.Screen>
-      <Tab.Screen name="Meds" component={MedsScreen} />
       <Tab.Screen name="Faces" component={FacesScreen} />
     </Tab.Navigator>
   );

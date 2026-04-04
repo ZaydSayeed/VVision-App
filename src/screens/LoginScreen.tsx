@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { UserRole } from "../types";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { fonts, spacing, radius } from "../config/theme";
 
 export function LoginScreen() {
+  const { colors } = useTheme();
   const { login, signup } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
@@ -26,23 +29,14 @@ export function LoginScreen() {
 
   async function handleSubmit() {
     setError("");
-
     if (!email.trim() || !password.trim()) {
       setError("Please enter your email and password.");
       return;
     }
-
     if (mode === "signup") {
-      if (!name.trim()) {
-        setError("Please enter your name.");
-        return;
-      }
-      if (!role) {
-        setError("Please select your role.");
-        return;
-      }
+      if (!name.trim()) { setError("Please enter your name."); return; }
+      if (!role) { setError("Please select your role."); return; }
     }
-
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -52,17 +46,196 @@ export function LoginScreen() {
       }
     } catch (e: any) {
       let msg = "Something went wrong.";
-      try {
-        const parsed = JSON.parse(e.message);
-        msg = parsed.detail || msg;
-      } catch {
-        msg = e.message || msg;
-      }
+      try { const parsed = JSON.parse(e.message); msg = parsed.detail || msg; } catch { msg = e.message || msg; }
       setError(msg);
     } finally {
       setLoading(false);
     }
   }
+
+  const styles = useMemo(() => StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    container: {
+      flexGrow: 1,
+      paddingHorizontal: spacing.xxl,
+      paddingTop: spacing.xxxxl,
+      paddingBottom: spacing.xxxxl,
+      backgroundColor: colors.bg,
+    },
+
+    // ── Brand ────────────────────────────────────────────────
+    brandSection: {
+      alignItems: "center",
+      marginBottom: spacing.xxxl,
+    },
+    logoCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: spacing.md,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.18,
+      shadowRadius: 14,
+      elevation: 5,
+    },
+    logoIcon: { width: 48, height: 48 },
+    logoText: {
+      fontSize: 24,
+      color: colors.text,
+      ...fonts.medium,
+      letterSpacing: 0.3,
+    },
+    tagline: {
+      fontSize: 15,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: spacing.xs,
+      textAlign: "center",
+    },
+
+    // ── Mode toggle ──────────────────────────────────────────
+    modeToggle: {
+      flexDirection: "row",
+      backgroundColor: colors.surface,
+      borderRadius: radius.pill,
+      padding: 4,
+      marginBottom: spacing.xxl,
+    },
+    modeBtn: {
+      flex: 1,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: radius.pill,
+    },
+    modeBtnActive: {
+      backgroundColor: colors.violet,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    modeBtnText: {
+      fontSize: 15,
+      color: colors.muted,
+      ...fonts.medium,
+    },
+    modeBtnTextActive: {
+      color: "#FFFFFF",
+    },
+
+    // ── Headline ─────────────────────────────────────────────
+    headline: {
+      fontSize: 30,
+      color: colors.text,
+      ...fonts.medium,
+      marginBottom: spacing.xl,
+      lineHeight: 36,
+    },
+
+    // ── Fields ───────────────────────────────────────────────
+    fieldGroup: { marginBottom: spacing.lg },
+    fieldLabel: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.medium,
+      letterSpacing: 1.2,
+      textTransform: "uppercase",
+      marginBottom: spacing.sm,
+    },
+    input: {
+      height: 56,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.lg,
+      fontSize: 16,
+      color: colors.text,
+      ...fonts.regular,
+    },
+
+    // ── Role selection ───────────────────────────────────────
+    roleRow: { flexDirection: "row", gap: spacing.md },
+    roleCard: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: 2,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      alignItems: "center",
+      gap: spacing.sm,
+    },
+    roleCardActive: {
+      backgroundColor: colors.violet50,
+      borderColor: colors.violet,
+    },
+    roleIconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.bg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    roleIconCircleActive: {
+      backgroundColor: colors.violet50,
+    },
+    roleTitle: {
+      fontSize: 16,
+      color: colors.muted,
+      ...fonts.medium,
+    },
+    roleTitleActive: { color: colors.violet },
+    roleSubtitle: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      textAlign: "center",
+      lineHeight: 16,
+    },
+    roleSubtitleActive: { color: colors.subtext },
+
+    // ── Error ────────────────────────────────────────────────
+    error: {
+      fontSize: 14,
+      color: "#E05050",
+      ...fonts.regular,
+      marginBottom: spacing.md,
+      textAlign: "center",
+      backgroundColor: "#FEF0F0",
+      borderRadius: radius.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      overflow: "hidden",
+    },
+
+    // ── Submit ───────────────────────────────────────────────
+    btn: {
+      height: 58,
+      backgroundColor: colors.violet,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: spacing.sm,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.38,
+      shadowRadius: 14,
+      elevation: 7,
+    },
+    btnDisabled: { opacity: 0.7 },
+    btnText: {
+      fontSize: 17,
+      color: "#FFFFFF",
+      ...fonts.medium,
+      letterSpacing: 0.2,
+    },
+  }), [colors]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -71,7 +244,7 @@ export function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Logo + Branding */}
+        {/* Brand */}
         <View style={styles.brandSection}>
           <View style={styles.logoCircle}>
             <Image
@@ -84,7 +257,7 @@ export function LoginScreen() {
           <Text style={styles.tagline}>Care made calm and simple.</Text>
         </View>
 
-        {/* Mode toggle pill */}
+        {/* Mode toggle */}
         <View style={styles.modeToggle}>
           <TouchableOpacity
             style={[styles.modeBtn, mode === "login" && styles.modeBtnActive]}
@@ -110,13 +283,13 @@ export function LoginScreen() {
         {/* Name (signup only) */}
         {mode === "signup" && (
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>YOUR NAME</Text>
+            <Text style={styles.fieldLabel}>Your Name</Text>
             <TextInput
               style={styles.input}
               value={name}
               onChangeText={setName}
               placeholder="e.g. Sarah Johnson"
-              placeholderTextColor="#B0AABF"
+              placeholderTextColor={colors.muted}
               autoCapitalize="words"
               returnKeyType="next"
             />
@@ -125,13 +298,13 @@ export function LoginScreen() {
 
         {/* Email */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>EMAIL</Text>
+          <Text style={styles.fieldLabel}>Email</Text>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor="#B0AABF"
+            placeholderTextColor={colors.muted}
             autoCapitalize="none"
             keyboardType="email-address"
             returnKeyType="next"
@@ -140,34 +313,35 @@ export function LoginScreen() {
 
         {/* Password */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>PASSWORD</Text>
+          <Text style={styles.fieldLabel}>Password</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor="#B0AABF"
+            placeholderTextColor={colors.muted}
             secureTextEntry
             returnKeyType={mode === "login" ? "go" : "next"}
             onSubmitEditing={mode === "login" ? handleSubmit : undefined}
           />
         </View>
 
-        {/* Role Selection (signup only) */}
+        {/* Role selection (signup only) */}
         {mode === "signup" && (
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>I AM A</Text>
+            <Text style={styles.fieldLabel}>I am a</Text>
             <View style={styles.roleRow}>
               <TouchableOpacity
                 style={[styles.roleCard, role === "patient" && styles.roleCardActive]}
                 onPress={() => setRole("patient")}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.roleTitle, role === "patient" && styles.roleTitleActive]}>
-                  Patient
-                </Text>
+                <View style={[styles.roleIconCircle, role === "patient" && styles.roleIconCircleActive]}>
+                  <Ionicons name="heart" size={22} color={role === "patient" ? colors.violet : colors.muted} />
+                </View>
+                <Text style={[styles.roleTitle, role === "patient" && styles.roleTitleActive]}>Patient</Text>
                 <Text style={[styles.roleSubtitle, role === "patient" && styles.roleSubtitleActive]}>
-                  Daily routines & reminders
+                  Daily routines{"\n"}& reminders
                 </Text>
               </TouchableOpacity>
 
@@ -176,11 +350,12 @@ export function LoginScreen() {
                 onPress={() => setRole("caregiver")}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.roleTitle, role === "caregiver" && styles.roleTitleActive]}>
-                  Caregiver
-                </Text>
+                <View style={[styles.roleIconCircle, role === "caregiver" && styles.roleIconCircleActive]}>
+                  <Ionicons name="shield-checkmark" size={22} color={role === "caregiver" ? colors.violet : colors.muted} />
+                </View>
+                <Text style={[styles.roleTitle, role === "caregiver" && styles.roleTitleActive]}>Caregiver</Text>
                 <Text style={[styles.roleSubtitle, role === "caregiver" && styles.roleSubtitleActive]}>
-                  Monitor & manage care
+                  Monitor{"\n"}& manage care
                 </Text>
               </TouchableOpacity>
             </View>
@@ -190,7 +365,7 @@ export function LoginScreen() {
         {/* Error */}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        {/* Submit Button */}
+        {/* Submit */}
         <TouchableOpacity
           style={[styles.btn, loading && styles.btnDisabled]}
           onPress={handleSubmit}
@@ -209,165 +384,3 @@ export function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#FFFFFF" },
-  container: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xxl,
-    paddingTop: spacing.xxxxl,
-    paddingBottom: spacing.xxxxl,
-    backgroundColor: "#FFFFFF",
-  },
-
-  // Brand
-  brandSection: {
-    alignItems: "center",
-    marginBottom: spacing.xxxl,
-  },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#F0EEFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.md,
-    shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  logoIcon: { width: 44, height: 44 },
-  logoText: {
-    fontSize: 22,
-    color: "#1E1B3A",
-    ...fonts.medium,
-    letterSpacing: 0.3,
-  },
-  tagline: {
-    fontSize: 15,
-    color: "#9590B0",
-    ...fonts.regular,
-    marginTop: spacing.xs,
-    textAlign: "center",
-  },
-
-  // Mode toggle
-  modeToggle: {
-    flexDirection: "row",
-    backgroundColor: "#F0EEFF",
-    borderRadius: radius.pill,
-    padding: 4,
-    marginBottom: spacing.xxl,
-  },
-  modeBtn: {
-    flex: 1,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radius.pill,
-  },
-  modeBtnActive: {
-    backgroundColor: "#7B5CE7",
-    shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  modeBtnText: {
-    fontSize: 15,
-    color: "#9590B0",
-    ...fonts.medium,
-  },
-  modeBtnTextActive: {
-    color: "#FFFFFF",
-  },
-
-  headline: {
-    fontSize: 26,
-    color: "#1E1B3A",
-    ...fonts.medium,
-    marginBottom: spacing.xl,
-  },
-
-  fieldGroup: { marginBottom: spacing.lg },
-  fieldLabel: {
-    fontSize: 11,
-    color: "#9590B0",
-    ...fonts.medium,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    marginBottom: spacing.sm,
-  },
-  input: {
-    height: 54,
-    backgroundColor: "#F7F5FF",
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.lg,
-    fontSize: 16,
-    color: "#1E1B3A",
-    ...fonts.regular,
-  },
-
-  roleRow: { flexDirection: "row", gap: spacing.md },
-  roleCard: {
-    flex: 1,
-    backgroundColor: "#F7F5FF",
-    borderWidth: 2,
-    borderColor: "#E8E4F5",
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    alignItems: "center",
-    gap: spacing.xs,
-  },
-  roleCardActive: {
-    backgroundColor: "#F0EEFF",
-    borderColor: "#7B5CE7",
-  },
-  roleTitle: {
-    fontSize: 16,
-    color: "#9590B0",
-    ...fonts.medium,
-  },
-  roleTitleActive: { color: "#7B5CE7" },
-  roleSubtitle: {
-    fontSize: 12,
-    color: "#B0AABF",
-    ...fonts.regular,
-    textAlign: "center",
-  },
-  roleSubtitleActive: {
-    color: "#9590B0",
-  },
-
-  error: {
-    fontSize: 13,
-    color: "#E05050",
-    ...fonts.regular,
-    marginBottom: spacing.md,
-    textAlign: "center",
-  },
-
-  btn: {
-    height: 56,
-    backgroundColor: "#7B5CE7",
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
-    shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  btnDisabled: { opacity: 0.7 },
-  btnText: {
-    fontSize: 17,
-    color: "#FFFFFF",
-    ...fonts.medium,
-  },
-});

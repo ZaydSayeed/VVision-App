@@ -19,64 +19,96 @@ interface Props {
   onAddPatient: () => void;
 }
 
+function getCompletionRatio(patient: PatientSummary): number {
+  const total = (patient.tasksTotal ?? 0) + (patient.medsTotal ?? 0);
+  if (total === 0) return 1;
+  const done = (patient.tasksDone ?? 0) + (patient.medsDone ?? 0);
+  return done / total;
+}
+
 export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props) {
   const { colors } = useTheme();
   const { patients, loading, refresh } = usePatients();
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
-    content: { padding: spacing.xl, paddingBottom: 100 },
+    content: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, paddingBottom: 100 },
 
     // Screen header
     screenHeader: {
       paddingHorizontal: spacing.xl,
       paddingTop: spacing.lg,
-      paddingBottom: spacing.lg,
+      paddingBottom: spacing.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
     },
+    headerLeft: { flex: 1 },
     screenTitle: {
       fontSize: 28,
       color: colors.text,
       ...fonts.medium,
+    },
+    patientCount: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 2,
     },
     addBtn: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.violet,
       borderRadius: radius.pill,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 10,
       gap: spacing.xs,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+      elevation: 5,
     },
     addBtnText: {
-      fontSize: 13,
+      fontSize: 14,
       color: "#FFFFFF",
       ...fonts.medium,
     },
 
+    // Card
     card: {
       backgroundColor: colors.bg,
       borderRadius: radius.xl,
-      padding: spacing.xl,
       marginBottom: spacing.md,
-      shadowColor: "#7B5CE7",
+      shadowColor: colors.violet,
       shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
+      shadowOpacity: 0.07,
+      shadowRadius: 14,
       elevation: 3,
+      overflow: "hidden",
+      flexDirection: "row",
     },
+    cardAccentStrip: {
+      width: 5,
+      borderTopLeftRadius: radius.xl,
+      borderBottomLeftRadius: radius.xl,
+    },
+    cardBody: {
+      flex: 1,
+      padding: spacing.xl,
+    },
+
+    // Card top row
     cardRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.md,
+      marginBottom: spacing.lg,
     },
     avatar: {
       width: 52,
       height: 52,
       borderRadius: 26,
-      backgroundColor: colors.violet,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -91,11 +123,17 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       color: colors.text,
       ...fonts.medium,
     },
-    patientStats: {
-      fontSize: 13,
-      color: colors.muted,
-      ...fonts.regular,
-      marginTop: 3,
+    statusPill: {
+      marginTop: 4,
+      alignSelf: "flex-start",
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+    },
+    statusPillText: {
+      fontSize: 11,
+      ...fonts.medium,
+      letterSpacing: 0.3,
     },
     chevronWrap: {
       width: 32,
@@ -106,34 +144,39 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       justifyContent: "center",
     },
 
-    // Stats below (shown on tap/expanded — keep simple for now)
-    statsRow: {
+    // Progress bars
+    progressSection: { gap: spacing.sm },
+    progressRow: { gap: 5 },
+    progressLabelRow: {
       flexDirection: "row",
-      gap: spacing.md,
-      marginTop: spacing.lg,
-      paddingTop: spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: colors.surface,
-    },
-    statBox: {
-      flex: 1,
+      justifyContent: "space-between",
       alignItems: "center",
+      marginBottom: 4,
     },
-    statValue: {
-      fontSize: 22,
-      color: colors.violet,
-      ...fonts.medium,
-    },
-    statLabel: {
-      fontSize: 10,
+    progressLabel: {
+      fontSize: 11,
       color: colors.muted,
       ...fonts.medium,
-      textTransform: "uppercase",
       letterSpacing: 0.8,
-      marginTop: 2,
-      textAlign: "center",
+      textTransform: "uppercase",
+    },
+    progressFraction: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    progressTrack: {
+      height: 6,
+      backgroundColor: colors.surface,
+      borderRadius: radius.pill,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: 6,
+      borderRadius: radius.pill,
     },
 
+    // Empty state
     emptyWrap: {
       alignItems: "center",
       paddingTop: 80,
@@ -171,10 +214,15 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
     <View style={styles.container}>
       {/* Screen Header */}
       <View style={styles.screenHeader}>
-        <Text style={styles.screenTitle}>My Patients</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.screenTitle}>My Patients</Text>
+          {patients.length > 0 && (
+            <Text style={styles.patientCount}>{patients.length} under your care</Text>
+          )}
+        </View>
         <TouchableOpacity style={styles.addBtn} onPress={onAddPatient} activeOpacity={0.85}>
           <Ionicons name="add" size={16} color="#FFFFFF" />
-          <Text style={styles.addBtnText}>Add</Text>
+          <Text style={styles.addBtnText}>Add Patient</Text>
         </TouchableOpacity>
       </View>
 
@@ -198,45 +246,97 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
             </Text>
           </View>
         ) : (
-          patients.map((patient) => (
-            <TouchableOpacity
-              key={patient.id}
-              style={styles.card}
-              onPress={() => onSelectPatient(patient)}
-              activeOpacity={0.88}
-            >
-              <View style={styles.cardRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {patient.name.charAt(0).toUpperCase()}
-                  </Text>
+          patients.map((patient) => {
+            const ratio = getCompletionRatio(patient);
+            const isGood = ratio >= 0.7;
+            const accentColor = isGood ? colors.sage : colors.amber;
+            const softColor = isGood ? colors.sageSoft : colors.amberSoft;
+
+            const taskRatio = (patient.tasksTotal ?? 0) > 0
+              ? (patient.tasksDone ?? 0) / (patient.tasksTotal ?? 1)
+              : 1;
+            const medRatio = (patient.medsTotal ?? 0) > 0
+              ? (patient.medsDone ?? 0) / (patient.medsTotal ?? 1)
+              : 1;
+
+            const statusLabel = isGood ? "On track" : "Needs attention";
+
+            return (
+              <TouchableOpacity
+                key={patient.id}
+                style={styles.card}
+                onPress={() => onSelectPatient(patient)}
+                activeOpacity={0.88}
+              >
+                {/* Left accent strip */}
+                <View style={[styles.cardAccentStrip, { backgroundColor: accentColor }]} />
+
+                <View style={styles.cardBody}>
+                  {/* Top row */}
+                  <View style={styles.cardRow}>
+                    <View style={[styles.avatar, { backgroundColor: accentColor }]}>
+                      <Text style={styles.avatarText}>
+                        {patient.name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.cardInfo}>
+                      <Text style={styles.patientName}>{patient.name}</Text>
+                      <View style={[styles.statusPill, { backgroundColor: softColor }]}>
+                        <Text style={[styles.statusPillText, { color: accentColor }]}>
+                          {statusLabel}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.chevronWrap}>
+                      <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                    </View>
+                  </View>
+
+                  {/* Progress bars */}
+                  <View style={styles.progressSection}>
+                    <View style={styles.progressRow}>
+                      <View style={styles.progressLabelRow}>
+                        <Text style={styles.progressLabel}>Routine</Text>
+                        <Text style={styles.progressFraction}>
+                          {patient.tasksDone ?? 0}/{patient.tasksTotal ?? 0}
+                        </Text>
+                      </View>
+                      <View style={styles.progressTrack}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            {
+                              width: `${Math.round(taskRatio * 100)}%`,
+                              backgroundColor: colors.sage,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.progressRow}>
+                      <View style={styles.progressLabelRow}>
+                        <Text style={styles.progressLabel}>Medications</Text>
+                        <Text style={styles.progressFraction}>
+                          {patient.medsDone ?? 0}/{patient.medsTotal ?? 0}
+                        </Text>
+                      </View>
+                      <View style={styles.progressTrack}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            {
+                              width: `${Math.round(medRatio * 100)}%`,
+                              backgroundColor: colors.amber,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  </View>
                 </View>
-                <View style={styles.cardInfo}>
-                  <Text style={styles.patientName}>{patient.name}</Text>
-                  <Text style={styles.patientStats}>
-                    {patient.tasksDone}/{patient.tasksTotal} tasks · {patient.medsDone}/{patient.medsTotal} meds
-                  </Text>
-                </View>
-                <View style={styles.chevronWrap}>
-                  <Ionicons name="chevron-forward" size={16} color={colors.muted} />
-                </View>
-              </View>
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statValue}>
-                    {patient.tasksDone}/{patient.tasksTotal}
-                  </Text>
-                  <Text style={styles.statLabel}>Routine Done</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statValue}>
-                    {patient.medsDone}/{patient.medsTotal}
-                  </Text>
-                  <Text style={styles.statLabel}>Meds Taken</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
+              </TouchableOpacity>
+            );
+          })
         )}
       </ScrollView>
     </View>

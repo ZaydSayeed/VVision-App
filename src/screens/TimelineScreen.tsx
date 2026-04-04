@@ -6,11 +6,11 @@ import {
   RefreshControl,
   StyleSheet,
 } from "react-native";
-import { StatChip } from "../components/StatChip";
-import { TimelineItem } from "../components/TimelineItem";
-import { spacing, fonts } from "../config/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { spacing, fonts, radius } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 import { DashboardStats, TimelineEvent } from "../types";
+import { formatTimeShort } from "../hooks/useDashboardData";
 
 interface TimelineScreenProps {
   stats: DashboardStats;
@@ -19,66 +19,222 @@ interface TimelineScreenProps {
   onRefresh: () => void;
 }
 
-export function TimelineScreen({
-  stats,
-  timeline,
-  loading,
-  onRefresh,
-}: TimelineScreenProps) {
+const EVENT_CONFIG: Record<
+  string,
+  {
+    borderColor: string;
+    iconName: keyof typeof Ionicons.glyphMap;
+    iconColor: string;
+    iconBg: string;
+    getTitle: (e: TimelineEvent) => string;
+    getSubtitle: (e: TimelineEvent) => string;
+  }
+> = {} as any; // built inline below to access colors
+
+function getEventStyle(type: string, colors: any) {
+  switch (type) {
+    case "seen":
+      return {
+        borderColor: colors.sage,
+        iconName: "eye" as keyof typeof Ionicons.glyphMap,
+        iconColor: colors.sage,
+        iconBg: colors.sageSoft,
+      };
+    case "alert":
+      return {
+        borderColor: colors.coral,
+        iconName: "scan-circle" as keyof typeof Ionicons.glyphMap,
+        iconColor: colors.coral,
+        iconBg: colors.coralSoft,
+      };
+    case "interaction":
+    default:
+      return {
+        borderColor: colors.violet,
+        iconName: "chatbubble" as keyof typeof Ionicons.glyphMap,
+        iconColor: colors.violet,
+        iconBg: colors.violet50,
+      };
+  }
+}
+
+function getEventTitle(event: TimelineEvent): string {
+  if (event.type === "alert") return "Unrecognized face detected";
+  if (event.type === "seen") return event.name || "Someone recognized";
+  return event.name || "Activity";
+}
+
+function getEventSubtitle(event: TimelineEvent): string {
+  if (event.type === "alert") return "AI alert · Glasses detected an unknown person";
+  if (event.type === "seen") return `${event.relation || "Contact"} · Seen ${event.count ?? 1}x today`;
+  return event.summary || "Interaction recorded";
+}
+
+export function TimelineScreen({ stats, timeline, loading, onRefresh }: TimelineScreenProps) {
   const { colors } = useTheme();
 
+  const today = new Date().toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
   const styles = useMemo(() => StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.bg,
-    },
-    content: {
-      paddingBottom: 100,
-    },
-    // Screen header
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { paddingBottom: 100 },
+
+    // Header
     screenHeader: {
       paddingHorizontal: spacing.xl,
       paddingTop: spacing.lg,
-      paddingBottom: spacing.lg,
+      paddingBottom: spacing.xxl,
+    },
+    eyebrow: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.medium,
+      letterSpacing: 1.4,
+      textTransform: "uppercase",
+      marginBottom: spacing.xs,
     },
     screenTitle: {
-      fontSize: 28,
+      fontSize: 30,
       color: colors.text,
       ...fonts.medium,
+      lineHeight: 36,
     },
-    screenSubtitle: {
+    dateLabel: {
       fontSize: 14,
       color: colors.muted,
       ...fonts.regular,
       marginTop: 4,
     },
-    statsStrip: {
-      paddingVertical: spacing.md,
-      backgroundColor: colors.bg,
+
+    // Stat strip
+    statStrip: {
+      marginHorizontal: spacing.xl,
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      flexDirection: "row",
+      marginBottom: spacing.xxl,
+      overflow: "hidden",
     },
-    statsContent: {
-      paddingHorizontal: spacing.xl,
-      gap: spacing.md,
+    statCell: {
+      flex: 1,
+      paddingVertical: spacing.xl,
+      alignItems: "center",
+      justifyContent: "center",
     },
-    section: {
-      paddingHorizontal: spacing.xl,
-      paddingTop: spacing.md,
+    statDivider: {
+      width: 1,
+      backgroundColor: colors.border,
+      marginVertical: spacing.md,
     },
-    sectionLabel: {
-      fontSize: 18,
+    statValue: {
+      fontSize: 30,
       color: colors.text,
       ...fonts.medium,
-      paddingVertical: spacing.sm,
-      paddingBottom: spacing.md,
+      lineHeight: 34,
     },
+    statLabel: {
+      fontSize: 10,
+      color: colors.muted,
+      ...fonts.medium,
+      textTransform: "uppercase",
+      letterSpacing: 0.9,
+      marginTop: 4,
+      textAlign: "center",
+    },
+
+    // Timeline section
+    timelineSection: { paddingHorizontal: spacing.xl },
+    sectionLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    sectionDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.violet,
+    },
+    sectionLabel: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.medium,
+      letterSpacing: 1.2,
+      textTransform: "uppercase",
+    },
+
+    // Event card
+    eventCard: {
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.sm,
+      flexDirection: "row",
+      gap: spacing.md,
+      alignItems: "flex-start",
+      borderLeftWidth: 4,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    eventIconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    eventBody: { flex: 1 },
+    eventTitle: {
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.medium,
+      marginBottom: 3,
+    },
+    eventSubtitle: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      lineHeight: 18,
+    },
+    eventTime: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+
+    // Empty
     empty: {
       alignItems: "center",
       paddingVertical: 48,
+      gap: spacing.sm,
+    },
+    emptyIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: spacing.xs,
     },
     emptyText: {
       color: colors.muted,
       fontSize: 15,
       ...fonts.regular,
+    },
+    emptySubtext: {
+      color: colors.muted,
+      fontSize: 13,
+      ...fonts.regular,
+      opacity: 0.6,
     },
   }), [colors]);
 
@@ -87,58 +243,71 @@ export function TimelineScreen({
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
-        <RefreshControl
-          refreshing={loading}
-          onRefresh={onRefresh}
-          tintColor={colors.violet}
-        />
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={colors.violet} />
       }
     >
-      {/* Screen Header */}
+      {/* Header */}
       <View style={styles.screenHeader}>
-        <Text style={styles.screenTitle}>Timeline</Text>
-        <Text style={styles.screenSubtitle}>{new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })}</Text>
+        <Text style={styles.eyebrow}>Command Center</Text>
+        <Text style={styles.screenTitle}>Today at a Glance</Text>
+        <Text style={styles.dateLabel}>{today}</Text>
       </View>
 
-      {/* Stats Strip */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.statsStrip}
-        contentContainerStyle={styles.statsContent}
-      >
-        <StatChip
-          value={stats.seenToday}
-          label="Seen Today"
-          color={colors.violet}
-        />
-        <StatChip
-          value={stats.alertCount}
-          label="Alerts"
-          color={colors.subtext}
-        />
-        <StatChip
-          value={stats.mostFrequent}
-          label="Most Visits"
-          color={colors.violet}
-        />
-        <StatChip
-          value={stats.lastActivity}
-          label="Last Activity"
-          color={colors.subtext}
-        />
-      </ScrollView>
+      {/* Stat Strip */}
+      <View style={styles.statStrip}>
+        <View style={styles.statCell}>
+          <Text style={styles.statValue}>{stats.seenToday ?? 0}</Text>
+          <Text style={styles.statLabel}>Seen Today</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statCell}>
+          <Text style={[styles.statValue, stats.alertCount > 0 && { color: colors.coral }]}>
+            {stats.alertCount ?? 0}
+          </Text>
+          <Text style={styles.statLabel}>Alerts</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statCell}>
+          <Text style={[styles.statValue, { fontSize: 18, lineHeight: 22, paddingHorizontal: 4 }]} numberOfLines={1}>
+            {stats.mostFrequent || "—"}
+          </Text>
+          <Text style={styles.statLabel}>Most Visits</Text>
+        </View>
+      </View>
 
       {/* Timeline */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Today's Activity</Text>
+      <View style={styles.timelineSection}>
+        <View style={styles.sectionLabelRow}>
+          <View style={styles.sectionDot} />
+          <Text style={styles.sectionLabel}>Today's Activity</Text>
+        </View>
+
         {timeline.length > 0 ? (
-          timeline.map((event, idx) => (
-            <TimelineItem key={`${event.type}-${event.time}-${idx}`} event={event} />
-          ))
+          timeline.map((event, idx) => {
+            const style = getEventStyle(event.type, colors);
+            return (
+              <View
+                key={`${event.type}-${event.time}-${idx}`}
+                style={[styles.eventCard, { borderLeftColor: style.borderColor }]}
+              >
+                <View style={[styles.eventIconCircle, { backgroundColor: style.iconBg }]}>
+                  <Ionicons name={style.iconName} size={18} color={style.iconColor} />
+                </View>
+                <View style={styles.eventBody}>
+                  <Text style={styles.eventTitle}>{getEventTitle(event)}</Text>
+                  <Text style={styles.eventSubtitle}>{getEventSubtitle(event)}</Text>
+                </View>
+                <Text style={styles.eventTime}>{formatTimeShort(event.time)}</Text>
+              </View>
+            );
+          })
         ) : (
           <View style={styles.empty}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="time-outline" size={24} color={colors.muted} />
+            </View>
             <Text style={styles.emptyText}>No activity yet</Text>
+            <Text style={styles.emptySubtext}>Events will appear as the day unfolds</Text>
           </View>
         )}
       </View>

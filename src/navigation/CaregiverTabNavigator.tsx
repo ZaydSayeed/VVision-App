@@ -15,11 +15,11 @@ import { useTheme } from "../context/ThemeContext";
 const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Timeline: "list-outline",
-  People: "people-outline",
-  Alerts: "notifications-outline",
-  Patients: "pulse-outline",
-  "Care Team": "person-add-outline",
+  Timeline: "list",
+  People: "people",
+  Alerts: "notifications",
+  Patients: "pulse",
+  "Care Team": "person-add",
 };
 
 export function CaregiverTabNavigator() {
@@ -29,21 +29,20 @@ export function CaregiverTabNavigator() {
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
-      backgroundColor: "#FFFFFF",
+      backgroundColor: colors.bg,
       borderTopWidth: 0,
-      height: 84,
+      height: 88,
       paddingTop: 8,
-      paddingBottom: 20,
-      shadowColor: "#7B5CE7",
+      paddingBottom: 22,
+      shadowColor: colors.violet,
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.06,
       shadowRadius: 12,
       elevation: 8,
     },
     tabLabel: {
-      fontSize: 10,
+      fontSize: 13,
       ...fonts.medium,
-      letterSpacing: 0.5,
     },
     tabIcon: {},
     tabBadge: {
@@ -60,11 +59,11 @@ export function CaregiverTabNavigator() {
         tabBarInactiveTintColor: colors.muted,
         tabBarLabel: ({ color }) => (
           <Text style={[styles.tabLabel, { color }]}>
-            {route.name.toUpperCase()}
+            {route.name}
           </Text>
         ),
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons name={iconNames[route.name]} size={24} color={color} />
+        tabBarIcon: ({ color }) => (
+          <Ionicons name={iconNames[route.name]} size={26} color={color} />
         ),
         tabBarBadge:
           route.name === "Alerts" && (alerts.length + pendingCount) > 0

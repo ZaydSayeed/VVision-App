@@ -1,9 +1,14 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Animated,
+  Pressable,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,9 +18,11 @@ import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
-import { EmptyState } from "../../components/shared/EmptyState";
 import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
+
+const SCREEN_W = Dimensions.get("window").width;
+const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
 
 export function PatientStatusScreen() {
   const { colors } = useTheme();
@@ -26,6 +33,9 @@ export function PatientStatusScreen() {
   const { alerts } = useHelpAlert();
 
   const [clock, setClock] = useState(new Date());
+  const [notifOpen, setNotifOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(PANEL_WIDTH)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const interval = setInterval(() => setClock(new Date()), 60000);
@@ -40,11 +50,47 @@ export function PatientStatusScreen() {
   const pendingHelp = alerts.filter((a) => !a.dismissed);
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
+  const pendingTasks = tasks.filter((t) => !isCompletedToday(t));
+  const pendingMeds = meds.filter((m) => !isTakenToday(m));
+  const totalNotifs = pendingTasks.length + pendingMeds.length;
+
+  const openNotifs = () => {
+    setNotifOpen(true);
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 58,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeNotifs = () => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: PANEL_WIDTH,
+        duration: 240,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setNotifOpen(false));
+  };
+
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: spacing.xl, paddingBottom: 110 },
 
-    // Greeting header
+    // ── Greeting header ──────────────────────────────────────────
     greetingSection: {
       paddingHorizontal: spacing.xl,
       paddingTop: spacing.lg,
@@ -65,21 +111,6 @@ export function PatientStatusScreen() {
     greetingName: {
       color: colors.violet,
     },
-    avatarCircle: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: colors.violet50,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 2,
-      borderColor: colors.violet100,
-    },
-    avatarText: {
-      fontSize: 20,
-      color: colors.violet,
-      ...fonts.medium,
-    },
     dateRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -98,7 +129,180 @@ export function PatientStatusScreen() {
       ...fonts.medium,
     },
 
-    // Stats
+    // ── Bell button ──────────────────────────────────────────────
+    notifBtn: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      backgroundColor: colors.violet50,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    notifBadge: {
+      position: "absolute",
+      top: 9,
+      right: 9,
+      minWidth: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: colors.violet,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 3,
+      borderWidth: 1.5,
+      borderColor: colors.bg,
+    },
+    notifBadgeText: {
+      fontSize: 9,
+      color: "#FFFFFF",
+      ...fonts.medium,
+    },
+
+    // ── Notification panel ───────────────────────────────────────
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(11, 7, 30, 0.38)",
+    },
+    panelWrapper: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      width: PANEL_WIDTH,
+      shadowColor: "#000",
+      shadowOffset: { width: -6, height: 0 },
+      shadowOpacity: 0.14,
+      shadowRadius: 20,
+      elevation: 16,
+    },
+    panel: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      overflow: "hidden",
+    },
+    // Soft lavender gradient wash at the top of the panel
+    panelTopGradient: {
+      paddingTop: 56,
+      paddingHorizontal: 24,
+      paddingBottom: 20,
+    },
+    panelHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    panelTitle: {
+      fontSize: 24,
+      color: colors.text,
+      ...fonts.medium,
+      letterSpacing: -0.3,
+    },
+    panelSubtitle: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 4,
+    },
+    panelClose: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: "rgba(123,92,231,0.1)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    panelBody: {
+      flex: 1,
+      paddingHorizontal: 24,
+    },
+    // Section label with violet left border accent
+    panelSectionLabel: {
+      fontSize: 10,
+      color: colors.violet,
+      ...fonts.medium,
+      textTransform: "uppercase",
+      letterSpacing: 1.6,
+      marginBottom: 10,
+      marginTop: 20,
+      paddingLeft: 10,
+      borderLeftWidth: 2,
+      borderLeftColor: colors.violet,
+    },
+    // Notification row — tall, breathable for easy reading
+    notifRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.bg,
+      borderRadius: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 14,
+      marginBottom: 8,
+      gap: 14,
+      borderWidth: 1,
+      borderColor: "rgba(123,92,231,0.08)",
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.07,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    notifIconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: "#F0ECFD",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    notifRowBody: { flex: 1 },
+    notifRowLabel: {
+      fontSize: 15,
+      color: colors.text,
+      ...fonts.medium,
+      lineHeight: 20,
+    },
+    notifRowSub: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 3,
+    },
+    // Divider between sections
+    sectionDivider: {
+      height: 1,
+      backgroundColor: "rgba(123,92,231,0.07)",
+      marginTop: 8,
+    },
+    // Empty state — centered, calm
+    emptyNotif: {
+      alignItems: "center",
+      paddingTop: 48,
+      paddingBottom: 32,
+      gap: 12,
+    },
+    emptyIconRing: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: "#F0ECFD",
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 4,
+    },
+    emptyNotifTitle: {
+      fontSize: 17,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    emptyNotifText: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      textAlign: "center",
+      lineHeight: 18,
+    },
+
+    // ── Stats ────────────────────────────────────────────────────
     statsRow: {
       flexDirection: "row",
       gap: spacing.md,
@@ -139,55 +343,34 @@ export function PatientStatusScreen() {
       marginTop: 2,
     },
 
-    // Help alerts
-    helpCard: {
-      backgroundColor: colors.bg,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: spacing.sm,
-      shadowColor: "#7B5CE7",
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 3,
+    // ── Featured gradient card ───────────────────────────────────
+    featuredCard: {
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      marginBottom: spacing.xxl,
+      overflow: "hidden",
     },
-    helpLeft: { flexDirection: "row", alignItems: "center", gap: spacing.md, flex: 1 },
-    helpIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: colors.violet50,
-      alignItems: "center",
-      justifyContent: "center",
+    featuredLabel: {
+      fontSize: 12,
+      color: "rgba(255,255,255,0.8)",
+      ...fonts.medium,
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      marginBottom: spacing.xs,
     },
-    helpTitle: {
-      fontSize: 15,
-      color: colors.text,
+    featuredTitle: {
+      fontSize: 22,
+      color: "#FFFFFF",
       ...fonts.medium,
     },
-    helpTime: {
-      fontSize: 12,
-      color: colors.muted,
+    featuredSub: {
+      fontSize: 14,
+      color: "rgba(255,255,255,0.8)",
       ...fonts.regular,
-      marginTop: 2,
-    },
-    dismissBtn: {
-      borderWidth: 1.5,
-      borderColor: colors.violet,
-      borderRadius: radius.pill,
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-    },
-    dismissText: {
-      fontSize: 12,
-      color: colors.violet,
-      ...fonts.medium,
+      marginTop: spacing.xs,
     },
 
-    // Sections
+    // ── Read-only list items ─────────────────────────────────────
     section: { marginTop: spacing.lg },
     noItems: {
       fontSize: 14,
@@ -195,8 +378,6 @@ export function PatientStatusScreen() {
       ...fonts.regular,
       paddingVertical: spacing.md,
     },
-
-    // Read-only list items
     readRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -239,51 +420,129 @@ export function PatientStatusScreen() {
       ...fonts.regular,
       marginTop: 2,
     },
-
-    // Featured gradient card
-    featuredCard: {
-      borderRadius: radius.xl,
-      padding: spacing.xl,
-      marginBottom: spacing.xxl,
-      overflow: "hidden",
-    },
-    featuredLabel: {
-      fontSize: 12,
-      color: "rgba(255,255,255,0.8)",
-      ...fonts.medium,
-      letterSpacing: 1,
-      textTransform: "uppercase",
-      marginBottom: spacing.xs,
-    },
-    featuredTitle: {
-      fontSize: 22,
-      color: "#FFFFFF",
-      ...fonts.medium,
-    },
-    featuredSub: {
-      fontSize: 14,
-      color: "rgba(255,255,255,0.8)",
-      ...fonts.regular,
-      marginTop: spacing.xs,
-    },
   }), [colors]);
 
-  const initials = user?.name?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() ?? "?";
+  const totalPending = pendingTasks.length + pendingMeds.length;
 
   return (
     <View style={styles.container}>
-      {/* Greeting Header */}
+
+      {/* ── Notification panel modal ─────────────────────────── */}
+      <Modal visible={notifOpen} transparent animationType="none" onRequestClose={closeNotifs}>
+        {/* Animated backdrop */}
+        <Animated.View style={[styles.backdrop, { opacity: backdropAnim }]} pointerEvents="auto">
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={closeNotifs} />
+        </Animated.View>
+
+        {/* Sliding panel */}
+        <Animated.View style={[styles.panelWrapper, { transform: [{ translateX: slideAnim }] }]}>
+          <View style={styles.panel}>
+
+            {/* Soft lavender gradient at top */}
+            <LinearGradient
+              colors={["#EDE8FC", "#F7F5FF", "#FFFFFF"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.panelTopGradient}
+            >
+              <View style={styles.panelHeader}>
+                <View>
+                  <Text style={styles.panelTitle}>Reminders</Text>
+                  <Text style={styles.panelSubtitle}>
+                    {totalPending > 0
+                      ? `${totalPending} item${totalPending === 1 ? "" : "s"} pending today`
+                      : "Nothing pending"}
+                  </Text>
+                </View>
+                <TouchableOpacity style={styles.panelClose} onPress={closeNotifs}>
+                  <Ionicons name="close" size={18} color={colors.violet} />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+
+            {/* Panel content */}
+            <ScrollView style={styles.panelBody} showsVerticalScrollIndicator={false}>
+              {totalPending === 0 ? (
+                <View style={styles.emptyNotif}>
+                  <View style={styles.emptyIconRing}>
+                    <Ionicons name="checkmark" size={36} color={colors.violet} />
+                  </View>
+                  <Text style={styles.emptyNotifTitle}>You're all caught up!</Text>
+                  <Text style={styles.emptyNotifText}>
+                    All tasks and medications{"\n"}for today are complete.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  {pendingTasks.length > 0 && (
+                    <>
+                      <Text style={styles.panelSectionLabel}>Routine Tasks</Text>
+                      {pendingTasks.map((task) => (
+                        <View key={task.id} style={styles.notifRow}>
+                          <View style={styles.notifIconCircle}>
+                            <Ionicons name="calendar-clear-outline" size={20} color={colors.violet} />
+                          </View>
+                          <View style={styles.notifRowBody}>
+                            <Text style={styles.notifRowLabel}>{task.label}</Text>
+                            {task.time ? (
+                              <Text style={styles.notifRowSub}>{task.time}</Text>
+                            ) : null}
+                          </View>
+                        </View>
+                      ))}
+                    </>
+                  )}
+
+                  {pendingTasks.length > 0 && pendingMeds.length > 0 && (
+                    <View style={styles.sectionDivider} />
+                  )}
+
+                  {pendingMeds.length > 0 && (
+                    <>
+                      <Text style={styles.panelSectionLabel}>Medications</Text>
+                      {pendingMeds.map((med) => (
+                        <View key={med.id} style={styles.notifRow}>
+                          <View style={styles.notifIconCircle}>
+                            <Ionicons name="medkit-outline" size={20} color={colors.violet} />
+                          </View>
+                          <View style={styles.notifRowBody}>
+                            <Text style={styles.notifRowLabel}>{med.name}</Text>
+                            <Text style={styles.notifRowSub}>
+                              {[med.dosage, med.time].filter(Boolean).join(" · ")}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </>
+                  )}
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </Animated.View>
+      </Modal>
+
+      {/* ── Greeting header ──────────────────────────────────── */}
       <View style={styles.greetingSection}>
         <View style={styles.greetingRow}>
           <View>
-            <Text style={styles.greetingText}>Hello,{"\n"}
+            <Text style={styles.greetingText}>
+              Hello,{"\n"}
               <Text style={styles.greetingName}>{firstName}!</Text>
             </Text>
           </View>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
+
+          {/* Bell button */}
+          <TouchableOpacity style={styles.notifBtn} onPress={openNotifs} activeOpacity={0.75}>
+            <Ionicons name="notifications-outline" size={22} color={colors.violet} />
+            {totalNotifs > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{totalNotifs}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
+
         <View style={styles.dateRow}>
           <View style={styles.datePill}>
             <Text style={styles.datePillText}>{dayStr}</Text>
@@ -294,8 +553,10 @@ export function PatientStatusScreen() {
         </View>
       </View>
 
+      {/* ── Main scroll content ──────────────────────────────── */}
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Featured gradient card — pending help or summary */}
+
+        {/* Featured gradient card — pending help alerts */}
         {pendingHelp.length > 0 && (
           <LinearGradient
             colors={[...gradients.primary]}
@@ -313,7 +574,7 @@ export function PatientStatusScreen() {
           </LinearGradient>
         )}
 
-        {/* Stat Cards */}
+        {/* Stat cards */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <View style={styles.statIconCircle}>
@@ -331,7 +592,7 @@ export function PatientStatusScreen() {
           </View>
         </View>
 
-        {/* Routine Tasks (read-only) */}
+        {/* Routine tasks (read-only) */}
         <View style={styles.section}>
           <SectionHeader label="Daily Routine" />
           {tasks.length === 0 ? (

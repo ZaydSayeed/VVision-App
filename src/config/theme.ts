@@ -18,6 +18,15 @@ export const lightColors = {
   subtext: "#3D3560",
   muted: "#9590B0",
   border: "#E8E4F5",
+  // Patient-facing warm palette
+  warm: "#FDF8F3",
+  warmSurface: "#F5EFE6",
+  sage: "#5C8E7A",
+  sageSoft: "#EAF4EF",
+  amber: "#E8934A",
+  amberSoft: "#FEF3E8",
+  coral: "#D95F5F",
+  coralSoft: "#FDEAEA",
 };
 
 export const darkColors = {
@@ -38,6 +47,15 @@ export const darkColors = {
   subtext: "#D4CCEE",
   muted: "#9B90B8",
   border: "#2E2A4A",
+  // Patient-facing warm palette (muted for dark mode)
+  warm: "#13111F",
+  warmSurface: "#1E1B30",
+  sage: "#4A7A67",
+  sageSoft: "#1A2E28",
+  amber: "#C47A3A",
+  amberSoft: "#2A1F10",
+  coral: "#B84A4A",
+  coralSoft: "#2A1414",
 };
 
 // Keep for backwards compatibility — overridden dynamically via ThemeContext
@@ -46,6 +64,9 @@ export const colors = lightColors;
 export const gradients = {
   primary: ["#7B5CE7", "#A695F5"] as const,
   dark: ["#2B2340", "#3D3560"] as const,
+  coral: ["#D95F5F", "#E87878"] as const,
+  sage: ["#5C8E7A", "#7AB5A0"] as const,
+  amber: ["#E8934A", "#F0AD72"] as const,
 };
 
 export const spacing = {

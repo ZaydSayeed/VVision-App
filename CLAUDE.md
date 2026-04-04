@@ -11,21 +11,34 @@ Authentication is handled by **Supabase**. Data is stored in **MongoDB Atlas**. 
 
 ## How to Run
 
-**Terminal 1 — Backend:**
+**Everything at once (recommended):**
 ```
-cd /Users/haadisiddiqui/projects/VVision-App && npm run backend
+cd /Users/haadisiddiqui/projects/VVision-App && npm run tunnel
+```
+Starts backend + Expo with tunnel in one command. Scan QR with Expo Go on your phone.
+
+**Separate terminals (local WiFi only):**
+```
+# Terminal 1
+npm run backend
+
+# Terminal 2
+npx expo start
 ```
 
-**Terminal 2 — App:**
+**Web browser:**
 ```
-cd /Users/haadisiddiqui/projects/VVision-App && npx expo start
+npx expo start --web
 ```
+Or press `w` after starting. Camera features won't work on web.
 
-For tunnel mode (phone not on same WiFi):
-```
-npx expo start --tunnel
-```
-Requires ngrok installed (`brew install ngrok`) and authenticated.
+**Available npm scripts:**
+- `npm run tunnel` — backend + expo tunnel (phone on any network)
+- `npm run dev` — backend + expo (local WiFi only)
+- `npm run backend` — backend only
+- `npm run web` — web only
+
+Requires ngrok installed (`brew install ngrok`) and authenticated for tunnel mode.
 
 **Local IP** (update `.env` if network changes):
 ```

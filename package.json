@@ -4,6 +4,7 @@
   "main": "index.ts",
   "scripts": {
     "dev": "npm run backend & expo start",
+    "tunnel": "npm run backend & expo start --tunnel",
     "start": "expo start",
     "backend": "tsx watch src/server.ts",
     "android": "expo run:android",

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { linkPatient } from "../../api/client";
 import { fonts, spacing, radius } from "../../config/theme";
@@ -49,7 +48,7 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
   }
 
   const styles = useMemo(() => StyleSheet.create({
-    safe: { flex: 1, backgroundColor: colors.bg },
+    safe: { flex: 1, backgroundColor: colors.bg, paddingTop: spacing.sm },
     container: {
       flex: 1,
       paddingHorizontal: spacing.xxl,
@@ -102,7 +101,7 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
     },
     error: {
       fontSize: 14,
-      color: colors.violet,
+      color: colors.coral,
       ...fonts.regular,
       marginBottom: spacing.md,
       textAlign: "center",
@@ -119,7 +118,7 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
   }), [colors]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <View style={styles.container}>
         {onCancel && (
           <TouchableOpacity style={styles.backRow} onPress={onCancel}>
@@ -162,6 +161,6 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -114,7 +114,7 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 <Switch
                   value={isDark}
                   onValueChange={toggleTheme}
-                  trackColor={{ false: "#D1C9E0", true: colors.violet }}
+                  trackColor={{ false: colors.border, true: colors.violet }}
                   thumbColor="#FFFFFF"
                 />
               </View>

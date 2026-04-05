@@ -19,18 +19,6 @@ interface TimelineScreenProps {
   onRefresh: () => void;
 }
 
-const EVENT_CONFIG: Record<
-  string,
-  {
-    borderColor: string;
-    iconName: keyof typeof Ionicons.glyphMap;
-    iconColor: string;
-    iconBg: string;
-    getTitle: (e: TimelineEvent) => string;
-    getSubtitle: (e: TimelineEvent) => string;
-  }
-> = {} as any; // built inline below to access colors
-
 function getEventStyle(type: string, colors: any) {
   switch (type) {
     case "seen":

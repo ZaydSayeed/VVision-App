@@ -90,14 +90,14 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       alignItems: "center",
     },
     avatar: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
+      width: 52,
+      height: 52,
+      borderRadius: 26,
       alignItems: "center",
       justifyContent: "center",
     },
     avatarText: {
-      fontSize: 15,
+      fontSize: 18,
       color: "#FFFFFF",
       ...fonts.medium,
     },
@@ -147,7 +147,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       backgroundColor: colors.bg,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: radius.sm,
+      borderRadius: radius.lg,
       padding: spacing.md,
       minHeight: 38,
     },
@@ -166,7 +166,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
       backgroundColor: colors.bg,
       borderWidth: 1,
       borderColor: colors.violet,
-      borderRadius: radius.sm,
+      borderRadius: radius.lg,
       padding: spacing.md,
       color: colors.text,
       fontSize: 14,
@@ -205,6 +205,9 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
     historyToggle: {
       marginTop: spacing.sm,
       paddingVertical: 4,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
     },
     historyToggleText: {
       fontSize: 12,
@@ -214,7 +217,7 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
     historyList: {
       marginTop: spacing.sm,
       backgroundColor: colors.bg,
-      borderRadius: radius.sm,
+      borderRadius: radius.lg,
       padding: spacing.sm + 2,
       borderWidth: 1,
       borderColor: colors.border,
@@ -318,9 +321,12 @@ export function PersonCard({ person, onRefresh }: PersonCardProps) {
         style={styles.historyToggle}
         onPress={() => setShowHistory(!showHistory)}
       >
-        <Text style={styles.historyToggleText}>
-          {showHistory ? "▾" : "▸"} Interaction history
-        </Text>
+        <Ionicons
+          name={showHistory ? "chevron-down" : "chevron-forward"}
+          size={12}
+          color={colors.muted}
+        />
+        <Text style={styles.historyToggleText}>Interaction history</Text>
       </TouchableOpacity>
 
       {showHistory && (

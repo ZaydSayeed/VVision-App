@@ -1,11 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Animated,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
@@ -22,8 +24,21 @@ interface Props {
   onBack: () => void;
 }
 
+function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
+  const widthAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(widthAnim, { toValue: ratio, duration: 600, useNativeDriver: false, delay: 150 }).start();
+  }, [ratio]);
+  return (
+    <View style={{ height: 6, backgroundColor: "rgba(0,0,0,0.06)", borderRadius: 999, overflow: "hidden" }}>
+      <Animated.View style={{ height: 6, borderRadius: 999, backgroundColor: color, width: widthAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) }} />
+    </View>
+  );
+}
+
 export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { tasks, isCompletedToday } = useRoutine(patientId);
   const { meds, isTakenToday } = useMeds(patientId);
   const { alerts, dismissAlert } = useHelpAlert();
@@ -31,6 +46,9 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
   const routineDone = tasks.filter(isCompletedToday).length;
   const medsDone = meds.filter(isTakenToday).length;
   const pendingHelp = alerts.filter((a) => !a.dismissed);
+
+  const taskRatio = tasks.length > 0 ? routineDone / tasks.length : 0;
+  const medRatio = meds.length > 0 ? medsDone / meds.length : 0;
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -63,44 +81,46 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       flex: 1,
     },
     content: { padding: spacing.xl, paddingBottom: 100 },
-    statsRow: {
-      flexDirection: "row",
-      gap: spacing.md,
-      marginBottom: spacing.xxl,
-    },
-    statCard: {
-      flex: 1,
+    statsCard: {
       backgroundColor: colors.bg,
-      borderRadius: radius.lg,
-      padding: spacing.lg,
-      alignItems: "center",
-      shadowColor: "#7B5CE7",
+      borderRadius: radius.xl,
+      padding: spacing.xl,
+      marginBottom: spacing.xxl,
+      shadowColor: colors.violet,
       shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
+      shadowOpacity: 0.07,
+      shadowRadius: 14,
       elevation: 3,
+      gap: spacing.lg,
     },
-    statIconCircle: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.violet50,
+    progressRow: { gap: 5 },
+    progressLabelRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
       alignItems: "center",
-      justifyContent: "center",
-      marginBottom: spacing.sm,
+      marginBottom: 4,
     },
-    statValue: {
-      fontSize: 28,
-      color: colors.violet,
-      ...fonts.medium,
-    },
-    statLabel: {
+    progressLabel: {
       fontSize: 11,
       color: colors.muted,
       ...fonts.medium,
-      textTransform: "uppercase",
       letterSpacing: 0.8,
-      marginTop: 2,
+      textTransform: "uppercase",
+    },
+    progressFraction: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    progressTrack: {
+      height: 6,
+      backgroundColor: colors.surface,
+      borderRadius: radius.pill,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: 6,
+      borderRadius: radius.pill,
     },
     helpCard: {
       backgroundColor: colors.bg,
@@ -189,8 +209,8 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* White back bar */}
-      <View style={styles.backBar}>
+      {/* Back bar */}
+      <View style={[styles.backBar, { paddingTop: Math.max(insets.top, spacing.lg) }]}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>
@@ -198,26 +218,26 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconCircle}>
-              <Ionicons name="calendar-clear-outline" size={16} color={colors.violet} />
+        <View style={styles.statsCard}>
+          <View style={styles.progressRow}>
+            <View style={styles.progressLabelRow}>
+              <Text style={styles.progressLabel}>Routine</Text>
+              <Text style={styles.progressFraction}>{routineDone}/{tasks.length}</Text>
             </View>
-            <Text style={styles.statValue}>{routineDone}/{tasks.length}</Text>
-            <Text style={styles.statLabel}>Routine Done</Text>
+            <AnimatedBar ratio={taskRatio} color={colors.sage} />
           </View>
-          <View style={styles.statCard}>
-            <View style={styles.statIconCircle}>
-              <Ionicons name="medkit-outline" size={16} color={colors.violet} />
+          <View style={styles.progressRow}>
+            <View style={styles.progressLabelRow}>
+              <Text style={styles.progressLabel}>Medications</Text>
+              <Text style={styles.progressFraction}>{medsDone}/{meds.length}</Text>
             </View>
-            <Text style={styles.statValue}>{medsDone}/{meds.length}</Text>
-            <Text style={styles.statLabel}>Meds Taken</Text>
+            <AnimatedBar ratio={medRatio} color={colors.amber} />
           </View>
         </View>
 
         <SectionHeader label="Help Requests" />
         {pendingHelp.length === 0 ? (
-          <EmptyState title="All clear" subtitle="No help requests from patient" />
+          <EmptyState icon="checkmark-circle" title="All clear" subtitle="No help requests from patient" />
         ) : (
           pendingHelp.map((alert) => (
             <View key={alert.id} style={styles.helpCard}>

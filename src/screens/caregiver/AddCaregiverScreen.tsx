@@ -52,6 +52,12 @@ export function AddCaregiverScreen() {
       color: colors.text,
       ...fonts.medium,
     },
+    screenSubtitle: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+      marginTop: 3,
+    },
 
     codeCard: {
       backgroundColor: colors.bg,
@@ -132,6 +138,9 @@ export function AddCaregiverScreen() {
     <View style={styles.container}>
     <View style={styles.screenHeader}>
       <Text style={styles.screenTitle}>Care Team</Text>
+      <Text style={styles.screenSubtitle}>
+        {user?.role === "patient" ? "Share your code so a caregiver can connect" : "People managing this patient's care"}
+      </Text>
     </View>
     <ScrollView
       style={{ flex: 1 }}
@@ -151,7 +160,7 @@ export function AddCaregiverScreen() {
       {/* Link Code Section (patient only) */}
       {user?.role === "patient" && linkCode && (
         <View style={styles.codeCard}>
-          <Text style={styles.codeLabel}>YOUR LINK CODE</Text>
+          <Text style={styles.codeLabel}>Your link code</Text>
           <Text style={styles.codeValue}>{linkCode}</Text>
           <Text style={styles.codeHint}>
             Share this code with your caregiver so they can connect to your
@@ -164,6 +173,7 @@ export function AddCaregiverScreen() {
       <SectionHeader label="Care Team" />
       {profiles.length === 0 ? (
         <EmptyState
+          icon="people-circle"
           title="No caregivers linked"
           subtitle={
             user?.role === "patient"

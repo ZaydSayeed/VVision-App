@@ -272,11 +272,13 @@ export function PeopleScreen({ people, loading, onRefresh }: PeopleScreenProps) 
           ))
         ) : query.trim() ? (
           <EmptyState
+            icon="search"
             title={`No results for "${query}"`}
             subtitle="Try a different name"
           />
         ) : (
           <EmptyState
+            icon="people"
             title="No contacts yet"
             subtitle="Tap '+ Add Person' to enroll someone for the glasses to recognize"
           />

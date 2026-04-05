@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   StyleSheet,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePatients } from "../../hooks/usePatients";
@@ -17,6 +18,33 @@ import { useTheme } from "../../context/ThemeContext";
 interface Props {
   onSelectPatient: (patient: PatientSummary) => void;
   onAddPatient: () => void;
+}
+
+// Animated progress bar sub-component
+function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
+  const widthAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(widthAnim, {
+      toValue: ratio,
+      duration: 600,
+      useNativeDriver: false,
+      delay: 100,
+    }).start();
+  }, [ratio]);
+
+  return (
+    <View style={{ height: 6, backgroundColor: "rgba(0,0,0,0.06)", borderRadius: 999, overflow: "hidden" }}>
+      <Animated.View
+        style={{
+          height: 6,
+          borderRadius: 999,
+          backgroundColor: color,
+          width: widthAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
+        }}
+      />
+    </View>
+  );
 }
 
 function getCompletionRatio(patient: PatientSummary): number {
@@ -301,17 +329,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
                           {patient.tasksDone ?? 0}/{patient.tasksTotal ?? 0}
                         </Text>
                       </View>
-                      <View style={styles.progressTrack}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            {
-                              width: `${Math.round(taskRatio * 100)}%`,
-                              backgroundColor: colors.sage,
-                            },
-                          ]}
-                        />
-                      </View>
+                      <AnimatedBar ratio={taskRatio} color={colors.sage} />
                     </View>
                     <View style={styles.progressRow}>
                       <View style={styles.progressLabelRow}>
@@ -320,17 +338,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
                           {patient.medsDone ?? 0}/{patient.medsTotal ?? 0}
                         </Text>
                       </View>
-                      <View style={styles.progressTrack}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            {
-                              width: `${Math.round(medRatio * 100)}%`,
-                              backgroundColor: colors.amber,
-                            },
-                          ]}
-                        />
-                      </View>
+                      <AnimatedBar ratio={medRatio} color={colors.amber} />
                     </View>
                   </View>
                 </View>

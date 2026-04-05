@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -36,6 +37,19 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
 
   const recent = alerts.slice(0, 3);
   const caregiverDisplay = caregiverName ?? "your caregiver";
+
+  // Breathing pulse on the outer ring — slow, calm, alive
+  const ringPulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(ringPulse, { toValue: 1.04, duration: 1800, useNativeDriver: true }),
+        Animated.timing(ringPulse, { toValue: 1, duration: 1800, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1 },
@@ -192,7 +206,7 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
     <View style={styles.container}>
       {/* Warm background gradient */}
       <LinearGradient
-        colors={["#FFFFFF", "#FFFFFF", colors.coralSoft]}
+        colors={[colors.bg, colors.bg, colors.coralSoft]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.background}
@@ -223,12 +237,16 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
 
       {/* Big Help Button */}
       <View style={styles.btnArea}>
-        <View style={styles.btnRing}>
+        <Animated.View style={[styles.btnRing, { transform: [{ scale: ringPulse }] }]}>
           <TouchableOpacity
             onPress={handlePress}
             activeOpacity={0.88}
             disabled={sent}
             style={styles.btnOuter}
+            accessibilityRole="button"
+            accessibilityLabel="Send help alert to caregiver"
+            accessibilityHint="Double tap to immediately notify your caregiver that you need assistance"
+            accessibilityState={{ disabled: sent }}
           >
             <LinearGradient
               colors={["#D95F5F", "#E87878"]}
@@ -249,7 +267,7 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
               )}
             </LinearGradient>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {!sent && (
           <Text style={styles.hint}>

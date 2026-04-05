@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -137,11 +137,16 @@ export function TodayScreen() {
       fontSize: 36,
       marginBottom: 2,
     },
+    greetingLineRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginBottom: 2,
+    },
     greetingLine: {
       fontSize: 17,
       color: colors.muted,
       ...fonts.regular,
-      marginBottom: 2,
     },
     greetingName: {
       fontSize: 36,
@@ -293,13 +298,13 @@ export function TodayScreen() {
       shadowOpacity: 0.14, shadowRadius: 20, elevation: 16,
     },
     panel: { flex: 1, backgroundColor: colors.bg, overflow: "hidden" },
-    panelTopGradient: { paddingTop: 56, paddingHorizontal: 24, paddingBottom: 20 },
+    panelTopGradient: { paddingTop: 48, paddingHorizontal: 24, paddingBottom: 20 },
     panelHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     panelTitle: { fontSize: 24, color: colors.text, ...fonts.medium, letterSpacing: -0.3 },
     panelSubtitle: { fontSize: 13, color: colors.muted, ...fonts.regular, marginTop: 4 },
     panelClose: {
       width: 38, height: 38, borderRadius: 19,
-      backgroundColor: "rgba(123,92,231,0.1)", alignItems: "center", justifyContent: "center",
+      backgroundColor: colors.violet50, alignItems: "center", justifyContent: "center",
     },
     panelBody: { flex: 1, paddingHorizontal: 24 },
     panelSectionLabel: {
@@ -318,7 +323,7 @@ export function TodayScreen() {
     },
     notifIconCircle: {
       width: 44, height: 44, borderRadius: 22,
-      backgroundColor: "#F0ECFD", alignItems: "center", justifyContent: "center",
+      backgroundColor: colors.violet50, alignItems: "center", justifyContent: "center",
     },
     notifRowBody: { flex: 1 },
     notifRowLabel: { fontSize: 15, color: colors.text, ...fonts.medium, lineHeight: 20 },
@@ -327,7 +332,7 @@ export function TodayScreen() {
     emptyNotif: { alignItems: "center", paddingTop: 48, paddingBottom: 32, gap: 12 },
     emptyIconRing: {
       width: 80, height: 80, borderRadius: 40,
-      backgroundColor: "#F0ECFD", alignItems: "center", justifyContent: "center", marginBottom: 4,
+      backgroundColor: colors.violet50, alignItems: "center", justifyContent: "center", marginBottom: 4,
     },
     emptyNotifTitle: { fontSize: 17, color: colors.text, ...fonts.medium },
     emptyNotifText: { fontSize: 13, color: colors.muted, ...fonts.regular, textAlign: "center", lineHeight: 18 },
@@ -393,6 +398,28 @@ export function TodayScreen() {
   const allTasksDone = tasks.length > 0 && tasks.every(isCompletedToday);
   const allMedsDone = meds.length > 0 && meds.every(isTakenToday);
 
+  // Animated banner entrance — slides down + fades in when all tasks done
+  const taskBannerAnim = useRef(new Animated.Value(0)).current;
+  const medBannerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(taskBannerAnim, {
+      toValue: allTasksDone ? 1 : 0,
+      useNativeDriver: true,
+      friction: 7,
+      tension: 80,
+    }).start();
+  }, [allTasksDone]);
+
+  useEffect(() => {
+    Animated.spring(medBannerAnim, {
+      toValue: allMedsDone ? 1 : 0,
+      useNativeDriver: true,
+      friction: 7,
+      tension: 80,
+    }).start();
+  }, [allMedsDone]);
+
   return (
     <View style={styles.container}>
 
@@ -404,7 +431,7 @@ export function TodayScreen() {
         <Animated.View style={[styles.panelWrapper, { transform: [{ translateX: slideAnim }] }]}>
           <View style={styles.panel}>
             <LinearGradient
-              colors={["#EDE8FC", "#F7F5FF", "#FFFFFF"]}
+              colors={[colors.violet50, colors.surface, colors.bg]}
               start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
               style={styles.panelTopGradient}
             >
@@ -477,9 +504,10 @@ export function TodayScreen() {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.greetingLine}>
-              <Ionicons name={greeting.icon} size={16} color={colors.amber} />{"  "}{greeting.text},
-            </Text>
+            <View style={styles.greetingLineRow}>
+              <Ionicons name={greeting.icon} size={16} color={colors.amber} />
+              <Text style={styles.greetingLine}>{greeting.text},</Text>
+            </View>
             <Text style={styles.greetingName}>
               <Text style={styles.greetingAccent}>{firstName}</Text>
             </Text>
@@ -515,17 +543,22 @@ export function TodayScreen() {
         <View style={styles.section}>
           <SectionHeader label="Your Routine" />
           {allTasksDone && (
-            <LinearGradient
-              colors={[...gradients.sage]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.allDoneBanner}
-            >
-              <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
-              <View>
-                <Text style={styles.bannerText}>Routine complete!</Text>
-                <Text style={styles.bannerSub}>All tasks done for today</Text>
-              </View>
-            </LinearGradient>
+            <Animated.View style={{
+              opacity: taskBannerAnim,
+              transform: [{ translateY: taskBannerAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] }) }],
+            }}>
+              <LinearGradient
+                colors={[...gradients.sage]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={styles.allDoneBanner}
+              >
+                <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
+                <View>
+                  <Text style={styles.bannerText}>Routine complete!</Text>
+                  <Text style={styles.bannerSub}>All tasks done for today</Text>
+                </View>
+              </LinearGradient>
+            </Animated.View>
           )}
           {tasks.length === 0 ? (
             <View style={styles.emptyCTA}>
@@ -563,17 +596,22 @@ export function TodayScreen() {
         <View style={styles.section}>
           <SectionHeader label="Your Medications" />
           {allMedsDone && (
-            <LinearGradient
-              colors={[...gradients.amber]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.allDoneBanner}
-            >
-              <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
-              <View>
-                <Text style={styles.bannerText}>All medications taken!</Text>
-                <Text style={styles.bannerSub}>Great job today</Text>
-              </View>
-            </LinearGradient>
+            <Animated.View style={{
+              opacity: medBannerAnim,
+              transform: [{ translateY: medBannerAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] }) }],
+            }}>
+              <LinearGradient
+                colors={[...gradients.amber]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={styles.allDoneBanner}
+              >
+                <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
+                <View>
+                  <Text style={styles.bannerText}>All medications taken!</Text>
+                  <Text style={styles.bannerSub}>Great job today</Text>
+                </View>
+              </LinearGradient>
+            </Animated.View>
           )}
           {meds.length === 0 ? (
             <View style={styles.emptyCTA}>
@@ -616,7 +654,7 @@ export function TodayScreen() {
       {/* ── Chooser sheet ─────────────────────────────────────── */}
       <Modal visible={showChooser} transparent animationType="slide">
         <Pressable style={styles.chooserOverlay} onPress={() => setShowChooser(false)}>
-          <View style={styles.chooserSheet}>
+          <Pressable style={styles.chooserSheet} onPress={() => {}}>
             <View style={styles.chooserHandle} />
             <Text style={styles.chooserTitle}>What would you like to add?</Text>
             <TouchableOpacity
@@ -645,7 +683,7 @@ export function TodayScreen() {
                 <Text style={styles.chooserBtnSub}>Track your daily medicines</Text>
               </View>
             </TouchableOpacity>
-          </View>
+          </Pressable>
         </Pressable>
       </Modal>
 

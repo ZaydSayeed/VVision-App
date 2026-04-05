@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useMemo, useEffect, useState, useRef } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
@@ -18,19 +18,58 @@ export function RootNavigator() {
   const { colors } = useTheme();
   const { setOffline } = useNetwork();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const contentOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setOnNetworkChange(setOffline);
   }, [setOffline]);
+
+  useEffect(() => {
+    if (!loading) {
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [loading]);
 
   const styles = useMemo(() => StyleSheet.create({
     root: {
       flex: 1,
       backgroundColor: colors.bg,
     },
+    splash: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 16,
+    },
+    splashLogo: {
+      width: 72,
+      height: 72,
+    },
+    splashText: {
+      fontSize: 20,
+      color: colors.violet,
+      ...fonts.medium,
+      letterSpacing: 0.3,
+    },
   }), [colors]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <View style={styles.splash}>
+        <Image
+          source={require("../../assets/icon.png")}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.splashText}>Vela Vision</Text>
+      </View>
+    );
+  }
 
   if (!user) {
     return <LoginScreen />;
@@ -38,22 +77,22 @@ export function RootNavigator() {
 
   if (user.role === "caregiver") {
     return (
-      <View style={styles.root}>
+      <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
         <Header onOpenDrawer={() => setDrawerOpen(true)} />
         <OfflineBanner />
         <CaregiverTabNavigator />
         <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      </View>
+      </Animated.View>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
       <Header onOpenDrawer={() => setDrawerOpen(true)} />
       <OfflineBanner />
       <PatientTabNavigator patientName={user.name} />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </View>
+    </Animated.View>
   );
 }
 

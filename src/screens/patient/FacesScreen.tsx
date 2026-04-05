@@ -49,7 +49,11 @@ export function FacesScreen() {
   const [error, setError] = useState("");
 
   // Pulsing dot animation for glasses status
+  // Pulsing dot animation for glasses status
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Skeleton shimmer for loading state
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
@@ -60,6 +64,17 @@ export function FacesScreen() {
     loop.start();
     return () => loop.stop();
   }, [pulseAnim]);
+
+  useEffect(() => {
+    const shimmer = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0.3, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    shimmer.start();
+    return () => shimmer.stop();
+  }, [shimmerAnim]);
 
   const load = useCallback(async () => {
     try {
@@ -242,6 +257,30 @@ export function FacesScreen() {
       marginTop: spacing.xs,
     },
 
+    // ── Skeleton ─────────────────────────────────────────────
+    skeletonCard: {
+      width: CARD_WIDTH,
+      backgroundColor: DARK.card,
+      borderRadius: 20,
+      padding: spacing.lg,
+      alignItems: "center",
+      gap: spacing.sm,
+      borderWidth: 1,
+      borderColor: DARK.cardBorder,
+    },
+    skeletonCircle: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      backgroundColor: "rgba(155,139,255,0.15)",
+      marginBottom: spacing.sm,
+    },
+    skeletonLine: {
+      height: 14,
+      borderRadius: 7,
+      backgroundColor: "rgba(155,139,255,0.15)",
+    },
+
     // ── Empty / loading states ───────────────────────────────
     centered: {
       alignItems: "center",
@@ -392,9 +431,15 @@ export function FacesScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color={DARK.violet} size="large" />
-          </View>
+          <Animated.View style={[styles.grid, { opacity: shimmerAnim }]}>
+            {[0, 1, 2, 3].map((i) => (
+              <View key={i} style={styles.skeletonCard}>
+                <View style={styles.skeletonCircle} />
+                <View style={[styles.skeletonLine, { width: CARD_WIDTH * 0.55 }]} />
+                <View style={[styles.skeletonLine, { width: CARD_WIDTH * 0.4 }]} />
+              </View>
+            ))}
+          </Animated.View>
         ) : showEmptyCTA ? (
           <View style={styles.centered}>
             <View style={styles.emptyRing}>

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+
 import { dismissAlert } from "../api/client";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { EmptyState } from "../components/shared/EmptyState";
@@ -240,7 +241,7 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
             <Text style={[styles.sectionLabel, { color: colors.coral }]}>Help Requests</Text>
           </View>
           {pendingHelp.length === 0 ? (
-            <EmptyState title="All clear" subtitle="No help requests from patients" />
+            <EmptyState icon="hand-left" title="All clear" subtitle="No help requests from patients" />
           ) : (
             pendingHelp.map((alert) => (
               <View key={alert.id} style={styles.helpCard}>
@@ -255,7 +256,10 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
                 </View>
                 <TouchableOpacity
                   style={styles.helpDismissBtn}
-                  onPress={() => dismissHelp(alert.id)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    dismissHelp(alert.id);
+                  }}
                   activeOpacity={0.85}
                 >
                   <Text style={styles.helpDismissText}>Mark as handled</Text>
@@ -272,7 +276,7 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
             <Text style={[styles.sectionLabel, { color: colors.violet }]}>AI Detection</Text>
           </View>
           {alerts.length === 0 ? (
-            <EmptyState title="No alerts" subtitle="All detected faces are recognized" />
+            <EmptyState icon="scan-circle" title="No alerts" subtitle="All detected faces are recognized" />
           ) : (
             alerts.map((alert) => (
               <View key={alert.id ?? alert._id} style={styles.faceCard}>

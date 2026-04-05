@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useMemo } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { fonts, spacing, radius } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -17,6 +18,39 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
   const { colors } = useTheme();
   const accent = accentColor ?? colors.violet;
 
+  // Checkmark scale spring — pops in when checked, fades out when unchecked
+  const checkScale = useRef(new Animated.Value(checked ? 1 : 0)).current;
+  // Row background flash on check
+  const rowFlash = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (checked) {
+      // Spring the checkmark in with a bounce
+      Animated.spring(checkScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 4,
+        tension: 200,
+      }).start();
+      // Brief background flash
+      Animated.sequence([
+        Animated.timing(rowFlash, { toValue: 1, duration: 120, useNativeDriver: false }),
+        Animated.timing(rowFlash, { toValue: 0, duration: 400, useNativeDriver: false }),
+      ]).start();
+    } else {
+      Animated.timing(checkScale, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [checked]);
+
+  async function handleToggle() {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggle();
+  }
+
   const styles = useMemo(() => StyleSheet.create({
     row: {
       flexDirection: "row",
@@ -25,7 +59,6 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
       minHeight: 72,
-      backgroundColor: colors.bg,
       borderRadius: radius.lg,
       marginBottom: spacing.md,
       shadowColor: "#7B5CE7",
@@ -81,13 +114,27 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
     checked && { backgroundColor: accent, borderColor: accent },
   ];
 
+  const rowBgColor = rowFlash.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.bg, accentColor ? `${accentColor}18` : colors.violet50],
+  });
+
   return (
-    <View style={styles.row}>
-      <TouchableOpacity style={checkboxStyle} onPress={onToggle} activeOpacity={0.8}>
-        {checked && <Ionicons name="checkmark" size={22} color="#FFFFFF" />}
+    <Animated.View style={[styles.row, { backgroundColor: rowBgColor }]}>
+      <TouchableOpacity
+        style={checkboxStyle}
+        onPress={handleToggle}
+        activeOpacity={0.8}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        accessibilityLabel={`${label}, ${checked ? "completed" : "not completed"}`}
+      >
+        <Animated.View style={{ transform: [{ scale: checkScale }] }}>
+          <Ionicons name="checkmark" size={22} color="#FFFFFF" />
+        </Animated.View>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.labelWrap} onPress={onToggle} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.labelWrap} onPress={handleToggle} activeOpacity={0.8}>
         <Text style={[styles.label, checked && styles.labelChecked]}>{label}</Text>
         {subLabel ? <Text style={[styles.subLabel, checked && styles.subLabelChecked]}>{subLabel}</Text> : null}
       </TouchableOpacity>
@@ -97,6 +144,6 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
           <Ionicons name="close" size={18} color={colors.muted} />
         </TouchableOpacity>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }

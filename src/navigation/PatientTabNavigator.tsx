@@ -31,9 +31,9 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       height: 88,
       paddingTop: 8,
       paddingBottom: 22,
-      shadowColor: "#000",
+      shadowColor: colors.coral,
       shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.05,
+      shadowOpacity: 0.08,
       shadowRadius: 12,
       elevation: 8,
     },
@@ -66,6 +66,11 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       borderRadius: 32,
       alignItems: "center",
       justifyContent: "center",
+    },
+    fabLabel: {
+      fontSize: 13,
+      ...fonts.medium,
+      marginTop: 2,
     },
   }), [colors]);
 
@@ -102,6 +107,9 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
                   <Ionicons name="hand-left" size={28} color="#FFFFFF" />
                 </LinearGradient>
               </TouchableOpacity>
+              <Text style={[styles.fabLabel, { color: props.accessibilityState?.selected ? colors.coral : colors.muted }]}>
+                Help
+              </Text>
             </View>
           ),
         }}

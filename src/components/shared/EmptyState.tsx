@@ -5,12 +5,12 @@ import { fonts, spacing, radius } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 
 interface EmptyStateProps {
-  emoji?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle: string;
 }
 
-export function EmptyState({ title, subtitle }: EmptyStateProps) {
+export function EmptyState({ icon = "layers-outline", title, subtitle }: EmptyStateProps) {
   const { colors } = useTheme();
 
   const styles = useMemo(() => StyleSheet.create({
@@ -46,7 +46,7 @@ export function EmptyState({ title, subtitle }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <Ionicons name="layers-outline" size={32} color={colors.violet} />
+        <Ionicons name={icon} size={32} color={colors.violet} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>

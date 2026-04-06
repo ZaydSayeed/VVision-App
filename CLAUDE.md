@@ -39,6 +39,10 @@ Update `app.json` `apiBaseUrl` to your local IP first (`ipconfig getifaddr en0`)
 - **expo-linear-gradient** (gradient UI elements)
 - **@expo/vector-icons** (Ionicons throughout)
 - **@react-navigation/bottom-tabs** v7 (tab navigation)
+- **zod** (input validation on all backend routes)
+- **express-rate-limit** (auth + link endpoints rate limited)
+- **helmet** (security headers on all responses)
+- **expo-image-manipulator** (compress photos to ≤500KB before upload)
 
 ---
 
@@ -111,14 +115,14 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - `src/navigation/CaregiverTabNavigator.tsx` — 5-tab caregiver nav
 
 ### Patient Screens
-- `src/screens/patient/TodayScreen.tsx` — **main patient home screen** (merged routine + meds + greeting). Uses `useRoutine` + `useMeds`. Time-aware greeting (morning/afternoon/evening/night). Sage accent for tasks, amber for meds. Slide-out notification panel. Delete confirmations via Alert.alert.
-- `src/screens/patient/FacesScreen.tsx` — intentionally dark screen (`DARK` palette const). Pulsing glasses status chip. 88×88 initials rings. Modal uses DARK palette. Delete requires confirmation.
-- `src/screens/patient/HelpScreen.tsx` — coral gradient bg, large ring button, inline error banner if send fails (catches error from `useHelpAlert.sendHelp()`), shows caregiver name
+- `src/screens/patient/TodayScreen.tsx` — **main patient home screen** (merged routine + meds + greeting). Uses `useRoutine` + `useMeds`. Time-aware greeting (morning/afternoon/evening/night). Sage accent for tasks, amber for meds. Slide-out notification panel. Delete confirmations via Alert.alert. Pull-to-refresh reloads both routines and meds.
+- `src/screens/patient/FacesScreen.tsx` — intentionally dark screen (`DARK` palette const). Pulsing glasses status chip. 88×88 initials rings. Modal uses DARK palette. Delete requires confirmation. Shows cache age ("last synced X ago") when offline. Pull-to-refresh supported.
+- `src/screens/patient/HelpScreen.tsx` — coral gradient bg, large ring button, inline error banner if send fails. Auto-retries up to 3 times with exponential backoff. Shows "Sending…" state. Pull-to-refresh reloads recent alerts.
 
 ### Caregiver Screens
-- `src/screens/TimelineScreen.tsx` — "Today at a Glance" header, 3-number inline stat strip (Seen Today / Alerts / Most Visits), vertical timeline with 4px color-coded left borders (sage=seen, coral=alert, violet=interaction)
-- `src/screens/AlertsScreen.tsx` — two visual identities: coral left-border cards for help requests (hand icon, "Mark as handled" button), dark surface + violet glow cards for AI face detection (scan-circle icon, "AI Alert" badge)
-- `src/screens/caregiver/PatientsDashboardScreen.tsx` — patient cards with 5px colored left accent strip (sage=on track, amber=needs attention), progress bars for routine + meds, status pill ("On track" / "Needs attention"), avatar color matches status
+- `src/screens/TimelineScreen.tsx` — "Today at a Glance" header, 3-number inline stat strip (Seen Today / Alerts / Most Visits), vertical timeline with 4px color-coded left borders (sage=seen, coral=alert, violet=interaction). Pull-to-refresh supported.
+- `src/screens/AlertsScreen.tsx` — two visual identities: coral left-border cards for help requests (hand icon, "Mark as handled" button), dark surface + violet glow cards for AI face detection (scan-circle icon, "AI Alert" badge). Pull-to-refresh supported.
+- `src/screens/caregiver/PatientsDashboardScreen.tsx` — patient cards with 5px colored left accent strip (sage=on track, amber=needs attention), progress bars for routine + meds, status pill ("On track" / "Needs attention"), avatar color matches status. Pull-to-refresh supported.
 - `src/screens/caregiver/PatientStatusScreen.tsx` — caregiver's read-only view of a single patient (slide-out notification reminders panel)
 
 ### Components
@@ -128,14 +132,25 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - `src/components/AlertCard.tsx` — used by AlertsScreen for face recognition cards
 - `src/components/TimelineItem.tsx` — used by TimelineScreen for event cards
 
+### Hooks
+- `src/hooks/useRoutine.ts` — exposes `tasks`, `addTask`, `toggleComplete`, `deleteTask`, `isCompletedToday`, `loadError`, `reload`
+- `src/hooks/useMeds.ts` — exposes `meds`, `addMed`, `toggleTaken`, `deleteMed`, `isTakenToday`, `loadError`, `reload`
+- `src/hooks/useHelpAlert.ts` — exposes `alerts`, `pendingCount`, `sending`, `sentAt`, `sendError`, `sendHelp`, `dismissAlert`, `clearSentState`, `reload`. `sendHelp` auto-retries 3× with backoff.
+- `src/hooks/useCaregiver.ts` — caregiver data, exposes `loadError`
+- `src/hooks/useDashboardData.ts` — polls every 15s (was 5s), `computeStats` and `buildTimeline` memoized
+
 ### Config / Context / API
-- `src/config/theme.ts` — all design tokens (colors, gradients, spacing, radius, fonts, typography, shadow)
+- `src/config/theme.ts` — all design tokens (colors, gradients, spacing, radius, fonts, typography, shadow). `shadow.sm/md/lg/fab` tokens. `typography.heroStyle/titleStyle/bodyStyle` etc.
 - `src/context/ThemeContext.tsx` — light/dark mode, exposes `colors`, `isDark`, `toggleTheme`
-- `src/context/AuthContext.tsx` — user session, `user.role` is `"patient"` or `"caregiver"`
-- `src/api/client.ts` — all API calls, handles auth token + offline caching
-- `src/server.ts` — Express backend entry point
-- `src/server-routes/auth.ts` — Supabase sync, link code generation
-- `src/server-routes/patients.ts` — patient linking, link code lookup
+- `src/context/AuthContext.tsx` — user session, `user.role` is `"patient"` or `"caregiver"`. 30-minute inactivity timeout auto-signs out.
+- `src/api/client.ts` — all API calls, auth token + offline caching with timestamps. Compresses photos to 800px/70% before upload. 8s request timeout.
+- `src/server.ts` — Express backend entry point. helmet, CORS, rate limiting, 1mb body limit, global error handler, `/health` + `/ready` endpoints.
+- `src/server-core/linkCode.ts` — shared 8-char link code generator (used by auth + patients routes)
+- `src/server-core/security.ts` — Supabase token cache with 5-minute TTL
+- `src/server-routes/auth.ts` — Supabase sync with Zod validation
+- `src/server-routes/patients.ts` — patient linking, link code lookup. `DELETE /api/patients/mine/unlink` (caregiver unlinks). `DELETE /api/patients/mine/caregivers/:id` (patient removes caregiver).
+- `src/server-routes/people.ts` — face enroll/delete. MIME type + 5MB upload validation.
+- `src/server-routes/routines.ts`, `medications.ts`, `helpAlerts.ts`, `caregiverProfiles.ts` — all have Zod validation + ObjectId guards
 
 ---
 
@@ -152,5 +167,9 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - **FacesScreen** deliberately uses its own `DARK` palette constant (not `colors` from theme) so it stays dark even in light mode — this is intentional design.
 - The `.env` file has `MONGODB_URI` with real credentials — never commit changes to this file that expose credentials.
 - The backend is deployed on **Render** (`https://vvision-app.onrender.com`). The app connects via `apiBaseUrl` in `app.json`. The `.env` `API_BASE_URL` is only used for local backend development.
+- **Render free tier** spins down after inactivity — first request after idle takes ~30s. Pull-to-refresh on any screen will retry.
 - To run on **web**: `npx expo start --web` (or press `w` after `npx expo start`). Camera features won't work on web.
 - **Old screens** `RoutineScreen.tsx` and `MedsScreen.tsx` still exist in the codebase but are no longer in navigation — their content was merged into `TodayScreen.tsx`.
+- **All backend routes** validate input with Zod and guard `req.params.id` with `ObjectId.isValid()` before use.
+- **Offline caching** stores a timestamp alongside data. FacesScreen shows "last synced X ago" when offline.
+- **CheckRow** uses a native-driver opacity overlay for its flash animation (not background color) — keeps 60fps on check/uncheck.

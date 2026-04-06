@@ -4,7 +4,9 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
 import { setAuthToken, setOnAuthExpired, syncProfile } from "../api/client";
@@ -39,9 +41,37 @@ function sessionToUser(
   };
 }
 
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes of inactivity
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    inactivityTimer.current = setTimeout(() => {
+      supabase.auth.signOut();
+      setUser(null);
+      setAuthToken(null);
+    }, SESSION_TIMEOUT_MS);
+  }, []);
+
+  // Track app foreground/background to manage session timeout
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") {
+        resetInactivityTimer();
+      } else if (state === "background") {
+        // Background counts as inactivity — restart timer on resume
+        if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      }
+    });
+    return () => {
+      sub.remove();
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [resetInactivityTimer]);
 
   // Restore session on mount
   useEffect(() => {
@@ -62,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch {}
         }
         setUser(appUser);
+        resetInactivityTimer();
       }
       setLoading(false);
     });
@@ -75,9 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.access_token) {
         setAuthToken(session.access_token);
         setUser(sessionToUser(session));
+        resetInactivityTimer();
       } else {
         setAuthToken(null);
         setUser(null);
+        if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
       }
     });
 
@@ -113,8 +146,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
 
       setUser(appUser);
+      resetInactivityTimer();
     },
-    []
+    [resetInactivityTimer]
   );
 
   const login = useCallback(async (email: string, password: string) => {
@@ -134,8 +168,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
 
     setUser(appUser);
+    resetInactivityTimer();
 
-  }, []);
+  }, [resetInactivityTimer]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();

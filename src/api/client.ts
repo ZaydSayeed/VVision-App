@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImageManipulator from "expo-image-manipulator";
 import { API_BASE_URL } from "../config/api";
 import {
   Person,
@@ -173,14 +174,21 @@ export async function enrollFace(
   relation: string,
   photoUri: string
 ): Promise<void> {
+  // Compress to ≤500KB before upload — keeps server storage manageable
+  const compressed = await ImageManipulator.manipulateAsync(
+    photoUri,
+    [{ resize: { width: 800 } }],
+    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+  );
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 15000); // longer for upload
 
   const formData = new FormData();
   formData.append("name", name);
   formData.append("relation", relation);
   formData.append("photo", {
-    uri: photoUri,
+    uri: compressed.uri,
     name: "face.jpg",
     type: "image/jpeg",
   } as any);

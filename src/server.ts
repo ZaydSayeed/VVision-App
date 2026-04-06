@@ -72,9 +72,20 @@ app.use("/api/help-alerts", helpAlertRoutes);
 app.use("/api/caregiver-profiles", caregiverProfileRoutes);
 app.use("/stream", streamRoutes);
 
-// Health check
+// Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+// Readiness check — verifies DB is reachable
+app.get("/ready", async (_req, res) => {
+  try {
+    const { getDb } = await import("./server-core/database");
+    await getDb().command({ ping: 1 });
+    res.json({ status: "ready" });
+  } catch {
+    res.status(503).json({ status: "unavailable" });
+  }
 });
 
 // Global error handler — catches any unhandled errors from routes

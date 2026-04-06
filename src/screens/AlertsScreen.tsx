@@ -35,7 +35,9 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
       await dismissAlert(id);
       onRefresh();
     } catch {
-      // Silently fail — will refresh on next poll
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // Refresh anyway — the next poll will reconcile state
+      onRefresh();
     }
   }
 
@@ -261,6 +263,8 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
                     dismissHelp(alert.id);
                   }}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mark help request as handled"
                 >
                   <Text style={styles.helpDismissText}>Mark as handled</Text>
                 </TouchableOpacity>
@@ -298,6 +302,8 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
                   style={styles.faceDismissBtn}
                   onPress={() => handleDismissApiAlert(alert.id ?? alert._id ?? "")}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel="Dismiss AI face detection alert"
                 >
                   <Ionicons name="checkmark-circle" size={15} color={colors.violet} />
                   <Text style={styles.faceDismissText}>Dismiss</Text>

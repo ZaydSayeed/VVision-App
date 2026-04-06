@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { fetchPeople, fetchAlerts } from "../api/client";
 import { Person, Alert, DashboardStats, TimelineEvent } from "../types";
 import { today } from "../config/storage";
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 15000; // 15s — less aggressive, better battery
 
 export function useDashboardData() {
   const [people, setPeople] = useState<Person[]>([]);
@@ -14,7 +14,7 @@ export function useDashboardData() {
   const loadingRef = useRef(false);
 
   const load = useCallback(async () => {
-    if (loadingRef.current) return; // prevent overlapping requests
+    if (loadingRef.current) return;
     loadingRef.current = true;
     try {
       const [p, a] = await Promise.all([fetchPeople(), fetchAlerts()]);
@@ -37,8 +37,9 @@ export function useDashboardData() {
     };
   }, [load]);
 
-  const stats: DashboardStats = computeStats(people, alerts);
-  const timeline: TimelineEvent[] = buildTimeline(people, alerts);
+  // Memoized so they don't recompute on every render
+  const stats = useMemo(() => computeStats(people, alerts), [people, alerts]);
+  const timeline = useMemo(() => buildTimeline(people, alerts), [people, alerts]);
 
   return { people, alerts, stats, timeline, loading, error, refresh: load };
 }

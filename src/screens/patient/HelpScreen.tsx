@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -20,18 +20,16 @@ interface HelpScreenProps {
 
 export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   const { colors } = useTheme();
-  const { alerts, sendHelp } = useHelpAlert();
-  const [sent, setSent] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const { alerts, sendHelp, sending, sentAt, sendError, clearSentState } = useHelpAlert();
+
+  const sent = !!sentAt;
+  const failed = !!sendError;
 
   async function handlePress() {
-    setFailed(false);
-    try {
-      await sendHelp();
-      setSent(true);
-      setTimeout(() => setSent(false), 3000);
-    } catch {
-      setFailed(true);
+    clearSentState();
+    await sendHelp();
+    if (sentAt) {
+      setTimeout(clearSentState, 4000);
     }
   }
 
@@ -241,12 +239,12 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
           <TouchableOpacity
             onPress={handlePress}
             activeOpacity={0.88}
-            disabled={sent}
+            disabled={sent || sending}
             style={styles.btnOuter}
             accessibilityRole="button"
             accessibilityLabel="Send help alert to caregiver"
             accessibilityHint="Double tap to immediately notify your caregiver that you need assistance"
-            accessibilityState={{ disabled: sent }}
+            accessibilityState={{ disabled: sent || sending }}
           >
             <LinearGradient
               colors={["#D95F5F", "#E87878"]}
@@ -258,6 +256,11 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
                 <>
                   <Ionicons name="checkmark-circle" size={72} color="#FFFFFF" />
                   <Text style={styles.btnLabelSent}>Help is on{"\n"}the way!</Text>
+                </>
+              ) : sending ? (
+                <>
+                  <Ionicons name="radio-outline" size={72} color="#FFFFFF" />
+                  <Text style={styles.btnLabelSent}>Sending…</Text>
                 </>
               ) : (
                 <>

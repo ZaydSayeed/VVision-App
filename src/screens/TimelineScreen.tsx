@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   RefreshControl,
   StyleSheet,
 } from "react-native";
@@ -61,7 +61,7 @@ function getEventSubtitle(event: TimelineEvent): string {
 export function TimelineScreen({ stats, timeline, loading, onRefresh }: TimelineScreenProps) {
   const { colors } = useTheme();
 
-  const today = new Date().toLocaleDateString([], {
+  const todayLabel = new Date().toLocaleDateString([], {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -71,7 +71,6 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
     container: { flex: 1, backgroundColor: colors.bg },
     content: { paddingBottom: 100 },
 
-    // Header
     screenHeader: {
       paddingHorizontal: spacing.xl,
       paddingTop: spacing.lg,
@@ -98,7 +97,6 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
       marginTop: 4,
     },
 
-    // Stat strip
     statStrip: {
       marginHorizontal: spacing.xl,
       backgroundColor: colors.surface,
@@ -134,7 +132,6 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
       textAlign: "center",
     },
 
-    // Timeline section
     timelineSection: { paddingHorizontal: spacing.xl },
     sectionLabelRow: {
       flexDirection: "row",
@@ -156,7 +153,6 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
       textTransform: "uppercase",
     },
 
-    // Event card
     eventCard: {
       backgroundColor: colors.bg,
       borderRadius: radius.lg,
@@ -198,7 +194,6 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
       ...fonts.regular,
     },
 
-    // Empty
     empty: {
       alignItems: "center",
       paddingVertical: 48,
@@ -226,36 +221,31 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
     },
   }), [colors]);
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={colors.violet} />
-      }
-    >
-      {/* Header */}
+  const renderHeader = () => (
+    <>
       <View style={styles.screenHeader}>
         <Text style={styles.eyebrow}>Command Center</Text>
-        <Text style={styles.screenTitle}>Today at a Glance</Text>
-        <Text style={styles.dateLabel}>{today}</Text>
+        <Text style={styles.screenTitle} accessibilityRole="header">Today at a Glance</Text>
+        <Text style={styles.dateLabel}>{todayLabel}</Text>
       </View>
 
-      {/* Stat Strip */}
-      <View style={styles.statStrip}>
-        <View style={styles.statCell}>
+      <View
+        style={styles.statStrip}
+        accessibilityLabel={`Stats: ${stats.seenToday ?? 0} seen today, ${stats.alertCount ?? 0} alerts, most visits by ${stats.mostFrequent || "nobody"}`}
+      >
+        <View style={styles.statCell} accessibilityElementsHidden>
           <Text style={styles.statValue}>{stats.seenToday ?? 0}</Text>
           <Text style={styles.statLabel}>Seen Today</Text>
         </View>
         <View style={styles.statDivider} />
-        <View style={styles.statCell}>
+        <View style={styles.statCell} accessibilityElementsHidden>
           <Text style={[styles.statValue, stats.alertCount > 0 && { color: colors.coral }]}>
             {stats.alertCount ?? 0}
           </Text>
           <Text style={styles.statLabel}>Alerts</Text>
         </View>
         <View style={styles.statDivider} />
-        <View style={styles.statCell}>
+        <View style={styles.statCell} accessibilityElementsHidden>
           <Text style={[styles.statValue, { fontSize: 18, lineHeight: 22, paddingHorizontal: 4 }]} numberOfLines={1}>
             {stats.mostFrequent || "—"}
           </Text>
@@ -263,42 +253,65 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
         </View>
       </View>
 
-      {/* Timeline */}
       <View style={styles.timelineSection}>
         <View style={styles.sectionLabelRow}>
           <View style={styles.sectionDot} />
           <Text style={styles.sectionLabel}>Today's Activity</Text>
         </View>
-
-        {timeline.length > 0 ? (
-          timeline.map((event, idx) => {
-            const style = getEventStyle(event.type, colors);
-            return (
-              <View
-                key={`${event.type}-${event.time}-${idx}`}
-                style={[styles.eventCard, { borderLeftColor: style.borderColor }]}
-              >
-                <View style={[styles.eventIconCircle, { backgroundColor: style.iconBg }]}>
-                  <Ionicons name={style.iconName} size={18} color={style.iconColor} />
-                </View>
-                <View style={styles.eventBody}>
-                  <Text style={styles.eventTitle}>{getEventTitle(event)}</Text>
-                  <Text style={styles.eventSubtitle}>{getEventSubtitle(event)}</Text>
-                </View>
-                <Text style={styles.eventTime}>{formatTimeShort(event.time)}</Text>
-              </View>
-            );
-          })
-        ) : (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="time-outline" size={24} color={colors.muted} />
-            </View>
-            <Text style={styles.emptyText}>No activity yet</Text>
-            <Text style={styles.emptySubtext}>Events will appear as the day unfolds</Text>
-          </View>
-        )}
       </View>
-    </ScrollView>
+    </>
+  );
+
+  const renderEmpty = () => (
+    <View style={[styles.timelineSection, styles.empty]}>
+      <View style={styles.emptyIcon}>
+        <Ionicons name="time-outline" size={24} color={colors.muted} />
+      </View>
+      <Text style={styles.emptyText}>No activity yet</Text>
+      <Text style={styles.emptySubtext}>Events will appear as the day unfolds</Text>
+    </View>
+  );
+
+  const renderItem = useCallback(({ item: event, index }: { item: TimelineEvent; index: number }) => {
+    const style = getEventStyle(event.type, colors);
+    const title = getEventTitle(event);
+    const subtitle = getEventSubtitle(event);
+    const time = formatTimeShort(event.time);
+    return (
+      <View
+        style={[styles.timelineSection, { paddingBottom: 0 }]}
+        key={`${event.type}-${event.time}-${index}`}
+      >
+        <View
+          style={[styles.eventCard, { borderLeftColor: style.borderColor }]}
+          accessibilityLabel={`${title}, ${subtitle}${time ? `, at ${time}` : ""}`}
+        >
+          <View style={[styles.eventIconCircle, { backgroundColor: style.iconBg }]}>
+            <Ionicons name={style.iconName} size={18} color={style.iconColor} />
+          </View>
+          <View style={styles.eventBody}>
+            <Text style={styles.eventTitle}>{title}</Text>
+            <Text style={styles.eventSubtitle}>{subtitle}</Text>
+          </View>
+          <Text style={styles.eventTime}>{time}</Text>
+        </View>
+      </View>
+    );
+  }, [colors, styles]);
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      data={timeline}
+      keyExtractor={(item, index) => `${item.type}-${item.time}-${index}`}
+      renderItem={renderItem}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmpty}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={colors.violet} />
+      }
+      showsVerticalScrollIndicator={false}
+    />
   );
 }

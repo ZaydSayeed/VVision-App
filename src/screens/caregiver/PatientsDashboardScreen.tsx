@@ -295,6 +295,9 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
                 style={styles.card}
                 onPress={() => onSelectPatient(patient)}
                 activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel={`${patient.name}, ${statusLabel}. Routine: ${patient.tasksDone ?? 0} of ${patient.tasksTotal ?? 0} done. Medications: ${patient.medsDone ?? 0} of ${patient.medsTotal ?? 0} taken.`}
+                accessibilityHint="Tap to view full patient details"
               >
                 {/* Left accent strip */}
                 <View style={[styles.cardAccentStrip, { backgroundColor: accentColor }]} />
@@ -304,7 +307,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
                   <View style={styles.cardRow}>
                     <View style={[styles.avatar, { backgroundColor: accentColor }]}>
                       <Text style={styles.avatarText}>
-                        {patient.name.charAt(0).toUpperCase()}
+                        {(patient.name || "?").charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <View style={styles.cardInfo}>

@@ -96,28 +96,63 @@ export const fonts = {
 };
 
 export const typography = {
+  // Size tokens
   hero: 34,
   title: 22,
   subtitle: 18,
   body: 15,
   small: 13,
   caption: 11,
+  // Full style objects — use these for consistent text rendering
+  heroStyle: { fontSize: 34, lineHeight: 40 },
+  titleStyle: { fontSize: 22, lineHeight: 28 },
+  subtitleStyle: { fontSize: 18, lineHeight: 24 },
+  bodyStyle: { fontSize: 15, lineHeight: 22 },
+  smallStyle: { fontSize: 13, lineHeight: 18 },
+  captionStyle: { fontSize: 11, lineHeight: 16, letterSpacing: 0.3 },
+  labelStyle: { fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase" as const },
 };
 
 export const shadow = {
-  card: {
+  // Subtle — list items, inline cards
+  sm: {
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  // Standard — main content cards
+  md: {
     shadowColor: "#7B5CE7",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
   },
+  // Prominent — floating elements, modals
+  lg: {
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  // FAB / primary action buttons
   fab: {
     shadowColor: "#7B5CE7",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 8,
+  },
+  // Legacy alias
+  card: {
+    shadowColor: "#7B5CE7",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
 };
 

@@ -20,22 +20,20 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
 
   // Checkmark scale spring — pops in when checked, fades out when unchecked
   const checkScale = useRef(new Animated.Value(checked ? 1 : 0)).current;
-  // Row background flash on check
-  const rowFlash = useRef(new Animated.Value(0)).current;
+  // Row flash overlay — uses native driver (opacity only, no background color interpolation)
+  const flashOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (checked) {
-      // Spring the checkmark in with a bounce
       Animated.spring(checkScale, {
         toValue: 1,
         useNativeDriver: true,
         friction: 4,
         tension: 200,
       }).start();
-      // Brief background flash
       Animated.sequence([
-        Animated.timing(rowFlash, { toValue: 1, duration: 120, useNativeDriver: false }),
-        Animated.timing(rowFlash, { toValue: 0, duration: 400, useNativeDriver: false }),
+        Animated.timing(flashOpacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+        Animated.timing(flashOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
       ]).start();
     } else {
       Animated.timing(checkScale, {
@@ -114,13 +112,20 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
     checked && { backgroundColor: accent, borderColor: accent },
   ];
 
-  const rowBgColor = rowFlash.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.bg, accentColor ? `${accentColor}18` : colors.violet50],
-  });
-
   return (
-    <Animated.View style={[styles.row, { backgroundColor: rowBgColor }]}>
+    <View style={[styles.row, { backgroundColor: colors.bg }]}>
+      {/* Native-driver flash overlay — avoids layout thread for better frame rate */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: radius.lg,
+            backgroundColor: accentColor ? `${accentColor}18` : colors.violet50,
+            opacity: flashOpacity,
+          },
+        ]}
+        pointerEvents="none"
+      />
       <TouchableOpacity
         style={checkboxStyle}
         onPress={handleToggle}
@@ -140,10 +145,15 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
       </TouchableOpacity>
 
       {onDelete ? (
-        <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={onDelete}
+          accessibilityLabel={`Remove ${label}`}
+          accessibilityRole="button"
+        >
           <Ionicons name="close" size={18} color={colors.muted} />
         </TouchableOpacity>
       ) : null}
-    </Animated.View>
+    </View>
   );
 }

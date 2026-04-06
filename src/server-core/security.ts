@@ -1,15 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import { config } from "./config";
 
-// In-memory token cache to avoid hitting Supabase on every request
-const userCache = new Map<string, string>();
+interface CachedToken {
+  userId: string;
+  expiresAt: number;
+}
+
+// In-memory token cache — 5 min TTL so revoked tokens expire promptly
+const userCache = new Map<string, CachedToken>();
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export interface AuthInfo {
   userId: string;
   token: string;
 }
 
-// Extend Express Request to include auth info
 declare global {
   namespace Express {
     interface Request {
@@ -31,13 +36,16 @@ export async function authMiddleware(
 
   const token = authHeader.slice(7);
 
-  // Check cache first
-  const cachedUserId = userCache.get(token);
-  if (cachedUserId) {
-    req.auth = { userId: cachedUserId, token };
+  // Check cache
+  const cached = userCache.get(token);
+  if (cached && cached.expiresAt > Date.now()) {
+    req.auth = { userId: cached.userId, token };
     next();
     return;
   }
+
+  // Stale or missing — remove and re-validate
+  userCache.delete(token);
 
   try {
     const response = await fetch(`${config.supabaseUrl}/auth/v1/user`, {
@@ -59,9 +67,14 @@ export async function authMiddleware(
       return;
     }
 
-    // Cache this mapping
-    userCache.set(token, userId);
-    if (userCache.size > 1000) userCache.clear();
+    userCache.set(token, { userId, expiresAt: Date.now() + CACHE_TTL_MS });
+    // Evict oldest entries if cache is getting large
+    if (userCache.size > 1000) {
+      const now = Date.now();
+      for (const [k, v] of userCache) {
+        if (v.expiresAt < now) userCache.delete(k);
+      }
+    }
 
     req.auth = { userId, token };
     next();

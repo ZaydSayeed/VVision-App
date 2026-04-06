@@ -66,7 +66,12 @@ export function FacesScreen() {
     return () => loop.stop();
   }, [pulseAnim]);
 
+  // Shimmer only runs while loading
   useEffect(() => {
+    if (!loading) {
+      shimmerAnim.setValue(1);
+      return;
+    }
     const shimmer = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
@@ -75,20 +80,29 @@ export function FacesScreen() {
     );
     shimmer.start();
     return () => shimmer.stop();
-  }, [shimmerAnim]);
+  }, [loading, shimmerAnim]);
+
+  const [cacheAge, setCacheAge] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const data = await fetchPeople();
       setPeople(data);
       setOffline(false);
+      setCacheAge(null);
     } catch {
-      // Backend unreachable or auth error — fall back to cached faces so they
-      // remain visible even when the server is down
+      // Backend unreachable — fall back to cached faces
       try {
         const raw = await AsyncStorage.getItem("@vela/api_cache:/api/people");
         if (raw) {
-          setPeople(JSON.parse(raw) as Person[]);
+          const parsed = JSON.parse(raw) as Person[];
+          setPeople(parsed);
+          // Check cache timestamp from the client's metadata key
+          const ts = await AsyncStorage.getItem("@vela/api_cache_ts:/api/people");
+          if (ts) {
+            const mins = Math.round((Date.now() - parseInt(ts)) / 60000);
+            setCacheAge(mins < 1 ? "just now" : mins < 60 ? `${mins}m ago` : `${Math.round(mins / 60)}h ago`);
+          }
         }
       } catch {}
       setOffline(true);
@@ -440,7 +454,9 @@ export function FacesScreen() {
             ]}
           />
           <Text style={styles.statusText}>
-            {offline ? "Glasses not connected" : "Glasses are active"}
+            {offline
+              ? `Glasses not connected${cacheAge ? ` · last synced ${cacheAge}` : ""}`
+              : "Glasses are active"}
           </Text>
         </View>
 
@@ -509,8 +525,8 @@ export function FacesScreen() {
                       <Text style={styles.initialsText}>{initials}</Text>
                     </View>
                   </LinearGradient>
-                  <Text style={styles.faceName}>{person.name}</Text>
-                  <Text style={styles.faceRelation}>{person.relation}</Text>
+                  <Text style={styles.faceName} numberOfLines={1}>{person.name}</Text>
+                  <Text style={styles.faceRelation} numberOfLines={1}>{person.relation}</Text>
                   <Text style={styles.faceHint}>Hold to remove</Text>
                 </TouchableOpacity>
               );

@@ -51,10 +51,14 @@ router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
 
 // PATCH /api/help-alerts/:alertId/dismiss
 router.patch("/:alertId/dismiss", authMiddleware, resolvePatientId, async (req, res) => {
+  if (!ObjectId.isValid(String(req.params.alertId))) {
+    res.status(400).json({ detail: "Invalid ID" });
+    return;
+  }
   try {
     const db = getDb();
     const result = await db.collection("help_alerts").updateOne(
-      { _id: new ObjectId(req.params.alertId as string), patient_id: req.patientId! },
+      { _id: new ObjectId(String(req.params.alertId)), patient_id: req.patientId! },
       { $set: { dismissed: true } }
     );
     if (result.matchedCount === 0) {
@@ -62,7 +66,11 @@ router.patch("/:alertId/dismiss", authMiddleware, resolvePatientId, async (req, 
       return;
     }
 
-    const doc = await db.collection("help_alerts").findOne({ _id: new ObjectId(req.params.alertId as string) });
+    const doc = await db.collection("help_alerts").findOne({ _id: new ObjectId(String(req.params.alertId)) });
+    if (!doc) {
+      res.status(404).json({ detail: "Help alert not found" });
+      return;
+    }
     res.json(alertOut(doc));
   } catch (err) {
     console.error("dismiss help alert error:", err);

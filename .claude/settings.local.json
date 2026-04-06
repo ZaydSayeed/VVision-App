@@ -9,7 +9,14 @@
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(npx tsc:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.velavision.org)",
+      "Bash(npm install:*)",
+      "Bash(sed -i '' 's/new ObjectId\\(req\\\\.params\\\\.\\\\\\([a-zA-Z]*\\\\\\)\\)/new ObjectId\\(req.params.\\\\1 as string\\)/g' src/server-routes/people.ts src/server-routes/medications.ts src/server-routes/helpAlerts.ts src/server-routes/patients.ts)",
+      "Bash(sed -i '' 's/ObjectId\\\\.isValid\\(req\\\\.params\\\\.\\\\\\([a-zA-Z]*\\\\\\)\\)/ObjectId.isValid\\(req.params.\\\\1 as string\\)/g' src/server-routes/people.ts src/server-routes/routines.ts src/server-routes/medications.ts src/server-routes/helpAlerts.ts src/server-routes/patients.ts)",
+      "Bash(sed -i '' 's/new ObjectId\\(req\\\\.params\\\\.\\\\\\([a-zA-Z]*\\\\\\)\\)/new ObjectId\\(String\\(req.params.\\\\1\\)\\)/g' src/server-routes/routines.ts src/server-routes/medications.ts src/server-routes/helpAlerts.ts)",
+      "Bash(sed -i '' 's/const caregiverId = req\\\\.params\\\\.caregiverId;/const caregiverId = String\\(req.params.caregiverId\\);/' src/server-routes/patients.ts)"
     ]
   }
 }

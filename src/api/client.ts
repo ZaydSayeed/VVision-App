@@ -46,7 +46,10 @@ async function getCached<T>(path: string): Promise<T | null> {
 
 async function setCache<T>(path: string, data: T): Promise<void> {
   try {
-    await AsyncStorage.setItem(CACHE_PREFIX + path, JSON.stringify(data));
+    await AsyncStorage.multiSet([
+      [CACHE_PREFIX + path, JSON.stringify(data)],
+      [`${CACHE_PREFIX}ts:${path}`, String(Date.now())],
+    ]);
   } catch {
     // Cache write failure is non-critical
   }

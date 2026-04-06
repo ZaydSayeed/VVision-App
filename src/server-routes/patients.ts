@@ -1,20 +1,23 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
-import crypto from "crypto";
+import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
-
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-function generateLinkCode(length = 6): string {
-  let code = "";
-  for (let i = 0; i < length; i++) {
-    code += ALPHABET[crypto.randomInt(ALPHABET.length)];
-  }
-  return code;
-}
+import { generateUniqueLinkCode } from "../server-core/linkCode";
 
 const router = Router();
+
+const patientUpdateSchema = z.object({
+  name: z.string().min(1).max(200).trim().optional(),
+  age: z.number().int().min(0).max(150).optional().nullable(),
+  diagnosis: z.string().max(500).trim().optional().nullable(),
+  notes: z.string().max(5000).trim().optional(),
+});
+
+const linkSchema = z.object({
+  link_code: z.string().min(1).max(20).trim().toUpperCase(),
+});
 
 function patientOut(doc: any) {
   return {
@@ -47,10 +50,16 @@ router.get("/mine", authMiddleware, resolvePatientId, async (req, res) => {
 
 // PATCH /api/patients/mine
 router.patch("/mine", authMiddleware, resolvePatientId, async (req, res) => {
+  const parsed = patientUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ detail: parsed.error.issues[0].message });
+    return;
+  }
+
   try {
     const db = getDb();
-    const { name, age, diagnosis, notes } = req.body;
     const updates: any = {};
+    const { name, age, diagnosis, notes } = parsed.data;
     if (name !== undefined) updates.name = name;
     if (age !== undefined) updates.age = age;
     if (diagnosis !== undefined) updates.diagnosis = diagnosis;
@@ -63,7 +72,7 @@ router.patch("/mine", authMiddleware, resolvePatientId, async (req, res) => {
 
     await db.collection("patients").updateOne(
       { _id: new ObjectId(req.patientId!) },
-      { $set: updates }
+      { $set: { ...updates, updated_at: new Date().toISOString() } }
     );
     const patient = await db.collection("patients").findOne({ _id: new ObjectId(req.patientId!) });
     res.json(patientOut(patient));
@@ -93,12 +102,9 @@ router.get("/mine/link-code", authMiddleware, async (req, res) => {
       return;
     }
 
-    // Auto-heal: if patient exists but has no link code, generate one now
+    // Auto-heal: generate link code if missing
     if (!patient.link_code) {
-      let linkCode = generateLinkCode();
-      while (await db.collection("patients").findOne({ link_code: linkCode })) {
-        linkCode = generateLinkCode();
-      }
+      const linkCode = await generateUniqueLinkCode(db);
       await db.collection("patients").updateOne(
         { _id: patient._id },
         { $set: { link_code: linkCode } }
@@ -115,11 +121,16 @@ router.get("/mine/link-code", authMiddleware, async (req, res) => {
 
 // POST /api/patients/link
 router.post("/link", authMiddleware, async (req, res) => {
+  const parsed = linkSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ detail: "Invalid link code" });
+    return;
+  }
+
   try {
     const db = getDb();
     let user = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
 
-    // Auto-create user doc if missing (e.g. signed up before backend sync was working)
     if (!user) {
       const result = await db.collection("users").insertOne({
         supabase_uid: req.auth!.userId,
@@ -127,6 +138,7 @@ router.post("/link", authMiddleware, async (req, res) => {
         name: "",
         role: "caregiver",
         patient_id: null,
+        created_at: new Date().toISOString(),
       });
       user = await db.collection("users").findOne({ _id: result.insertedId });
     }
@@ -140,8 +152,7 @@ router.post("/link", authMiddleware, async (req, res) => {
       return;
     }
 
-    const code = (req.body.link_code || "").trim().toUpperCase();
-    const patient = await db.collection("patients").findOne({ link_code: code });
+    const patient = await db.collection("patients").findOne({ link_code: parsed.data.link_code });
     if (!patient) {
       res.status(404).json({ detail: "Invalid link code" });
       return;
@@ -154,7 +165,6 @@ router.post("/link", authMiddleware, async (req, res) => {
       { _id: patient._id },
       { $addToSet: { caregiver_ids: userId } }
     );
-
     await db.collection("users").updateOne(
       { _id: user._id },
       { $set: { patient_id: patientId } }
@@ -164,6 +174,64 @@ router.post("/link", authMiddleware, async (req, res) => {
     res.json(patientOut(updated));
   } catch (err) {
     console.error("link error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+// DELETE /api/patients/mine/unlink  — caregiver unlinks from their patient
+router.delete("/mine/unlink", authMiddleware, async (req, res) => {
+  try {
+    const db = getDb();
+    const user = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+    if (!user || user.role !== "caregiver") {
+      res.status(403).json({ detail: "Only caregivers can unlink" });
+      return;
+    }
+    if (!user.patient_id) {
+      res.status(404).json({ detail: "Not linked to any patient" });
+      return;
+    }
+
+    const userId = String(user._id);
+    await db.collection("patients").updateOne(
+      { _id: new ObjectId(String(user.patient_id)) },
+      { $pull: { caregiver_ids: userId } as any }
+    );
+    await db.collection("users").updateOne(
+      { _id: user._id },
+      { $set: { patient_id: null } }
+    );
+
+    res.status(204).send();
+  } catch (err) {
+    console.error("unlink error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+// DELETE /api/patients/mine/caregivers/:caregiverId  — patient removes a caregiver
+router.delete("/mine/caregivers/:caregiverId", authMiddleware, resolvePatientId, async (req, res) => {
+  const caregiverId = String(req.params.caregiverId);
+  if (!ObjectId.isValid(caregiverId)) {
+    res.status(400).json({ detail: "Invalid caregiver ID" });
+    return;
+  }
+
+  try {
+    const db = getDb();
+
+    await db.collection("patients").updateOne(
+      { _id: new ObjectId(req.patientId!) },
+      { $pull: { caregiver_ids: caregiverId } as any }
+    );
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(caregiverId) },
+      { $set: { patient_id: null } }
+    );
+
+    res.status(204).send();
+  } catch (err) {
+    console.error("remove caregiver error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });

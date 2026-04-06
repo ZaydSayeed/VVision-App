@@ -39,9 +39,10 @@ export function TodayScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
-  const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday } = useRoutine(patientId);
-  const { meds, addMed, toggleTaken, deleteMed, isTakenToday } = useMeds(patientId);
+  const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError } = useRoutine(patientId);
+  const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError } = useMeds(patientId);
   const { alerts } = useHelpAlert();
+  const dataError = routineError || medsError;
 
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
@@ -69,7 +70,7 @@ export function TodayScreen() {
   const openNotifs = () => {
     setNotifOpen(true);
     Animated.parallel([
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, friction: 8, tension: 58 }),
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, friction: 7, tension: 65 }),
       Animated.timing(backdropAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
     ]).start();
   };
@@ -535,6 +536,14 @@ export function TodayScreen() {
           <Text style={styles.progressBold}>{medsDone}/{meds.length}</Text> meds done today
         </Text>
       </View>
+
+      {/* ── Data error banner ────────────────────────────────── */}
+      {dataError ? (
+        <View style={{ marginHorizontal: spacing.xl, marginBottom: spacing.sm, backgroundColor: colors.coralSoft, borderRadius: radius.lg, padding: spacing.md, flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+          <Ionicons name="wifi-outline" size={16} color={colors.coral} />
+          <Text style={{ fontSize: 13, color: colors.coral, ...fonts.regular, flex: 1 }}>Couldn't load your data. Showing last saved version.</Text>
+        </View>
+      ) : null}
 
       {/* ── Main content ─────────────────────────────────────── */}
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

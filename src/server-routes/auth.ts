@@ -1,21 +1,16 @@
 import { Router } from "express";
-import crypto from "crypto";
-import { ObjectId } from "mongodb";
+import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { config } from "../server-core/config";
+import { generateUniqueLinkCode } from "../server-core/linkCode";
 
 const router = Router();
 
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-function generateLinkCode(length = 6): string {
-  let code = "";
-  for (let i = 0; i < length; i++) {
-    code += ALPHABET[crypto.randomInt(ALPHABET.length)];
-  }
-  return code;
-}
+const syncSchema = z.object({
+  name: z.string().min(1, "Name required").max(200).trim(),
+  role: z.enum(["patient", "caregiver"], { message: "Role must be patient or caregiver" }),
+});
 
 function userOut(user: any) {
   return {
@@ -29,26 +24,23 @@ function userOut(user: any) {
 
 // POST /api/auth/sync
 router.post("/sync", authMiddleware, async (req, res) => {
-  try {
-    const { name, role } = req.body;
-    if (!name || !["patient", "caregiver"].includes(role)) {
-      res.status(400).json({ detail: "name and role (patient|caregiver) required" });
-      return;
-    }
+  const parsed = syncSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ detail: parsed.error.issues[0].message });
+    return;
+  }
+  const { name, role } = parsed.data;
 
+  try {
     const supabaseUid = req.auth!.userId;
     const db = getDb();
     const users = db.collection("users");
 
-    // Check if user already exists
     const existing = await users.findOne({ supabase_uid: supabaseUid });
     if (existing) {
-      // If patient role but patient_id is missing, create the patient record now
+      // Auto-heal: patient role but missing patient_id
       if (existing.role === "patient" && !existing.patient_id) {
-        let linkCode = generateLinkCode();
-        while (await db.collection("patients").findOne({ link_code: linkCode })) {
-          linkCode = generateLinkCode();
-        }
+        const linkCode = await generateUniqueLinkCode(db);
         const patientDoc = {
           name: existing.name,
           age: null,
@@ -57,20 +49,18 @@ router.post("/sync", authMiddleware, async (req, res) => {
           caregiver_id: "",
           caregiver_ids: [] as string[],
           link_code: linkCode,
+          created_at: new Date().toISOString(),
         };
         const patientResult = await db.collection("patients").insertOne(patientDoc);
         const patientId = String(patientResult.insertedId);
-        await users.updateOne(
-          { _id: existing._id },
-          { $set: { patient_id: patientId } }
-        );
+        await users.updateOne({ _id: existing._id }, { $set: { patient_id: patientId } });
         existing.patient_id = patientId;
       }
       res.json(userOut(existing));
       return;
     }
 
-    // Get email from Supabase
+    // Fetch email from Supabase
     let email = "";
     try {
       const resp = await fetch(`${config.supabaseUrl}/auth/v1/user`, {
@@ -83,28 +73,23 @@ router.post("/sync", authMiddleware, async (req, res) => {
         const data = (await resp.json()) as { email?: string };
         email = data.email || "";
       }
-    } catch {}
+    } catch (err) {
+      console.error("Failed to fetch email from Supabase:", err);
+    }
 
-    // Create user doc
     const userDoc = {
       supabase_uid: supabaseUid,
       email,
       name,
       role,
       patient_id: null as string | null,
+      created_at: new Date().toISOString(),
     };
     const result = await users.insertOne(userDoc);
-    const userId = String(result.insertedId);
 
     let patientId: string | null = null;
-
-    // If patient, auto-create patient record with link code
     if (role === "patient") {
-      let linkCode = generateLinkCode();
-      while (await db.collection("patients").findOne({ link_code: linkCode })) {
-        linkCode = generateLinkCode();
-      }
-
+      const linkCode = await generateUniqueLinkCode(db);
       const patientDoc = {
         name,
         age: null,
@@ -113,18 +98,15 @@ router.post("/sync", authMiddleware, async (req, res) => {
         caregiver_id: "",
         caregiver_ids: [] as string[],
         link_code: linkCode,
+        created_at: new Date().toISOString(),
       };
       const patientResult = await db.collection("patients").insertOne(patientDoc);
       patientId = String(patientResult.insertedId);
-
-      await users.updateOne(
-        { _id: new ObjectId(userId) },
-        { $set: { patient_id: patientId } }
-      );
+      await users.updateOne({ _id: result.insertedId }, { $set: { patient_id: patientId } });
     }
 
     res.json({
-      id: userId,
+      id: String(result.insertedId),
       email,
       name,
       role,

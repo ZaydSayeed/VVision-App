@@ -10,12 +10,16 @@ import {
 
 export function useMeds(patientId?: string) {
   const [meds, setMeds] = useState<Medication[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const data = await fetchMedications();
       setMeds(data);
-    } catch {}
+      setLoadError(null);
+    } catch (e: any) {
+      setLoadError(e?.message ?? "Failed to load medications");
+    }
   }, [patientId]);
 
   useEffect(() => {
@@ -46,5 +50,5 @@ export function useMeds(patientId?: string) {
 
   const isTakenToday = (med: Medication) => isDoneToday(med.taken_date);
 
-  return { meds, addMed, toggleTaken, deleteMed, isTakenToday };
+  return { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError, reload: load };
 }

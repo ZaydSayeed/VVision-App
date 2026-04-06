@@ -4,13 +4,15 @@ import { fetchCaregiverProfiles } from "../api/client";
 
 export function useCaregiver() {
   const [profiles, setProfiles] = useState<CaregiverProfile[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const data = await fetchCaregiverProfiles();
       setProfiles(data);
-    } catch {
-      // Keep current state on error
+      setLoadError(null);
+    } catch (e: any) {
+      setLoadError(e?.message ?? "Failed to load caregiver info");
     }
   }, []);
 
@@ -18,5 +20,5 @@ export function useCaregiver() {
     load();
   }, [load]);
 
-  return { profiles, refresh: load };
+  return { profiles, loadError, refresh: load };
 }

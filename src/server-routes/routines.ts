@@ -1,10 +1,22 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
+import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
 
 const router = Router();
+
+const createSchema = z.object({
+  label: z.string().min(1, "Label required").max(300).trim(),
+  time: z.string().min(1, "Time required").max(50).trim(),
+});
+
+const updateSchema = z.object({
+  label: z.string().min(1).max(300).trim().optional(),
+  time: z.string().min(1).max(50).trim().optional(),
+  completed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+});
 
 function routineOut(doc: any) {
   return {
@@ -34,11 +46,16 @@ router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
 
 // POST /api/routines
 router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ detail: parsed.error.issues[0].message });
+    return;
+  }
   try {
     const db = getDb();
     const doc = {
-      label: req.body.label,
-      time: req.body.time,
+      label: parsed.data.label,
+      time: parsed.data.time,
       completed_date: null,
       patient_id: req.patientId!,
       created_at: new Date().toISOString(),
@@ -53,10 +70,19 @@ router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
 
 // PATCH /api/routines/:routineId
 router.patch("/:routineId", authMiddleware, resolvePatientId, async (req, res) => {
+  if (!ObjectId.isValid(String(req.params.routineId))) {
+    res.status(400).json({ detail: "Invalid ID" });
+    return;
+  }
+  const parsed = updateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ detail: parsed.error.issues[0].message });
+    return;
+  }
   try {
     const db = getDb();
-    const { label, time, completed_date } = req.body;
     const updates: any = {};
+    const { label, time, completed_date } = parsed.data;
     if (label !== undefined) updates.label = label;
     if (time !== undefined) updates.time = time;
     if (completed_date !== undefined) updates.completed_date = completed_date;
@@ -67,7 +93,7 @@ router.patch("/:routineId", authMiddleware, resolvePatientId, async (req, res) =
     }
 
     const result = await db.collection("routines").updateOne(
-      { _id: new ObjectId(req.params.routineId as string), patient_id: req.patientId! },
+      { _id: new ObjectId(String(req.params.routineId)), patient_id: req.patientId! },
       { $set: updates }
     );
     if (result.matchedCount === 0) {
@@ -75,7 +101,11 @@ router.patch("/:routineId", authMiddleware, resolvePatientId, async (req, res) =
       return;
     }
 
-    const doc = await db.collection("routines").findOne({ _id: new ObjectId(req.params.routineId as string) });
+    const doc = await db.collection("routines").findOne({ _id: new ObjectId(String(req.params.routineId)) });
+    if (!doc) {
+      res.status(404).json({ detail: "Routine not found" });
+      return;
+    }
     res.json(routineOut(doc));
   } catch (err) {
     console.error("update routine error:", err);
@@ -85,10 +115,14 @@ router.patch("/:routineId", authMiddleware, resolvePatientId, async (req, res) =
 
 // DELETE /api/routines/:routineId
 router.delete("/:routineId", authMiddleware, resolvePatientId, async (req, res) => {
+  if (!ObjectId.isValid(String(req.params.routineId))) {
+    res.status(400).json({ detail: "Invalid ID" });
+    return;
+  }
   try {
     const db = getDb();
     const result = await db.collection("routines").deleteOne({
-      _id: new ObjectId(req.params.routineId as string),
+      _id: new ObjectId(String(req.params.routineId)),
       patient_id: req.patientId!,
     });
     if (result.deletedCount === 0) {

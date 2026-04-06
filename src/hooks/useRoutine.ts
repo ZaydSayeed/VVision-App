@@ -10,12 +10,16 @@ import {
 
 export function useRoutine(patientId?: string) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const data = await fetchRoutines();
       setTasks(data);
-    } catch {}
+      setLoadError(null);
+    } catch (e: any) {
+      setLoadError(e?.message ?? "Failed to load routine");
+    }
   }, [patientId]);
 
   useEffect(() => {
@@ -46,5 +50,5 @@ export function useRoutine(patientId?: string) {
 
   const isCompletedToday = (task: RoutineTask) => isDoneToday(task.completed_date);
 
-  return { tasks, addTask, toggleComplete, deleteTask, isCompletedToday };
+  return { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError, reload: load };
 }

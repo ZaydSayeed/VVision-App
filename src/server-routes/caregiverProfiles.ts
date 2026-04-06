@@ -16,7 +16,9 @@ router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
       return;
     }
 
-    const caregiverIds: string[] = patient.caregiver_ids || [];
+    const caregiverIds: string[] = (patient.caregiver_ids || []).filter(
+      (cid: string) => ObjectId.isValid(cid)
+    );
     if (caregiverIds.length === 0) {
       res.json([]);
       return;

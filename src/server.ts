@@ -1,5 +1,7 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { config } from "./server-core/config";
 import { connectDb, closeDb } from "./server-core/database";
 
@@ -15,9 +17,49 @@ import streamRoutes from "./server-routes/stream";
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// Security headers
+app.use(helmet());
+
+// CORS — allow Expo Go and local dev
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (mobile apps, curl) and Expo origins
+    if (!origin || origin.startsWith("exp://") || origin.startsWith("http://localhost")) {
+      cb(null, true);
+    } else {
+      cb(null, true); // Keep permissive for now; tighten when deploying web frontend
+    }
+  },
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+// Body parsing with size limit
+app.use(express.json({ limit: "1mb" }));
+
+// Request logging
 app.use((req, _res, next) => { console.log(`${req.method} ${req.path}`); next(); });
+
+// Rate limiting — strict on auth & link endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { detail: "Too many requests. Please try again later." },
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { detail: "Too many requests. Please slow down." },
+});
+
+app.use("/api/auth", authLimiter);
+app.use("/api/patients/link", authLimiter);
+app.use("/api", generalLimiter);
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -35,23 +77,41 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Global error handler — catches any unhandled errors from routes
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ detail: "Internal server error" });
+});
+
+// Catch unhandled promise rejections so server doesn't crash silently
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
 async function start() {
   try {
     await connectDb();
     console.log("MongoDB connected");
 
-    app.listen(config.port, "0.0.0.0", () => {
+    const server = app.listen(config.port, "0.0.0.0", () => {
       console.log(`Server running on http://0.0.0.0:${config.port}`);
     });
+
+    async function shutdown(signal: string) {
+      console.log(`${signal} received — shutting down gracefully`);
+      server.close(async () => {
+        await closeDb();
+        process.exit(0);
+      });
+      setTimeout(() => process.exit(1), 10000);
+    }
+
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
   } catch (err) {
     console.error("Failed to start:", err);
     process.exit(1);
   }
 }
-
-process.on("SIGINT", async () => {
-  await closeDb();
-  process.exit(0);
-});
 
 start();

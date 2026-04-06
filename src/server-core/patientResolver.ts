@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ObjectId } from "mongodb";
 import { getDb } from "./database";
 
 // Extend Express Request to include patientId
@@ -29,6 +30,10 @@ export async function resolvePatientId(
   }
 
   const patientId = user.patient_id;
+  if (patientId && !ObjectId.isValid(String(patientId))) {
+    res.status(500).json({ detail: "Account data corrupted. Please sign out and back in." });
+    return;
+  }
   if (!patientId) {
     const msg =
       user.role === "caregiver"

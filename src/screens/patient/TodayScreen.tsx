@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -39,10 +40,16 @@ export function TodayScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
-  const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError } = useRoutine(patientId);
-  const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError } = useMeds(patientId);
+  const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
+  const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
   const { alerts } = useHelpAlert();
   const dataError = routineError || medsError;
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([reloadRoutine(), reloadMeds()]);
+    setRefreshing(false);
+  }, [reloadRoutine, reloadMeds]);
 
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
@@ -546,7 +553,13 @@ export function TodayScreen() {
       ) : null}
 
       {/* ── Main content ─────────────────────────────────────── */}
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />
+        }
+      >
 
         {/* Routine section */}
         <View style={styles.section}>

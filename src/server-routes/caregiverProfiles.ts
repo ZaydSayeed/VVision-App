@@ -22,17 +22,13 @@ router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
       return;
     }
 
-    const caregivers = [];
-    for (const cid of caregiverIds) {
-      const user = await db.collection("users").findOne({ _id: new ObjectId(cid) });
-      if (user) {
-        caregivers.push({
-          id: String(user._id),
-          name: user.name,
-          email: user.email,
-        });
-      }
-    }
+    const objectIds = caregiverIds.map((cid) => new ObjectId(cid));
+    const users = await db.collection("users").find({ _id: { $in: objectIds } }).toArray();
+    const caregivers = users.map((user) => ({
+      id: String(user._id),
+      name: user.name,
+      email: user.email,
+    }));
 
     res.json(caregivers);
   } catch (err) {

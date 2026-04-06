@@ -5,26 +5,17 @@ A dementia-care mobile app built with React Native / Expo. There are two user ro
 - **Patient** — sees their daily routine, medications, known faces, and a help button to alert caregivers
 - **Caregiver** — sees a dashboard of linked patients, face recognition alerts, activity timeline, and can manage the care team
 
-Authentication is handled by **Supabase**. Data is stored in **MongoDB Atlas**. The backend is an **Express/TypeScript** server (`src/server.ts`) that the app talks to via a local network IP.
+Authentication is handled by **Supabase**. Data is stored in **MongoDB Atlas**. The backend is an **Express/TypeScript** server (`src/server.ts`) deployed on **Render** at `https://vvision-app.onrender.com`.
 
 ---
 
 ## How to Run
 
-**Everything at once (recommended):**
+**Start the app (backend is always running on Render — no need to start it):**
 ```
-cd /Users/haadisiddiqui/projects/VVision-App && npm run tunnel
-```
-Starts backend + Expo with tunnel in one command. Scan QR with Expo Go on your phone.
-
-**Separate terminals (local WiFi only):**
-```
-# Terminal 1
-npm run backend
-
-# Terminal 2
 npx expo start
 ```
+Scan QR with Expo Go on your phone. Works from any network.
 
 **Web browser:**
 ```
@@ -32,19 +23,11 @@ npx expo start --web
 ```
 Or press `w` after starting. Camera features won't work on web.
 
-**Available npm scripts:**
-- `npm run tunnel` — backend + expo tunnel (phone on any network)
-- `npm run dev` — backend + expo (local WiFi only)
-- `npm run backend` — backend only
-- `npm run web` — web only
-
-Requires ngrok installed (`brew install ngrok`) and authenticated for tunnel mode.
-
-**Local IP** (update `.env` if network changes):
+**Local backend (only if you need to test backend changes locally):**
 ```
-API_BASE_URL=http://192.168.16.109:3000
+npm run backend
 ```
-Find current IP with: `ipconfig getifaddr en0`
+Update `app.json` `apiBaseUrl` to your local IP first (`ipconfig getifaddr en0`), and revert it to the Render URL when done.
 
 ---
 
@@ -168,6 +151,6 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - **Dark mode** is toggled from the side drawer. The global time banner adapts — uses `gradients.primary` in light mode and `gradients.dark` in dark mode.
 - **FacesScreen** deliberately uses its own `DARK` palette constant (not `colors` from theme) so it stays dark even in light mode — this is intentional design.
 - The `.env` file has `MONGODB_URI` with real credentials — never commit changes to this file that expose credentials.
-- The backend runs on **port 3000** (`src/server.ts`). The app connects to it via `API_BASE_URL` in `.env`.
+- The backend is deployed on **Render** (`https://vvision-app.onrender.com`). The app connects via `apiBaseUrl` in `app.json`. The `.env` `API_BASE_URL` is only used for local backend development.
 - To run on **web**: `npx expo start --web` (or press `w` after `npx expo start`). Camera features won't work on web.
 - **Old screens** `RoutineScreen.tsx` and `MedsScreen.tsx` still exist in the codebase but are no longer in navigation — their content was merged into `TodayScreen.tsx`.

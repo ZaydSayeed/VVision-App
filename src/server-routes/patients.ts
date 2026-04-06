@@ -1,8 +1,18 @@
 import { Router } from "express";
 import { ObjectId } from "mongodb";
+import crypto from "crypto";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
+
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+function generateLinkCode(length = 6): string {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += ALPHABET[crypto.randomInt(ALPHABET.length)];
+  }
+  return code;
+}
 
 const router = Router();
 
@@ -77,13 +87,26 @@ router.get("/mine/link-code", authMiddleware, async (req, res) => {
       return;
     }
 
-    const patient = await db.collection("patients").findOne({ _id: new ObjectId(String(user.patient_id)) });
+    let patient = await db.collection("patients").findOne({ _id: new ObjectId(String(user.patient_id)) });
     if (!patient) {
       res.status(404).json({ detail: "Patient not found" });
       return;
     }
 
-    res.json({ link_code: patient.link_code || "" });
+    // Auto-heal: if patient exists but has no link code, generate one now
+    if (!patient.link_code) {
+      let linkCode = generateLinkCode();
+      while (await db.collection("patients").findOne({ link_code: linkCode })) {
+        linkCode = generateLinkCode();
+      }
+      await db.collection("patients").updateOne(
+        { _id: patient._id },
+        { $set: { link_code: linkCode } }
+      );
+      patient = { ...patient, link_code: linkCode };
+    }
+
+    res.json({ link_code: patient.link_code });
   } catch (err) {
     console.error("link-code error:", err);
     res.status(500).json({ detail: "Internal server error" });

@@ -14,6 +14,7 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
@@ -82,6 +83,14 @@ export function FacesScreen() {
       setPeople(data);
       setOffline(false);
     } catch {
+      // Backend unreachable or auth error — fall back to cached faces so they
+      // remain visible even when the server is down
+      try {
+        const raw = await AsyncStorage.getItem("@vela/api_cache:/api/people");
+        if (raw) {
+          setPeople(JSON.parse(raw) as Person[]);
+        }
+      } catch {}
       setOffline(true);
     } finally {
       setLoading(false);
@@ -91,6 +100,11 @@ export function FacesScreen() {
   useEffect(() => { load(); }, [load]);
 
   async function pickPhoto() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Camera permission required", "Please allow camera access in your device settings to add face photos.");
+      return;
+    }
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
@@ -114,7 +128,7 @@ export function FacesScreen() {
       if (msg.toLowerCase().includes("no face detected")) {
         setError("No face detected. Please retake with a clearer view of the face.");
       } else {
-        setError("Could not connect to the glasses system. Make sure you're on the same network.");
+        setError("Couldn't save this person. Please check your connection and try again.");
       }
     } finally {
       setUploading(false);

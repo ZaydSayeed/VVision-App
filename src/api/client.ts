@@ -170,6 +170,9 @@ export async function enrollFace(
   relation: string,
   photoUri: string
 ): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
   const formData = new FormData();
   formData.append("name", name);
   formData.append("relation", relation);
@@ -179,18 +182,23 @@ export async function enrollFace(
     type: "image/jpeg",
   } as any);
 
-  const res = await fetch(`${API_BASE_URL}/api/people/enroll`, {
-    method: "POST",
-    body: formData,
-    headers: authHeaders(),
-  });
-  if (res.status === 401 && onAuthExpired) {
-    onAuthExpired();
-    throw new Error("Session expired");
-  }
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `API error ${res.status}`);
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/people/enroll`, {
+      method: "POST",
+      body: formData,
+      headers: authHeaders(),
+      signal: controller.signal,
+    });
+    if (res.status === 401 && onAuthExpired) {
+      onAuthExpired();
+      throw new Error("Session expired");
+    }
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `API error ${res.status}`);
+    }
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

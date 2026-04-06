@@ -116,7 +116,7 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 
 ### Patient Screens
 - `src/screens/patient/TodayScreen.tsx` — **main patient home screen** (merged routine + meds + greeting). Uses `useRoutine` + `useMeds`. Time-aware greeting (morning/afternoon/evening/night). Sage accent for tasks, amber for meds. Slide-out notification panel. Delete confirmations via Alert.alert. Pull-to-refresh reloads both routines and meds.
-- `src/screens/patient/FacesScreen.tsx` — intentionally dark screen (`DARK` palette const). Pulsing glasses status chip. 88×88 initials rings. Modal uses DARK palette. Delete requires confirmation. Shows cache age ("last synced X ago") when offline. Pull-to-refresh supported.
+- `src/screens/patient/FacesScreen.tsx` — uses theme colors (light/dark aware). Pulsing glasses status chip. 88×88 initials rings with violet gradients. Modal uses theme colors. Delete requires confirmation. Shows cache age ("last synced X ago") when offline. Pull-to-refresh supported.
 - `src/screens/patient/HelpScreen.tsx` — coral gradient bg, large ring button, inline error banner if send fails. Auto-retries up to 3 times with exponential backoff. Shows "Sending…" state. Pull-to-refresh reloads recent alerts.
 
 ### Caregiver Screens
@@ -164,7 +164,7 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - The **link code** (patients share with caregivers to connect) requires the backend to be running. If it's not showing in the side drawer, it's a backend connectivity issue, not a frontend bug.
 - The **Faces** feature (face recognition) requires the glasses hardware system running on the same network. Most face-related API calls will fail gracefully with an offline state if the glasses aren't connected.
 - **Dark mode** is toggled from the side drawer. The global time banner adapts — uses `gradients.primary` in light mode and `gradients.dark` in dark mode.
-- **FacesScreen** deliberately uses its own `DARK` palette constant (not `colors` from theme) so it stays dark even in light mode — this is intentional design.
+- **FacesScreen** now fully respects the app theme — light mode shows a clean bright layout, dark mode stays deep purple.
 - The `.env` file has `MONGODB_URI` with real credentials — never commit changes to this file that expose credentials.
 - The backend is deployed on **Render** (`https://vvision-app.onrender.com`). The app connects via `apiBaseUrl` in `app.json`. The `.env` `API_BASE_URL` is only used for local backend development.
 - **Render free tier** spins down after inactivity — first request after idle takes ~30s. Pull-to-refresh on any screen will retry.

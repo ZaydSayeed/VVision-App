@@ -27,17 +27,6 @@ import { useTheme } from "../../context/ThemeContext";
 const CARD_GAP = 12;
 const CARD_WIDTH = (Dimensions.get("window").width - spacing.xl * 2 - CARD_GAP) / 2;
 
-// Dark palette — always the same regardless of app theme (this screen is intentionally dark)
-const DARK = {
-  bg: "#1A1630",
-  card: "#2A2248",
-  cardBorder: "rgba(155,139,255,0.15)",
-  text: "#F5F0E8",
-  muted: "#9B8BCC",
-  lavender: "#C4B8FF",
-  violet: "#9B8BFF",
-};
-
 export function FacesScreen() {
   const { colors } = useTheme();
   const [people, setPeople] = useState<Person[]>([]);
@@ -50,10 +39,7 @@ export function FacesScreen() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  // Pulsing dot animation for glasses status
-  // Pulsing dot animation for glasses status
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  // Skeleton shimmer for loading state
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -67,7 +53,6 @@ export function FacesScreen() {
     return () => loop.stop();
   }, [pulseAnim]);
 
-  // Shimmer only runs while loading
   useEffect(() => {
     if (!loading) {
       shimmerAnim.setValue(1);
@@ -93,13 +78,11 @@ export function FacesScreen() {
       setOffline(false);
       setCacheAge(null);
     } catch {
-      // Backend unreachable — fall back to cached faces
       try {
         const raw = await AsyncStorage.getItem("@vela/api_cache:/api/people");
         if (raw) {
           const parsed = JSON.parse(raw) as Person[];
           setPeople(parsed);
-          // Check cache timestamp from the client's metadata key
           const ts = await AsyncStorage.getItem("@vela/api_cache_ts:/api/people");
           if (ts) {
             const mins = Math.round((Date.now() - parseInt(ts)) / 60000);
@@ -187,7 +170,7 @@ export function FacesScreen() {
   const showEmptyCTA = !loading && !offline && people.length === 0;
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, backgroundColor: DARK.bg },
+    container: { flex: 1, backgroundColor: colors.bg },
     scrollContent: { padding: spacing.xl, paddingBottom: 120 },
 
     // ── Glasses status chip ──────────────────────────────────
@@ -196,9 +179,9 @@ export function FacesScreen() {
       alignItems: "center",
       alignSelf: "flex-start",
       gap: 8,
-      backgroundColor: "rgba(155,139,255,0.12)",
+      backgroundColor: colors.violet50,
       borderWidth: 1,
-      borderColor: "rgba(155,139,255,0.25)",
+      borderColor: colors.violet100,
       borderRadius: radius.pill,
       paddingVertical: 10,
       paddingHorizontal: 16,
@@ -211,7 +194,7 @@ export function FacesScreen() {
     },
     statusText: {
       fontSize: 13,
-      color: DARK.lavender,
+      color: colors.lavender,
       ...fonts.medium,
       letterSpacing: 0.3,
     },
@@ -224,13 +207,13 @@ export function FacesScreen() {
     },
     screenTitle: {
       fontSize: 32,
-      color: DARK.text,
+      color: colors.text,
       ...fonts.medium,
       lineHeight: 38,
     },
     screenSubtitle: {
       fontSize: 16,
-      color: DARK.muted,
+      color: colors.muted,
       ...fonts.regular,
       marginTop: 6,
     },
@@ -243,16 +226,16 @@ export function FacesScreen() {
     },
     faceCard: {
       width: CARD_WIDTH,
-      backgroundColor: DARK.card,
+      backgroundColor: colors.surface,
       borderRadius: 20,
       padding: spacing.lg,
       alignItems: "center",
       gap: spacing.xs,
       borderWidth: 1,
-      borderColor: DARK.cardBorder,
-      shadowColor: "#9B8BFF",
+      borderColor: colors.border,
+      shadowColor: colors.violet,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
+      shadowOpacity: 0.08,
       shadowRadius: 16,
       elevation: 4,
     },
@@ -276,19 +259,19 @@ export function FacesScreen() {
     },
     faceName: {
       fontSize: 18,
-      color: DARK.text,
+      color: colors.text,
       ...fonts.medium,
       textAlign: "center",
     },
     faceRelation: {
       fontSize: 14,
-      color: DARK.lavender,
+      color: colors.lavender,
       ...fonts.regular,
       textAlign: "center",
     },
     faceHint: {
       fontSize: 11,
-      color: DARK.muted,
+      color: colors.muted,
       ...fonts.regular,
       marginTop: spacing.xs,
     },
@@ -296,25 +279,25 @@ export function FacesScreen() {
     // ── Skeleton ─────────────────────────────────────────────
     skeletonCard: {
       width: CARD_WIDTH,
-      backgroundColor: DARK.card,
+      backgroundColor: colors.surface,
       borderRadius: 20,
       padding: spacing.lg,
       alignItems: "center",
       gap: spacing.sm,
       borderWidth: 1,
-      borderColor: DARK.cardBorder,
+      borderColor: colors.border,
     },
     skeletonCircle: {
       width: 88,
       height: 88,
       borderRadius: 44,
-      backgroundColor: "rgba(155,139,255,0.15)",
+      backgroundColor: colors.violet100,
       marginBottom: spacing.sm,
     },
     skeletonLine: {
       height: 14,
       borderRadius: 7,
-      backgroundColor: "rgba(155,139,255,0.15)",
+      backgroundColor: colors.violet100,
     },
 
     // ── Empty / loading states ───────────────────────────────
@@ -327,28 +310,28 @@ export function FacesScreen() {
       width: 96,
       height: 96,
       borderRadius: 48,
-      backgroundColor: "rgba(155,139,255,0.12)",
+      backgroundColor: colors.violet50,
       borderWidth: 1,
-      borderColor: "rgba(155,139,255,0.25)",
+      borderColor: colors.violet100,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: spacing.sm,
     },
     emptyTitle: {
       fontSize: 22,
-      color: DARK.text,
+      color: colors.text,
       ...fonts.medium,
     },
     emptySub: {
       fontSize: 16,
-      color: DARK.muted,
+      color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
       lineHeight: 24,
     },
     addFirstBtn: {
       marginTop: spacing.md,
-      backgroundColor: "#7B5CE7",
+      backgroundColor: colors.violet,
       borderRadius: radius.pill,
       paddingHorizontal: 28,
       paddingVertical: 14,
@@ -370,71 +353,71 @@ export function FacesScreen() {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: "#7B5CE7",
+      backgroundColor: colors.violet,
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: "#7B5CE7",
+      shadowColor: colors.violet,
       shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 0.5,
       shadowRadius: 14,
       elevation: 10,
     },
 
-    // ── Add modal (dark-aware) ───────────────────────────────
+    // ── Add modal ────────────────────────────────────────────
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(6,4,14,0.85)",
+      backgroundColor: "rgba(0,0,0,0.5)",
       justifyContent: "flex-end",
     },
     modalSheet: {
-      backgroundColor: "#221E3A",
+      backgroundColor: colors.bg,
       borderTopLeftRadius: 28,
       borderTopRightRadius: 28,
       padding: spacing.xxl,
       gap: spacing.sm,
       borderTopWidth: 1,
-      borderColor: "rgba(155,139,255,0.15)",
+      borderColor: colors.border,
     },
     modalHandle: {
       width: 40, height: 4, borderRadius: 2,
-      backgroundColor: "rgba(155,139,255,0.3)", alignSelf: "center", marginBottom: spacing.lg,
+      backgroundColor: colors.border, alignSelf: "center", marginBottom: spacing.lg,
     },
-    modalTitle: { fontSize: 22, color: DARK.text, ...fonts.medium, marginBottom: spacing.sm },
+    modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
     photoBtn: { alignSelf: "stretch", marginBottom: spacing.sm },
     photoPlaceholder: {
-      height: 80, backgroundColor: "rgba(155,139,255,0.08)",
-      borderWidth: 1.5, borderColor: "rgba(155,139,255,0.4)", borderStyle: "dashed",
+      height: 80, backgroundColor: colors.surface,
+      borderWidth: 1.5, borderColor: colors.violet300, borderStyle: "dashed",
       borderRadius: radius.lg, flexDirection: "row",
       alignItems: "center", justifyContent: "center", gap: spacing.sm,
     },
-    photoPlaceholderText: { fontSize: 15, color: DARK.lavender, ...fonts.medium },
+    photoPlaceholderText: { fontSize: 15, color: colors.lavender, ...fonts.medium },
     photoTaken: {
-      height: 80, backgroundColor: "rgba(92,142,122,0.15)",
-      borderWidth: 1.5, borderColor: "rgba(92,142,122,0.5)",
+      height: 80, backgroundColor: colors.sageSoft,
+      borderWidth: 1.5, borderColor: colors.sage,
       borderRadius: radius.lg, flexDirection: "row",
       alignItems: "center", justifyContent: "center", gap: spacing.sm,
     },
-    photoTakenText: { fontSize: 14, color: "#7AB5A0", ...fonts.medium },
+    photoTakenText: { fontSize: 14, color: colors.sage, ...fonts.medium },
     fieldLabel: {
-      fontSize: 11, color: DARK.muted, ...fonts.medium,
+      fontSize: 11, color: colors.muted, ...fonts.medium,
       letterSpacing: 1.2, textTransform: "uppercase",
       marginTop: spacing.md, marginBottom: spacing.xs,
     },
     input: {
-      height: 54, backgroundColor: "rgba(255,255,255,0.06)",
+      height: 54, backgroundColor: colors.surface,
       borderRadius: radius.lg, paddingHorizontal: spacing.lg,
-      fontSize: 16, color: DARK.text, ...fonts.regular,
-      borderWidth: 1, borderColor: "rgba(155,139,255,0.2)",
+      fontSize: 16, color: colors.text, ...fonts.regular,
+      borderWidth: 1, borderColor: colors.border,
     },
-    error: { fontSize: 13, color: "#E87878", ...fonts.regular, marginTop: spacing.xs },
+    error: { fontSize: 13, color: colors.coral, ...fonts.regular, marginTop: spacing.xs },
     modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
     btnOutline: {
-      flex: 1, height: 54, borderWidth: 1.5, borderColor: "rgba(155,139,255,0.3)",
+      flex: 1, height: 54, borderWidth: 1.5, borderColor: colors.border,
       borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
     },
-    btnOutlineText: { fontSize: 16, color: DARK.lavender, ...fonts.medium },
+    btnOutlineText: { fontSize: 16, color: colors.subtext, ...fonts.medium },
     btnPrimary: {
-      flex: 1, height: 54, backgroundColor: "#7B5CE7",
+      flex: 1, height: 54, backgroundColor: colors.violet,
       borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
     },
     btnDisabled: { opacity: 0.6 },
@@ -453,7 +436,7 @@ export function FacesScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={DARK.violet} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />
         }
       >
         {/* Glasses status chip */}
@@ -462,7 +445,7 @@ export function FacesScreen() {
             style={[
               styles.statusDot,
               {
-                backgroundColor: offline ? "#E8934A" : "#5C8E7A",
+                backgroundColor: offline ? colors.amber : colors.sage,
                 opacity: offline ? 1 : pulseAnim,
               },
             ]}
@@ -487,7 +470,7 @@ export function FacesScreen() {
         ) : showEmptyCTA ? (
           <View style={styles.centered}>
             <View style={styles.emptyRing}>
-              <Ionicons name="people" size={40} color={DARK.lavender} />
+              <Ionicons name="people" size={40} color={colors.lavender} />
             </View>
             <Text style={styles.emptyTitle}>No one added yet</Text>
             <Text style={styles.emptySub}>
@@ -501,7 +484,7 @@ export function FacesScreen() {
         ) : offline ? (
           <View style={styles.centered}>
             <View style={styles.emptyRing}>
-              <Ionicons name="wifi" size={36} color={DARK.muted} />
+              <Ionicons name="wifi" size={36} color={colors.muted} />
             </View>
             <Text style={styles.emptyTitle}>Not connected</Text>
             <Text style={styles.emptySub}>
@@ -513,7 +496,6 @@ export function FacesScreen() {
             {people.map((person, idx) => {
               const initials = person.name
                 .split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-              // Gradient options cycling through violet shades
               const gradientSets: [string, string][] = [
                 ["#7B5CE7", "#A695F5"],
                 ["#5A40D0", "#7B5CE7"],
@@ -568,12 +550,12 @@ export function FacesScreen() {
             <TouchableOpacity style={styles.photoBtn} onPress={pickPhoto}>
               {photoUri ? (
                 <View style={styles.photoTaken}>
-                  <Ionicons name="checkmark-circle" size={24} color="#7AB5A0" />
+                  <Ionicons name="checkmark-circle" size={24} color={colors.sage} />
                   <Text style={styles.photoTakenText}>Photo taken — tap to retake</Text>
                 </View>
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={24} color={DARK.lavender} />
+                  <Ionicons name="camera" size={24} color={colors.lavender} />
                   <Text style={styles.photoPlaceholderText}>Take Photo</Text>
                 </View>
               )}

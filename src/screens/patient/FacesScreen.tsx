@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   TextInput,
   Modal,
@@ -82,6 +83,7 @@ export function FacesScreen() {
     return () => shimmer.stop();
   }, [loading, shimmerAnim]);
 
+  const [refreshing, setRefreshing] = useState(false);
   const [cacheAge, setCacheAge] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -112,6 +114,12 @@ export function FacesScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   async function pickPhoto() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -441,7 +449,13 @@ export function FacesScreen() {
         <Text style={styles.screenSubtitle}>Your glasses will recognize these people</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={DARK.violet} />
+        }
+      >
         {/* Glasses status chip */}
         <View style={styles.statusChip}>
           <Animated.View

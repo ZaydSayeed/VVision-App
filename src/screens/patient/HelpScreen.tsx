@@ -1,7 +1,9 @@
-import React, { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef, useState, useCallback } from "react";
 import {
   View,
   Text,
+  ScrollView,
+  RefreshControl,
   TouchableOpacity,
   StyleSheet,
   Animated,
@@ -20,7 +22,13 @@ interface HelpScreenProps {
 
 export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   const { colors } = useTheme();
-  const { alerts, sendHelp, sending, sentAt, sendError, clearSentState } = useHelpAlert();
+  const { alerts, sendHelp, sending, sentAt, sendError, clearSentState, reload } = useHelpAlert();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  }, [reload]);
 
   const sent = !!sentAt;
   const failed = !!sendError;
@@ -82,7 +90,8 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
 
     // ── Button area ───────────────────────────────────────────
     btnArea: {
-      flex: 1,
+      flexGrow: 1,
+      minHeight: 360,
       alignItems: "center",
       justifyContent: "center",
       paddingBottom: spacing.xxl,
@@ -210,6 +219,14 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
         style={styles.background}
       />
 
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.coral} />
+        }
+      >
+
       {/* Header */}
       <View style={styles.headerSection}>
         <Text style={styles.headerTitle}>
@@ -293,6 +310,8 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
           ))}
         </View>
       )}
+
+      </ScrollView>
     </View>
   );
 }

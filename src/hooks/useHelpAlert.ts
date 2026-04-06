@@ -71,5 +71,5 @@ export function useHelpAlert() {
 
   const pendingCount = alerts.filter((a) => !a.dismissed).length;
 
-  return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, clearSentState };
+  return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, clearSentState, reload: load };
 }

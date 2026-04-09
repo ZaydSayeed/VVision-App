@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  PanResponder,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,6 +18,7 @@ import { useTheme } from "../context/ThemeContext";
 import { fonts, spacing, radius, gradients } from "../config/theme";
 import { sendVisionMessage, saveConversationTurn, fetchConversations } from "../api/client";
 import { ConversationTurn } from "../types";
+import { triggerReminderReload } from "../utils/reminderEvents";
 
 interface Props {
   visible: boolean;
@@ -44,6 +46,16 @@ export function VisionSheet({ visible, onClose }: Props) {
     }
   }, [messages]);
 
+  const swipePanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 40) onClose();
+      },
+    })
+  ).current;
+
   const handleSend = async () => {
     const text = inputText.trim();
     if (!text || sending) return;
@@ -59,7 +71,8 @@ export function VisionSheet({ visible, onClose }: Props) {
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const { reply } = await sendVisionMessage(text);
+      const { reply, reminderCreated } = await sendVisionMessage(text);
+      if (reminderCreated) triggerReminderReload();
       const assistantMsg: ConversationTurn = {
         id: String(Date.now() + 1),
         role: "assistant",
@@ -234,7 +247,7 @@ export function VisionSheet({ visible, onClose }: Props) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <View style={styles.handle} {...swipePanResponder.panHandlers} />
 
           {/* Header */}
           <View style={styles.header}>

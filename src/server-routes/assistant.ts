@@ -120,37 +120,48 @@ ${conversationHistory}`;
 
     const firstChoice = firstCompletion.choices[0];
     let reply: string;
+    let reminderCreated = false;
 
     if (firstChoice?.finish_reason === "tool_calls" && firstChoice.message.tool_calls?.length) {
-      const toolCall = firstChoice.message.tool_calls[0];
-      let toolResult = "Reminder created.";
+      // Process all tool calls in parallel (supports multiple reminders in one message)
+      const toolResults = await Promise.all(
+        firstChoice.message.tool_calls.map(async (toolCall) => {
+          let result = "Done.";
+          if (toolCall.function.name === "create_reminder") {
+            try {
+              const args = JSON.parse(toolCall.function.arguments);
+              await db.collection("reminders").insertOne({
+                patient_id: patientId,
+                text: args.text,
+                time: args.time ?? null,
+                recurrence: args.recurrence ?? null,
+                source: "app",
+                created_at: new Date().toISOString(),
+                completed_date: null,
+              });
+              result = "Reminder created.";
+              reminderCreated = true;
+            } catch (e) {
+              result = "Sorry, I couldn't save that reminder.";
+              console.error("create_reminder tool error:", e);
+            }
+          }
+          return { toolCall, result };
+        })
+      );
 
-      if (toolCall.function.name === "create_reminder") {
-        try {
-          const args = JSON.parse(toolCall.function.arguments);
-          await db.collection("reminders").insertOne({
-            patient_id: patientId,
-            text: args.text,
-            time: args.time ?? null,
-            recurrence: args.recurrence ?? null,
-            source: "app",
-            created_at: new Date().toISOString(),
-            completed_date: null,
-          });
-        } catch (e) {
-          toolResult = "Sorry, I couldn't save that reminder.";
-          console.error("create_reminder tool error:", e);
-        }
-      }
-
-      // Second call so Groq generates a natural confirmation reply
+      // Second call with all tool results so Groq generates a natural confirmation reply
       const secondCompletion = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: parsed.data.message },
           firstChoice.message,
-          { role: "tool", tool_call_id: toolCall.id, content: toolResult },
+          ...toolResults.map(({ toolCall, result }) => ({
+            role: "tool" as const,
+            tool_call_id: toolCall.id,
+            content: result,
+          })),
         ],
         max_tokens: 200,
         temperature: 0.7,
@@ -161,7 +172,7 @@ ${conversationHistory}`;
       reply = firstChoice?.message?.content?.trim() ?? "Sorry, I couldn't respond right now.";
     }
 
-    res.json({ reply });
+    res.json({ reply, reminderCreated });
   } catch (err) {
     console.error("assistant chat error:", err);
     res.status(500).json({ detail: "Internal server error" });

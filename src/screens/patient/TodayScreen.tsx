@@ -29,6 +29,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { CheckRow } from "../../components/shared/CheckRow";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { fonts, spacing, radius, gradients } from "../../config/theme";
+import { registerReminderReload } from "../../utils/reminderEvents";
 
 const SCREEN_W = Dimensions.get("window").width;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
@@ -48,6 +49,7 @@ export function TodayScreen() {
   const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
   const { alerts } = useHelpAlert();
   const { reminders, deleteReminder, reload: reloadReminders } = useReminders();
+  useEffect(() => { registerReminderReload(reloadReminders); }, [reloadReminders]);
   const dataError = routineError || medsError;
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {

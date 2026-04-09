@@ -16,7 +16,7 @@ interface PatientTabNavigatorProps {
 const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Today: "home",
+  Home: "home",
   Faces: "people",
   Help: "hand-left",
 };
@@ -91,7 +91,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         ),
       })}
     >
-      <Tab.Screen name="Today" component={TodayScreen} />
+      <Tab.Screen name="Home" component={TodayScreen} />
       <Tab.Screen
         name="Help"
         options={{

@@ -10,8 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  PanResponder,
 } from "react-native";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../context/ThemeContext";
@@ -45,16 +45,6 @@ export function VisionSheet({ visible, onClose }: Props) {
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages]);
-
-  const swipePanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 40) onClose();
-      },
-    })
-  ).current;
 
   const handleSend = async () => {
     const text = inputText.trim();
@@ -111,13 +101,16 @@ export function VisionSheet({ visible, onClose }: Props) {
       paddingBottom: 24,
       maxHeight: "75%",
     },
+    handleZone: {
+      width: "100%",
+      paddingVertical: 14,
+      alignItems: "center",
+    },
     handle: {
       width: 40,
       height: 4,
       backgroundColor: colors.border,
       borderRadius: 2,
-      alignSelf: "center",
-      marginTop: 12,
     },
     header: {
       flexDirection: "row",
@@ -247,7 +240,17 @@ export function VisionSheet({ visible, onClose }: Props) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.sheet}>
-          <View style={styles.handle} {...swipePanResponder.panHandlers} />
+          <PanGestureHandler
+            onHandlerStateChange={({ nativeEvent }) => {
+              if (nativeEvent.state === State.END && nativeEvent.translationY > 60) {
+                onClose();
+              }
+            }}
+          >
+            <View style={styles.handleZone}>
+              <View style={styles.handle} />
+            </View>
+          </PanGestureHandler>
 
           {/* Header */}
           <View style={styles.header}>

@@ -58,6 +58,27 @@ export function RootNavigator() {
       ...fonts.medium,
       letterSpacing: 0.3,
     },
+    visionFab: {
+      position: "absolute",
+      bottom: 108,
+      right: 20,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.45,
+      shadowRadius: 14,
+      elevation: 12,
+      overflow: "hidden",
+    },
+    visionFabGradient: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: "center",
+      justifyContent: "center",
+    },
   }), [colors]);
 
   if (loading) {
@@ -80,7 +101,7 @@ export function RootNavigator() {
   if (user.role === "caregiver") {
     return (
       <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
-        <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} onOpenVision={() => setVisionOpen(true)} />
+        <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} />
         <OfflineBanner />
         <CaregiverTabNavigator />
         <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -90,19 +111,30 @@ export function RootNavigator() {
 
   return (
     <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
-      <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} onOpenVision={() => setVisionOpen(true)} />
+      <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} />
       <OfflineBanner />
       <PatientTabNavigator patientName={user.name} />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
+      <TouchableOpacity
+        onPress={() => setVisionOpen(true)}
+        style={styles.visionFab}
+        activeOpacity={0.85}
+      >
+        <LinearGradient
+          colors={[...gradients.primary]}
+          style={styles.visionFabGradient}
+        >
+          <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+        </LinearGradient>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
 
-function Header({ onOpenDrawer, user, onOpenVision }: {
+function Header({ onOpenDrawer, user }: {
   onOpenDrawer: () => void;
   user: import("../types").AppUser | null;
-  onOpenVision: () => void;
 }) {
   const { colors, isDark } = useTheme();
   const [clock, setClock] = useState(new Date());
@@ -131,32 +163,9 @@ function Header({ onOpenDrawer, user, onOpenVision }: {
           />
           <Text style={[headerStyles.logoText, { color: colors.text }]}>Vela Vision</Text>
         </TouchableOpacity>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          {user?.role === "patient" && (
-            <TouchableOpacity
-              onPress={onOpenVision}
-              activeOpacity={0.8}
-              style={headerStyles.visionBtn}
-            >
-              <View style={{
-                width: 26,
-                height: 26,
-                borderRadius: 999,
-                borderWidth: 1.5,
-                borderColor: colors.violet,
-                backgroundColor: colors.violet50,
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                <Ionicons name="sparkles" size={13} color={colors.violet} />
-              </View>
-              <View style={[headerStyles.onlineDot, { backgroundColor: colors.sage, borderColor: colors.bg }]} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={onOpenDrawer} activeOpacity={0.7} style={headerStyles.menuBtn}>
-            <Ionicons name="menu-outline" size={26} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={onOpenDrawer} activeOpacity={0.7} style={headerStyles.menuBtn}>
+          <Ionicons name="menu-outline" size={26} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       {/* Time banner */}
@@ -204,21 +213,6 @@ const headerStyles = StyleSheet.create({
     height: 36,
     alignItems: "center",
     justifyContent: "center",
-  },
-  visionBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  onlineDot: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    width: 7,
-    height: 7,
-    borderRadius: 999,
-    borderWidth: 1.5,
   },
   timeBanner: {
     flexDirection: "row",

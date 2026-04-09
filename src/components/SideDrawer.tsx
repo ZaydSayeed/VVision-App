@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { getMyLinkCode } from "../api/client";
@@ -30,6 +31,7 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const { colors, toggleTheme, isDark } = useTheme();
   const [linkCode, setLinkCode] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -96,10 +98,19 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 {codeLoading ? (
                   <ActivityIndicator color={colors.violet} style={{ marginTop: 8 }} />
                 ) : linkCode ? (
-                  <Text style={[styles.linkCode, { color: colors.violet }]}>{linkCode}</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={async () => {
+                      await Clipboard.setStringAsync(linkCode);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                  >
+                    <Text style={[styles.linkCode, { color: colors.violet }]}>{linkCode}</Text>
+                  </TouchableOpacity>
                 ) : null}
                 <Text style={[styles.codeHint, { color: colors.muted }]}>
-                  Share with your caregiver to connect
+                  {copied ? "Copied to clipboard!" : "Tap code to copy · Share with your caregiver"}
                 </Text>
               </View>
             )}

@@ -23,6 +23,8 @@ export async function connectDb(): Promise<void> {
   await db.collection("help_alerts").createIndex({ patient_id: 1 });
   await db.collection("routines").createIndex({ patient_id: 1 });
   await db.collection("medications").createIndex({ patient_id: 1 });
+  await db.collection("reminders").createIndex({ patient_id: 1 });
+  await db.collection("conversations").createIndex({ patient_id: 1, created_at: 1 });
   console.log("Indexes ensured");
 }
 

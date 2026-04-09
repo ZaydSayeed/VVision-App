@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -26,8 +26,13 @@ interface AlertsScreenProps {
 
 export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) {
   const { colors } = useTheme();
-  const { alerts: helpAlerts, dismissAlert: dismissHelp } = useHelpAlert();
+  const { alerts: helpAlerts, dismissAlert: dismissHelp, reload: reloadHelp } = useHelpAlert();
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed);
+
+  const handleRefresh = useCallback(() => {
+    onRefresh();
+    reloadHelp();
+  }, [onRefresh, reloadHelp]);
 
   async function handleDismissApiAlert(id: string) {
     try {
@@ -233,7 +238,7 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={colors.violet} />
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.violet} />
         }
       >
         {/* ── Help Requests ── */}

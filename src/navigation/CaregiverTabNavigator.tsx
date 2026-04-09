@@ -8,7 +8,6 @@ import { AlertsScreen } from "../screens/AlertsScreen";
 import { PatientsTab } from "../screens/caregiver/PatientsTab";
 import { AddCaregiverScreen } from "../screens/caregiver/AddCaregiverScreen";
 import { useDashboardData } from "../hooks/useDashboardData";
-import { useHelpAlert } from "../hooks/useHelpAlert";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 
@@ -22,10 +21,13 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   "Care Team": "person-add",
 };
 
-export function CaregiverTabNavigator() {
+interface CaregiverTabNavigatorProps {
+  helpPendingCount: number;
+}
+
+export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigatorProps) {
   const { colors } = useTheme();
   const { people, alerts, stats, timeline, loading, refresh } = useDashboardData();
-  const { pendingCount } = useHelpAlert();
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
@@ -66,8 +68,8 @@ export function CaregiverTabNavigator() {
           <Ionicons name={iconNames[route.name]} size={26} color={color} />
         ),
         tabBarBadge:
-          route.name === "Alerts" && (alerts.length + pendingCount) > 0
-            ? alerts.length + pendingCount
+          route.name === "Alerts" && (alerts.length + helpPendingCount) > 0
+            ? alerts.length + helpPendingCount
             : undefined,
         tabBarBadgeStyle: styles.tabBadge,
       })}

@@ -30,6 +30,8 @@ export function useHelpAlert() {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const sendHelp = useCallback(async () => {

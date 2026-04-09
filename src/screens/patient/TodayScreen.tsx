@@ -119,8 +119,6 @@ export function TodayScreen() {
   // ── Add Task modal ───────────────────────────────────────────
   const [showTaskModal, setShowTaskModal] = useState(false);
   useEffect(() => { if (showTaskModal) slideModalIn(taskModalY, taskModalBaseY); }, [showTaskModal]);
-  useEffect(() => { if (editingTask) slideModalIn(editModalY, editModalBaseY); }, [editingTask]);
-  useEffect(() => { if (showMedModal) slideModalIn(medModalY, medModalBaseY); }, [showMedModal]);
   const [taskLabel, setTaskLabel] = useState("");
   const [taskTime, setTaskTime] = useState("");
   const [taskError, setTaskError] = useState("");
@@ -138,6 +136,7 @@ export function TodayScreen() {
 
   // ── Edit Task modal ──────────────────────────────────────
   const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
+  useEffect(() => { if (editingTask) slideModalIn(editModalY, editModalBaseY); }, [editingTask]);
   const [editLabel, setEditLabel] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editError, setEditError] = useState("");
@@ -157,6 +156,7 @@ export function TodayScreen() {
 
   // ── Add Med modal ────────────────────────────────────────────
   const [showMedModal, setShowMedModal] = useState(false);
+  useEffect(() => { if (showMedModal) slideModalIn(medModalY, medModalBaseY); }, [showMedModal]);
   const [medName, setMedName] = useState("");
   const [medDosage, setMedDosage] = useState("");
   const [medTime, setMedTime] = useState("");

@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
+import { useReminders } from "../../hooks/useReminders";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -43,13 +44,14 @@ export function TodayScreen() {
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
   const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
   const { alerts } = useHelpAlert();
+  const { reminders, reload: reloadReminders } = useReminders();
   const dataError = routineError || medsError;
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([reloadRoutine(), reloadMeds()]);
+    await Promise.all([reloadRoutine(), reloadMeds(), reloadReminders()]);
     setRefreshing(false);
-  }, [reloadRoutine, reloadMeds]);
+  }, [reloadRoutine, reloadMeds, reloadReminders]);
 
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
@@ -666,6 +668,8 @@ export function TodayScreen() {
             ))
           )}
         </View>
+
+        <RemindersSection reminders={reminders} colors={colors} />
       </ScrollView>
 
       {/* ── Add FAB ──────────────────────────────────────────── */}
@@ -796,6 +800,54 @@ export function TodayScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+    </View>
+  );
+}
+
+function RemindersSection({ reminders, colors }: {
+  reminders: import("../../types").Reminder[];
+  colors: import("../../config/theme").AppColors;
+}) {
+  if (reminders.length === 0) return null;
+  return (
+    <View>
+      <Text style={{
+        fontSize: 11,
+        textTransform: "uppercase",
+        letterSpacing: 1.2,
+        color: colors.muted,
+        marginBottom: spacing.sm,
+        marginTop: spacing.lg,
+        ...fonts.medium,
+      }}>
+        Reminders
+      </Text>
+      {reminders.map((r) => (
+        <View
+          key={r.id}
+          style={{
+            backgroundColor: colors.bg,
+            borderRadius: radius.xl,
+            padding: spacing.md,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: spacing.md,
+            marginBottom: spacing.sm,
+            borderLeftWidth: 4,
+            borderLeftColor: colors.violet,
+          }}
+        >
+          <Ionicons name="notifications-outline" size={18} color={colors.violet} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, color: colors.text, ...fonts.medium }}>{r.text}</Text>
+            {(r.time || r.source) && (
+              <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, ...fonts.regular }}>
+                {[r.time, r.source === "glasses" ? "via glasses" : "via app"].filter(Boolean).join(" · ")}
+              </Text>
+            )}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }

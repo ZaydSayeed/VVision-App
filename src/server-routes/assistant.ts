@@ -87,17 +87,79 @@ ${conversationHistory}`;
 
     const groq = new Groq({ apiKey: config.groqApiKey });
 
-    const completion = await groq.chat.completions.create({
+    const tools: Groq.Chat.ChatCompletionTool[] = [
+      {
+        type: "function",
+        function: {
+          name: "create_reminder",
+          description: "Create a reminder for the patient. Call this when the patient asks to be reminded about something.",
+          parameters: {
+            type: "object",
+            properties: {
+              text: { type: "string", description: "What to remind the patient about, e.g. 'Take a walk'" },
+              time: { type: "string", description: "Time for the reminder, e.g. '6:00 PM'. Omit if no specific time mentioned." },
+              recurrence: { type: "string", description: "How often: 'once', 'daily', 'every 2 hours', etc. Omit if not mentioned." },
+            },
+            required: ["text"],
+          },
+        },
+      },
+    ];
+
+    const firstCompletion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: parsed.data.message },
       ],
-      max_tokens: 200,
+      tools,
+      tool_choice: "auto",
+      max_tokens: 300,
       temperature: 0.7,
     });
 
-    const reply = completion.choices[0]?.message?.content?.trim() ?? "Sorry, I couldn't respond right now.";
+    const firstChoice = firstCompletion.choices[0];
+    let reply: string;
+
+    if (firstChoice?.finish_reason === "tool_calls" && firstChoice.message.tool_calls?.length) {
+      const toolCall = firstChoice.message.tool_calls[0];
+      let toolResult = "Reminder created.";
+
+      if (toolCall.function.name === "create_reminder") {
+        try {
+          const args = JSON.parse(toolCall.function.arguments);
+          await db.collection("reminders").insertOne({
+            patient_id: patientId,
+            text: args.text,
+            time: args.time ?? null,
+            recurrence: args.recurrence ?? null,
+            source: "app",
+            created_at: new Date().toISOString(),
+            completed_date: null,
+          });
+        } catch (e) {
+          toolResult = "Sorry, I couldn't save that reminder.";
+          console.error("create_reminder tool error:", e);
+        }
+      }
+
+      // Second call so Groq generates a natural confirmation reply
+      const secondCompletion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: parsed.data.message },
+          firstChoice.message,
+          { role: "tool", tool_call_id: toolCall.id, content: toolResult },
+        ],
+        max_tokens: 200,
+        temperature: 0.7,
+      });
+
+      reply = secondCompletion.choices[0]?.message?.content?.trim() ?? "Done! I've set that reminder for you.";
+    } else {
+      reply = firstChoice?.message?.content?.trim() ?? "Sorry, I couldn't respond right now.";
+    }
 
     res.json({ reply });
   } catch (err) {

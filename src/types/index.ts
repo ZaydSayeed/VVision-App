@@ -124,3 +124,24 @@ export interface FacePerson {
   photoUri: string | null;
   addedAt: string;
 }
+
+// ── Reminders ────────────────────────────────────────────
+export interface Reminder {
+  id: string;
+  patient_id?: string;
+  text: string;
+  time?: string;
+  recurrence?: string;
+  source: "glasses" | "app";
+  created_at: string;
+  completed_date: string | null;
+}
+
+// ── Conversations ─────────────────────────────────────────
+export interface ConversationTurn {
+  id: string;
+  patient_id?: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}

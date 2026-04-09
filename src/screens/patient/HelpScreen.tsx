@@ -22,7 +22,7 @@ interface HelpScreenProps {
 
 export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   const { colors } = useTheme();
-  const { alerts, sendHelp, sending, sentAt, sendError, clearSentState, reload } = useHelpAlert();
+  const { alerts, sendHelp, sending, sentAt, sendError, dismissAlert, clearSentState, reload } = useHelpAlert();
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -36,9 +36,14 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   async function handlePress() {
     clearSentState();
     await sendHelp();
-    if (sentAt) {
-      setTimeout(clearSentState, 4000);
+  }
+
+  async function handleCancel() {
+    const latest = alerts.find((a) => !a.dismissed);
+    if (latest) {
+      try { await dismissAlert(latest.id); } catch { /* ignore */ }
     }
+    clearSentState();
   }
 
   const recent = alerts.slice(0, 3);
@@ -146,6 +151,20 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
     hintName: {
       color: colors.coral,
       ...fonts.medium,
+    },
+    cancelBtn: {
+      marginTop: spacing.lg,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xxl,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      borderColor: colors.coral,
+    },
+    cancelBtnText: {
+      fontSize: 15,
+      color: colors.coral,
+      ...fonts.medium,
+      textAlign: "center",
     },
 
     // ── Error banner ──────────────────────────────────────────
@@ -295,6 +314,11 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
             <Text style={styles.hintName}>{caregiverDisplay}</Text>
             {" "}immediately
           </Text>
+        )}
+        {sent && (
+          <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel} activeOpacity={0.75}>
+            <Text style={styles.cancelBtnText}>Cancel Request</Text>
+          </TouchableOpacity>
         )}
       </View>
 

@@ -683,9 +683,8 @@ export function TodayScreen() {
               </Swipeable>
             ))
           )}
+          <RemindersSection reminders={reminders} colors={colors} />
         </View>
-
-        <RemindersSection reminders={reminders} colors={colors} />
 
         {/* Medications section */}
         <View style={styles.section}>
@@ -921,17 +920,6 @@ function RemindersSection({ reminders, colors }: {
   if (reminders.length === 0) return null;
   return (
     <View>
-      <Text style={{
-        fontSize: 11,
-        textTransform: "uppercase",
-        letterSpacing: 1.2,
-        color: colors.muted,
-        marginBottom: spacing.sm,
-        marginTop: spacing.lg,
-        ...fonts.medium,
-      }}>
-        Reminders
-      </Text>
       {reminders.map((r) => (
         <View
           key={r.id}
@@ -939,12 +927,18 @@ function RemindersSection({ reminders, colors }: {
             backgroundColor: colors.bg,
             borderRadius: radius.xl,
             padding: spacing.md,
+            paddingVertical: 18,
             flexDirection: "row",
             alignItems: "center",
             gap: spacing.md,
-            marginBottom: spacing.sm,
+            marginBottom: spacing.md,
             borderLeftWidth: 4,
             borderLeftColor: colors.violet,
+            shadowColor: "#7B5CE7",
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.07,
+            shadowRadius: 12,
+            elevation: 3,
           }}
         >
           <Ionicons name="notifications-outline" size={18} color={colors.violet} />

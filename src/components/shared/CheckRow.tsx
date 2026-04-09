@@ -57,8 +57,9 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
       paddingHorizontal: spacing.lg,
       gap: spacing.md,
       minHeight: 72,
-      borderRadius: radius.lg,
+      borderRadius: radius.xl,
       marginBottom: spacing.md,
+      borderLeftWidth: 4,
       shadowColor: "#7B5CE7",
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.07,
@@ -113,7 +114,7 @@ export function CheckRow({ label, subLabel, checked, onToggle, onDelete, accentC
   ];
 
   return (
-    <View style={[styles.row, { backgroundColor: colors.bg }]}>
+    <View style={[styles.row, { backgroundColor: colors.bg, borderLeftColor: accent }]}>
       {/* Native-driver flash overlay — avoids layout thread for better frame rate */}
       <Animated.View
         style={[

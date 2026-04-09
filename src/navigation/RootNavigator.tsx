@@ -60,7 +60,7 @@ export function RootNavigator() {
     },
     visionFab: {
       position: "absolute",
-      bottom: 108,
+      bottom: 192,
       right: 20,
       width: 56,
       height: 56,

@@ -11,6 +11,7 @@ import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
+import { VisionSheet } from "../components/VisionSheet";
 import { fonts, spacing, gradients } from "../config/theme";
 
 export function RootNavigator() {
@@ -18,6 +19,7 @@ export function RootNavigator() {
   const { colors } = useTheme();
   const { setOffline } = useNetwork();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [visionOpen, setVisionOpen] = useState(false);
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export function RootNavigator() {
   if (user.role === "caregiver") {
     return (
       <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
-        <Header onOpenDrawer={() => setDrawerOpen(true)} />
+        <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} onOpenVision={() => setVisionOpen(true)} />
         <OfflineBanner />
         <CaregiverTabNavigator />
         <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -88,15 +90,20 @@ export function RootNavigator() {
 
   return (
     <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
-      <Header onOpenDrawer={() => setDrawerOpen(true)} />
+      <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} onOpenVision={() => setVisionOpen(true)} />
       <OfflineBanner />
       <PatientTabNavigator patientName={user.name} />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
     </Animated.View>
   );
 }
 
-function Header({ onOpenDrawer }: { onOpenDrawer: () => void }) {
+function Header({ onOpenDrawer, user, onOpenVision }: {
+  onOpenDrawer: () => void;
+  user: import("../types").AppUser | null;
+  onOpenVision: () => void;
+}) {
   const { colors, isDark } = useTheme();
   const [clock, setClock] = useState(new Date());
 
@@ -124,9 +131,32 @@ function Header({ onOpenDrawer }: { onOpenDrawer: () => void }) {
           />
           <Text style={[headerStyles.logoText, { color: colors.text }]}>Vela Vision</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onOpenDrawer} activeOpacity={0.7} style={headerStyles.menuBtn}>
-          <Ionicons name="menu-outline" size={26} color={colors.text} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          {user?.role === "patient" && (
+            <TouchableOpacity
+              onPress={onOpenVision}
+              activeOpacity={0.8}
+              style={headerStyles.visionBtn}
+            >
+              <View style={{
+                width: 26,
+                height: 26,
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: colors.violet,
+                backgroundColor: colors.violet50,
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                <Ionicons name="sparkles" size={13} color={colors.violet} />
+              </View>
+              <View style={[headerStyles.onlineDot, { backgroundColor: colors.sage, borderColor: colors.bg }]} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onOpenDrawer} activeOpacity={0.7} style={headerStyles.menuBtn}>
+            <Ionicons name="menu-outline" size={26} color={colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Time banner */}
@@ -174,6 +204,21 @@ const headerStyles = StyleSheet.create({
     height: 36,
     alignItems: "center",
     justifyContent: "center",
+  },
+  visionBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  onlineDot: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    borderWidth: 1.5,
   },
   timeBanner: {
     flexDirection: "row",

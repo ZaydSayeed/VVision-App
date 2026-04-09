@@ -47,7 +47,7 @@ export function TodayScreen() {
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
   const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
   const { alerts } = useHelpAlert();
-  const { reminders, reload: reloadReminders } = useReminders();
+  const { reminders, deleteReminder, reload: reloadReminders } = useReminders();
   const dataError = routineError || medsError;
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -627,49 +627,47 @@ export function TodayScreen() {
                   else swipeableRefs.current.delete(task.id);
                 }}
                 renderLeftActions={() => (
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: colors.violet,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      width: 80,
-                      borderRadius: radius.lg,
-                      marginBottom: spacing.md,
-                    }}
-                    onPress={() => {
-                      swipeableRefs.current.get(task.id)?.close();
-                      setEditLabel(task.label);
-                      setEditTime(task.time);
-                      setEditError("");
-                      setEditingTask(task);
-                    }}
-                  >
+                  <View style={{
+                    backgroundColor: colors.violet,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: 80,
+                    borderRadius: radius.xl,
+                    marginBottom: spacing.md,
+                  }}>
                     <Ionicons name="pencil-outline" size={20} color="#FFFFFF" />
                     <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Edit</Text>
-                  </TouchableOpacity>
+                  </View>
                 )}
                 renderRightActions={() => (
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: colors.coral,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      width: 80,
-                      borderRadius: radius.lg,
-                      marginBottom: spacing.md,
-                    }}
-                    onPress={() => {
-                      swipeableRefs.current.get(task.id)?.close();
-                      Alert.alert("Remove task?", `"${task.label}" will be removed from your routine.`, [
-                        { text: "Keep it", style: "cancel" },
-                        { text: "Remove", style: "destructive", onPress: () => deleteTask(task.id) },
-                      ]);
-                    }}
-                  >
+                  <View style={{
+                    backgroundColor: colors.coral,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: 80,
+                    borderRadius: radius.xl,
+                    marginBottom: spacing.md,
+                  }}>
                     <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
                     <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Delete</Text>
-                  </TouchableOpacity>
+                  </View>
                 )}
+                onSwipeableOpen={(direction) => {
+                  if (direction === "left") {
+                    // swiped right → edit
+                    swipeableRefs.current.get(task.id)?.close();
+                    setEditLabel(task.label);
+                    setEditTime(task.time);
+                    setEditError("");
+                    setEditingTask(task);
+                  } else {
+                    // swiped left → delete
+                    Alert.alert("Remove task?", `"${task.label}" will be removed from your routine.`, [
+                      { text: "Keep it", style: "cancel", onPress: () => swipeableRefs.current.get(task.id)?.close() },
+                      { text: "Remove", style: "destructive", onPress: () => deleteTask(task.id) },
+                    ]);
+                  }
+                }}
                 overshootLeft={false}
                 overshootRight={false}
               >
@@ -683,7 +681,7 @@ export function TodayScreen() {
               </Swipeable>
             ))
           )}
-          <RemindersSection reminders={reminders} colors={colors} />
+          <RemindersSection reminders={reminders} colors={colors} onDelete={deleteReminder} />
         </View>
 
         {/* Medications section */}
@@ -913,9 +911,10 @@ export function TodayScreen() {
   );
 }
 
-function RemindersSection({ reminders, colors }: {
+function RemindersSection({ reminders, colors, onDelete }: {
   reminders: import("../../types").Reminder[];
   colors: import("../../config/theme").AppColors;
+  onDelete: (id: string) => void;
 }) {
   if (reminders.length === 0) return null;
   return (
@@ -950,6 +949,15 @@ function RemindersSection({ reminders, colors }: {
               </Text>
             )}
           </View>
+          <TouchableOpacity
+            onPress={() => Alert.alert("Remove reminder?", `"${r.text}" will be removed.`, [
+              { text: "Keep it", style: "cancel" },
+              { text: "Remove", style: "destructive", onPress: () => onDelete(r.id) },
+            ])}
+            style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
+          >
+            <Ionicons name="close" size={18} color={colors.muted} />
+          </TouchableOpacity>
         </View>
       ))}
     </View>

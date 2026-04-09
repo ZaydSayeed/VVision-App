@@ -14,6 +14,9 @@ import medicationRoutes from "./server-routes/medications";
 import helpAlertRoutes from "./server-routes/helpAlerts";
 import caregiverProfileRoutes from "./server-routes/caregiverProfiles";
 import streamRoutes from "./server-routes/stream";
+import reminderRoutes from "./server-routes/reminders";
+import conversationRoutes from "./server-routes/conversations";
+import assistantRoutes from "./server-routes/assistant";
 
 const app = express();
 
@@ -71,6 +74,9 @@ app.use("/api/medications", medicationRoutes);
 app.use("/api/help-alerts", helpAlertRoutes);
 app.use("/api/caregiver-profiles", caregiverProfileRoutes);
 app.use("/stream", streamRoutes);
+app.use("/api/reminders", reminderRoutes);
+app.use("/api/conversations", conversationRoutes);
+app.use("/api/assistant", assistantRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

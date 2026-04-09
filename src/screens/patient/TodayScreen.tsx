@@ -28,6 +28,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { CheckRow } from "../../components/shared/CheckRow";
 import { SectionHeader } from "../../components/shared/SectionHeader";
+import { TimeSlider } from "../../components/shared/TimeSlider";
 import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { registerReminderReload } from "../../utils/reminderEvents";
 
@@ -791,15 +792,8 @@ export function TodayScreen() {
               placeholderTextColor={colors.muted}
               autoFocus
             />
-            <Text style={styles.fieldLabel}>TIME (e.g. 09:00)</Text>
-            <TextInput
-              style={styles.input}
-              value={taskTime}
-              onChangeText={setTaskTime}
-              placeholder="09:00"
-              placeholderTextColor={colors.muted}
-              keyboardType="numbers-and-punctuation"
-            />
+            <Text style={styles.fieldLabel}>TIME</Text>
+            <TimeSlider value={taskTime} onChange={setTaskTime} />
             {taskError ? <Text style={styles.error}>{taskError}</Text> : null}
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.btnOutline} onPress={() => { setShowTaskModal(false); setTaskError(""); }}>
@@ -831,15 +825,8 @@ export function TodayScreen() {
               placeholderTextColor={colors.muted}
               autoFocus
             />
-            <Text style={styles.fieldLabel}>TIME (e.g. 09:00)</Text>
-            <TextInput
-              style={styles.input}
-              value={editTime}
-              onChangeText={setEditTime}
-              placeholder="09:00"
-              placeholderTextColor={colors.muted}
-              keyboardType="numbers-and-punctuation"
-            />
+            <Text style={styles.fieldLabel}>TIME</Text>
+            <TimeSlider value={editTime} onChange={setEditTime} />
             {editError ? <Text style={styles.error}>{editError}</Text> : null}
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingTask(null); setEditError(""); }}>
@@ -879,15 +866,8 @@ export function TodayScreen() {
               placeholder="e.g. 1 tablet"
               placeholderTextColor={colors.muted}
             />
-            <Text style={styles.fieldLabel}>TIME (e.g. 08:00)</Text>
-            <TextInput
-              style={styles.input}
-              value={medTime}
-              onChangeText={setMedTime}
-              placeholder="08:00"
-              placeholderTextColor={colors.muted}
-              keyboardType="numbers-and-punctuation"
-            />
+            <Text style={styles.fieldLabel}>TIME</Text>
+            <TimeSlider value={medTime} onChange={setMedTime} />
             {medError ? <Text style={styles.error}>{medError}</Text> : null}
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.btnOutline} onPress={() => { setShowMedModal(false); setMedError(""); }}>

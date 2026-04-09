@@ -555,10 +555,6 @@ export function TodayScreen() {
             )}
           </TouchableOpacity>
         </View>
-        <View style={styles.dateRow}>
-          <View style={styles.datePill}><Text style={styles.datePillText}>{dayStr}</Text></View>
-          <View style={styles.datePill}><Text style={styles.datePillText}>{dateStr}</Text></View>
-        </View>
       </View>
 
       {/* ── Progress summary ──────────────────────────────────── */}

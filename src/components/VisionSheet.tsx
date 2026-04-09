@@ -10,8 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Animated,
+  Dimensions,
 } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
+
+const SCREEN_H = Dimensions.get("window").height;
+const HALF_H = SCREEN_H * 0.75;
+const FULL_H = SCREEN_H;
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../context/ThemeContext";
@@ -31,6 +37,24 @@ export function VisionSheet({ visible, onClose }: Props) {
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const sheetHeight = useRef(new Animated.Value(HALF_H)).current;
+
+  function animateTo(toValue: number, cb?: () => void) {
+    Animated.spring(sheetHeight, {
+      toValue,
+      useNativeDriver: false,
+      bounciness: 0,
+      speed: 16,
+    }).start(cb);
+  }
+
+  useEffect(() => {
+    if (!visible) {
+      sheetHeight.setValue(HALF_H);
+      setIsFullScreen(false);
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -99,7 +123,6 @@ export function VisionSheet({ visible, onClose }: Props) {
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       paddingBottom: 24,
-      maxHeight: "75%",
     },
     handleZone: {
       width: "100%",
@@ -239,11 +262,21 @@ export function VisionSheet({ visible, onClose }: Props) {
         style={styles.overlay}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.sheet}>
+        <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
           <PanGestureHandler
             onHandlerStateChange={({ nativeEvent }) => {
-              if (nativeEvent.state === State.END && nativeEvent.translationY > 60) {
-                onClose();
+              if (nativeEvent.state !== State.END) return;
+              if (nativeEvent.translationY < -60) {
+                // Swipe up → expand to full screen
+                animateTo(FULL_H, () => setIsFullScreen(true));
+              } else if (nativeEvent.translationY > 60) {
+                if (isFullScreen) {
+                  // Swipe down from full → back to half
+                  animateTo(HALF_H, () => setIsFullScreen(false));
+                } else {
+                  // Swipe down from half → close
+                  onClose();
+                }
               }
             }}
           >
@@ -333,7 +366,7 @@ export function VisionSheet({ visible, onClose }: Props) {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );

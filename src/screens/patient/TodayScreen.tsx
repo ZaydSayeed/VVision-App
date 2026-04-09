@@ -17,6 +17,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Swipeable } from "react-native-gesture-handler";
+import { updateRoutine } from "../../api/client";
+import { RoutineTask } from "../../types";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useReminders } from "../../hooks/useReminders";
@@ -107,6 +110,25 @@ export function TodayScreen() {
       setTaskLabel(""); setTaskTime(""); setShowTaskModal(false);
     } catch {
       setTaskError("Could not save. Check your connection.");
+    }
+  }
+
+  // ── Edit Task modal ──────────────────────────────────────
+  const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [editError, setEditError] = useState("");
+  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
+
+  async function handleEditTask() {
+    if (!editLabel.trim() || !editTime.trim()) { setEditError("Please fill in both fields."); return; }
+    setEditError("");
+    try {
+      await updateRoutine(editingTask!.id, { label: editLabel.trim(), time: editTime.trim() });
+      setEditingTask(null);
+      reloadRoutine();
+    } catch {
+      setEditError("Could not save. Check your connection.");
     }
   }
 
@@ -598,20 +620,67 @@ export function TodayScreen() {
             </View>
           ) : (
             tasks.map((task) => (
-              <CheckRow
+              <Swipeable
                 key={task.id}
-                label={task.label}
-                subLabel={task.time}
-                checked={isCompletedToday(task)}
-                onToggle={() => toggleComplete(task.id)}
-                onDelete={() =>
-                  Alert.alert("Remove task?", `"${task.label}" will be removed from your routine.`, [
-                    { text: "Keep it", style: "cancel" },
-                    { text: "Remove", style: "destructive", onPress: () => deleteTask(task.id) },
-                  ])
-                }
-                accentColor={colors.sage}
-              />
+                ref={(ref) => {
+                  if (ref) swipeableRefs.current.set(task.id, ref);
+                  else swipeableRefs.current.delete(task.id);
+                }}
+                renderLeftActions={() => (
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: colors.violet,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: 80,
+                      borderRadius: radius.lg,
+                      marginBottom: spacing.md,
+                    }}
+                    onPress={() => {
+                      swipeableRefs.current.get(task.id)?.close();
+                      setEditLabel(task.label);
+                      setEditTime(task.time);
+                      setEditError("");
+                      setEditingTask(task);
+                    }}
+                  >
+                    <Ionicons name="pencil-outline" size={20} color="#FFFFFF" />
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Edit</Text>
+                  </TouchableOpacity>
+                )}
+                renderRightActions={() => (
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: colors.coral,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: 80,
+                      borderRadius: radius.lg,
+                      marginBottom: spacing.md,
+                    }}
+                    onPress={() => {
+                      swipeableRefs.current.get(task.id)?.close();
+                      Alert.alert("Remove task?", `"${task.label}" will be removed from your routine.`, [
+                        { text: "Keep it", style: "cancel" },
+                        { text: "Remove", style: "destructive", onPress: () => deleteTask(task.id) },
+                      ]);
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Delete</Text>
+                  </TouchableOpacity>
+                )}
+                overshootLeft={false}
+                overshootRight={false}
+              >
+                <CheckRow
+                  label={task.label}
+                  subLabel={task.time}
+                  checked={isCompletedToday(task)}
+                  onToggle={() => toggleComplete(task.id)}
+                  accentColor={colors.sage}
+                />
+              </Swipeable>
             ))
           )}
         </View>
@@ -748,6 +817,46 @@ export function TodayScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnPrimary} onPress={handleAddTask}>
                 <Text style={styles.btnPrimaryText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Edit Task modal ───────────────────────────────────── */}
+      <Modal visible={editingTask !== null} transparent animationType="slide">
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Edit Task</Text>
+            <Text style={styles.fieldLabel}>WHAT DO I NEED TO DO?</Text>
+            <TextInput
+              style={styles.input}
+              value={editLabel}
+              onChangeText={setEditLabel}
+              placeholder="e.g. Morning walk"
+              placeholderTextColor={colors.muted}
+              autoFocus
+            />
+            <Text style={styles.fieldLabel}>TIME (e.g. 09:00)</Text>
+            <TextInput
+              style={styles.input}
+              value={editTime}
+              onChangeText={setEditTime}
+              placeholder="09:00"
+              placeholderTextColor={colors.muted}
+              keyboardType="numbers-and-punctuation"
+            />
+            {editError ? <Text style={styles.error}>{editError}</Text> : null}
+            <View style={styles.modalBtns}>
+              <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingTask(null); setEditError(""); }}>
+                <Text style={styles.btnOutlineText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnPrimary} onPress={handleEditTask}>
+                <Text style={styles.btnPrimaryText}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -9,6 +9,8 @@ import {
   HelpAlert,
   UserRole,
   PatientSummary,
+  Reminder,
+  ConversationTurn,
 } from "../types";
 
 // ── Token management ──────────────────────────────────────
@@ -331,4 +333,45 @@ export function createSSEConnection(onUpdate: () => void): () => void {
     eventSource?.close();
     if (retryTimeout) clearTimeout(retryTimeout);
   };
+}
+
+// ── Reminders ─────────────────────────────────────────────
+export async function fetchReminders(): Promise<Reminder[]> {
+  return request<Reminder[]>("/api/reminders");
+}
+
+export async function addReminder(data: {
+  text: string;
+  time?: string;
+  recurrence?: string;
+  source?: "glasses" | "app";
+}): Promise<Reminder> {
+  return request<Reminder>("/api/reminders", {
+    method: "POST",
+    body: JSON.stringify({ source: "app", ...data }),
+  });
+}
+
+export async function deleteReminder(id: string): Promise<void> {
+  await request(`/api/reminders/${id}`, { method: "DELETE" });
+}
+
+// ── Vision Assistant ───────────────────────────────────────
+export async function sendVisionMessage(message: string): Promise<{ reply: string }> {
+  return request<{ reply: string }>("/api/assistant/chat", {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
+
+// ── Conversations ──────────────────────────────────────────
+export async function saveConversationTurn(role: "user" | "assistant", content: string): Promise<ConversationTurn> {
+  return request<ConversationTurn>("/api/conversations", {
+    method: "POST",
+    body: JSON.stringify({ role, content }),
+  });
+}
+
+export async function fetchConversations(): Promise<ConversationTurn[]> {
+  return request<ConversationTurn[]>("/api/conversations");
 }

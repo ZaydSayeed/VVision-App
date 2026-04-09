@@ -741,11 +741,6 @@ export function TodayScreen() {
 
       </ScrollView>
 
-      {/* ── Add FAB ──────────────────────────────────────────── */}
-      <TouchableOpacity style={styles.fab} onPress={() => setShowChooser(true)} activeOpacity={0.85}>
-        <Ionicons name="add" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
-
       {/* ── Chooser sheet ─────────────────────────────────────── */}
       <Modal visible={showChooser} transparent animationType="slide">
         <Pressable style={styles.chooserOverlay} onPress={() => setShowChooser(false)}>

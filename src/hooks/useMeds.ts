@@ -43,6 +43,11 @@ export function useMeds(patientId?: string) {
     [meds]
   );
 
+  const editMed = useCallback(async (id: string, name: string, dosage: string, time: string) => {
+    const data = await updateMedication(id, { name, dosage, time });
+    setMeds((prev) => prev.map((m) => (m.id === id ? data : m)));
+  }, []);
+
   const deleteMed = useCallback(async (id: string) => {
     await deleteMedication(id);
     setMeds((prev) => prev.filter((m) => m.id !== id));
@@ -50,5 +55,5 @@ export function useMeds(patientId?: string) {
 
   const isTakenToday = (med: Medication) => isDoneToday(med.taken_date);
 
-  return { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError, reload: load };
+  return { meds, addMed, editMed, toggleTaken, deleteMed, isTakenToday, loadError, reload: load };
 }

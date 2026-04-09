@@ -1,11 +1,12 @@
 import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { fonts, spacing } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 
 interface SectionHeaderProps {
   label: string;
-  action?: { label: string; onPress: () => void };
+  action?: { onPress: () => void };
 }
 
 export function SectionHeader({ label, action }: SectionHeaderProps) {
@@ -25,10 +26,11 @@ export function SectionHeader({ label, action }: SectionHeaderProps) {
       letterSpacing: 0.2,
       ...fonts.medium,
     },
-    action: {
-      fontSize: 13,
-      color: colors.violet,
-      ...fonts.medium,
+    addBtn: {
+      width: 32,
+      height: 32,
+      alignItems: "center",
+      justifyContent: "center",
     },
   }), [colors]);
 
@@ -36,8 +38,8 @@ export function SectionHeader({ label, action }: SectionHeaderProps) {
     <View style={styles.row}>
       <Text style={styles.label}>{label}</Text>
       {action ? (
-        <TouchableOpacity onPress={action.onPress}>
-          <Text style={styles.action}>{action.label}</Text>
+        <TouchableOpacity onPress={action.onPress} style={styles.addBtn} activeOpacity={0.7}>
+          <Ionicons name="add-circle-outline" size={24} color={colors.violet} />
         </TouchableOpacity>
       ) : null}
     </View>

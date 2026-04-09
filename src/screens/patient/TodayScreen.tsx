@@ -47,7 +47,7 @@ export function TodayScreen() {
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
-  const { meds, addMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
+  const { meds, addMed, editMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
   const { alerts } = useHelpAlert();
   const { reminders, deleteReminder, reload: reloadReminders } = useReminders();
   useEffect(() => { registerReminderReload(reloadReminders); }, [reloadReminders]);
@@ -58,9 +58,11 @@ export function TodayScreen() {
   const taskModalY = useRef(new Animated.Value(0)).current;
   const editModalY = useRef(new Animated.Value(0)).current;
   const medModalY = useRef(new Animated.Value(0)).current;
+  const editMedModalY = useRef(new Animated.Value(0)).current;
   const taskModalBaseY = useRef(0);
   const editModalBaseY = useRef(0);
   const medModalBaseY = useRef(0);
+  const editMedModalBaseY = useRef(0);
 
   function slideModalIn(anim: Animated.Value, baseRef: { current: number }) {
     baseRef.current = 0;
@@ -157,6 +159,26 @@ export function TodayScreen() {
   // ── Add Med modal ────────────────────────────────────────────
   const [showMedModal, setShowMedModal] = useState(false);
   useEffect(() => { if (showMedModal) slideModalIn(medModalY, medModalBaseY); }, [showMedModal]);
+
+  // ── Edit Med modal ───────────────────────────────────────────
+  const [editingMed, setEditingMed] = useState<import("../../types").Medication | null>(null);
+  useEffect(() => { if (editingMed) slideModalIn(editMedModalY, editMedModalBaseY); }, [editingMed]);
+  const [editMedName, setEditMedName] = useState("");
+  const [editMedDosage, setEditMedDosage] = useState("");
+  const [editMedTime, setEditMedTime] = useState("");
+  const [editMedError, setEditMedError] = useState("");
+  const medSwipeableRefs = useRef<Map<string, import("react-native-gesture-handler").Swipeable>>(new Map());
+
+  async function handleEditMed() {
+    if (!editMedName.trim() || !editMedDosage.trim() || !editMedTime.trim()) { setEditMedError("Please fill in all fields."); return; }
+    setEditMedError("");
+    try {
+      await editMed(editingMed!.id, editMedName.trim(), editMedDosage.trim(), editMedTime.trim());
+      setEditingMed(null);
+    } catch {
+      setEditMedError("Could not save. Check your connection.");
+    }
+  }
   const [medName, setMedName] = useState("");
   const [medDosage, setMedDosage] = useState("");
   const [medTime, setMedTime] = useState("");
@@ -606,7 +628,7 @@ export function TodayScreen() {
 
         {/* Routine section */}
         <View style={styles.section}>
-          <SectionHeader label="Your Routine" />
+          <SectionHeader label="Your Routine" action={{ onPress: () => { setShowChooser(false); setShowTaskModal(true); } }} />
           {allTasksDone && (
             <Animated.View style={{
               opacity: taskBannerAnim,
@@ -705,7 +727,7 @@ export function TodayScreen() {
 
         {/* Medications section */}
         <View style={styles.section}>
-          <SectionHeader label="Your Medications" />
+          <SectionHeader label="Your Medications" action={{ onPress: () => { setShowChooser(false); setShowMedModal(true); } }} />
           {allMedsDone && (
             <Animated.View style={{
               opacity: medBannerAnim,
@@ -738,20 +760,64 @@ export function TodayScreen() {
             </View>
           ) : (
             meds.map((med) => (
-              <CheckRow
+              <Swipeable
                 key={med.id}
-                label={med.name}
-                subLabel={`${med.dosage} · ${med.time}`}
-                checked={isTakenToday(med)}
-                onToggle={() => toggleTaken(med.id)}
-                onDelete={() =>
-                  Alert.alert("Remove medication?", `"${med.name}" will be removed.`, [
-                    { text: "Keep it", style: "cancel" },
-                    { text: "Remove", style: "destructive", onPress: () => deleteMed(med.id) },
-                  ])
-                }
-                accentColor={colors.amber}
-              />
+                ref={(ref) => {
+                  if (ref) medSwipeableRefs.current.set(med.id, ref);
+                  else medSwipeableRefs.current.delete(med.id);
+                }}
+                renderLeftActions={() => (
+                  <View style={{
+                    backgroundColor: colors.violet,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: 80,
+                    borderRadius: radius.xl,
+                    marginBottom: spacing.md,
+                  }}>
+                    <Ionicons name="pencil-outline" size={20} color="#FFFFFF" />
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Edit</Text>
+                  </View>
+                )}
+                renderRightActions={() => (
+                  <View style={{
+                    backgroundColor: colors.coral,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: 80,
+                    borderRadius: radius.xl,
+                    marginBottom: spacing.md,
+                  }}>
+                    <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Delete</Text>
+                  </View>
+                )}
+                onSwipeableOpen={(direction) => {
+                  if (direction === "left") {
+                    medSwipeableRefs.current.get(med.id)?.close();
+                    setEditMedName(med.name);
+                    setEditMedDosage(med.dosage);
+                    setEditMedTime(med.time);
+                    setEditMedError("");
+                    setEditingMed(med);
+                  } else {
+                    Alert.alert("Remove medication?", `"${med.name}" will be removed.`, [
+                      { text: "Keep it", style: "cancel", onPress: () => medSwipeableRefs.current.get(med.id)?.close() },
+                      { text: "Remove", style: "destructive", onPress: () => deleteMed(med.id) },
+                    ]);
+                  }
+                }}
+                overshootLeft={false}
+                overshootRight={false}
+              >
+                <CheckRow
+                  label={med.name}
+                  subLabel={`${med.dosage} · ${med.time}`}
+                  checked={isTakenToday(med)}
+                  onToggle={() => toggleTaken(med.id)}
+                  accentColor={colors.amber}
+                />
+              </Swipeable>
             ))
           )}
         </View>
@@ -856,6 +922,43 @@ export function TodayScreen() {
                   <Text style={styles.btnOutlineText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnPrimary} onPress={handleEditTask}>
+                  <Text style={styles.btnPrimaryText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </PanGestureHandler>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Edit Med modal ─────────────────────────────────────── */}
+      <Modal visible={editingMed !== null} transparent animationType="none">
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <PanGestureHandler
+            onGestureEvent={({ nativeEvent }) => {
+              editMedModalY.setValue(Math.max(0, editMedModalBaseY.current + nativeEvent.translationY));
+            }}
+            onHandlerStateChange={({ nativeEvent }) => {
+              if (nativeEvent.state !== State.END) return;
+              nativeEvent.translationY > 80
+                ? slideModalOut(editMedModalY, editMedModalBaseY, () => { setEditingMed(null); setEditMedError(""); })
+                : Animated.spring(editMedModalY, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
+            }}
+          >
+            <Animated.View style={[styles.modalSheet, { transform: [{ translateY: editMedModalY }] }]}>
+              <View style={styles.modalHandle} />
+              <Text style={styles.modalTitle}>Edit Medication</Text>
+              <Text style={styles.fieldLabel}>MEDICATION NAME</Text>
+              <TextInput style={styles.input} value={editMedName} onChangeText={setEditMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
+              <Text style={styles.fieldLabel}>DOSAGE</Text>
+              <TextInput style={styles.input} value={editMedDosage} onChangeText={setEditMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
+              <Text style={styles.fieldLabel}>TIME</Text>
+              <TimeSlider value={editMedTime} onChange={setEditMedTime} />
+              {editMedError ? <Text style={styles.error}>{editMedError}</Text> : null}
+              <View style={styles.modalBtns}>
+                <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingMed(null); setEditMedError(""); }}>
+                  <Text style={styles.btnOutlineText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnPrimary} onPress={handleEditMed}>
                   <Text style={styles.btnPrimaryText}>Save</Text>
                 </TouchableOpacity>
               </View>

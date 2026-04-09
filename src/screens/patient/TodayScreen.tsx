@@ -616,6 +616,8 @@ export function TodayScreen() {
           )}
         </View>
 
+        <RemindersSection reminders={reminders} colors={colors} />
+
         {/* Medications section */}
         <View style={styles.section}>
           <SectionHeader label="Your Medications" />
@@ -669,7 +671,6 @@ export function TodayScreen() {
           )}
         </View>
 
-        <RemindersSection reminders={reminders} colors={colors} />
       </ScrollView>
 
       {/* ── Add FAB ──────────────────────────────────────────── */}

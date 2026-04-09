@@ -72,7 +72,6 @@ export function TimeSlider({ value, onChange }: TimeSliderProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.timeDisplay}>{display}</Text>
-      <Text style={styles.sliderLabel}>Drag to set time · 15 min steps</Text>
       <Slider
         minimumValue={0}
         maximumValue={95}

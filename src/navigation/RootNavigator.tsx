@@ -23,6 +23,7 @@ import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
 import { useHelpAlert } from "../hooks/useHelpAlert";
+import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 
@@ -123,7 +124,7 @@ function CaregiverView({
   onCloseDrawer: () => void;
 }) {
   const { colors } = useTheme();
-  const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp } = useHelpAlert();
+  const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert } = useHelpAlert();
 
   // Notifications slide panel
   const [notifOpen, setNotifOpen] = useState(false);
@@ -140,6 +141,7 @@ function CaregiverView({
 
   // Urgent alert overlay
   const [urgentVisible, setUrgentVisible] = useState(false);
+  const [resolveSheetVisible, setResolveSheetVisible] = useState(false);
   const prevCountRef = useRef<number | null>(null);
   const pulse1 = useRef(new Animated.Value(0)).current;
   const pulse2 = useRef(new Animated.Value(0)).current;
@@ -197,12 +199,6 @@ function CaregiverView({
   const latestAlert = pendingHelp[0];
 
   const handleRespondingNow = useCallback(() => setUrgentVisible(false), []);
-  const handleMarkHandled = useCallback(async () => {
-    if (latestAlert) {
-      try { await dismissHelp(latestAlert.id); } catch { /* ignore */ }
-    }
-    setUrgentVisible(false);
-  }, [latestAlert, dismissHelp]);
 
   // Ring interpolations
   const makeRing = (anim: Animated.Value) => ({
@@ -424,7 +420,7 @@ function CaregiverView({
                   </Text>
                 </View>
               )}
-              <TouchableOpacity style={styles.btnHandled} onPress={handleMarkHandled} activeOpacity={0.85}>
+              <TouchableOpacity style={styles.btnHandled} onPress={() => setResolveSheetVisible(true)} activeOpacity={0.85}>
                 <Text style={styles.btnHandledText}>Mark as Handled</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnResponding} onPress={handleRespondingNow} activeOpacity={0.85}>
@@ -434,6 +430,24 @@ function CaregiverView({
           </LinearGradient>
         </Animated.View>
       )}
+      <ResolveSheet
+        visible={resolveSheetVisible}
+        onResolve={async (cause: HelpCause, note: string) => {
+          if (latestAlert) {
+            try { await resolveAlert(latestAlert.id, cause, note || undefined); } catch { /* ignore */ }
+          }
+          setResolveSheetVisible(false);
+          setUrgentVisible(false);
+        }}
+        onSkip={async () => {
+          if (latestAlert) {
+            try { await dismissHelp(latestAlert.id); } catch { /* ignore */ }
+          }
+          setResolveSheetVisible(false);
+          setUrgentVisible(false);
+        }}
+        onCancel={() => setResolveSheetVisible(false)}
+      />
     </View>
   );
 }

@@ -17,6 +17,7 @@ import streamRoutes from "./server-routes/stream";
 import reminderRoutes from "./server-routes/reminders";
 import conversationRoutes from "./server-routes/conversations";
 import assistantRoutes from "./server-routes/assistant";
+import noteRoutes from "./server-routes/notes";
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use("/api/help-alerts", helpAlertRoutes);
 app.use("/api/caregiver-profiles", caregiverProfileRoutes);
 app.use("/stream", streamRoutes);
 app.use("/api/reminders", reminderRoutes);
+app.use("/api/notes", generalLimiter, noteRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/assistant", assistantRoutes);
 

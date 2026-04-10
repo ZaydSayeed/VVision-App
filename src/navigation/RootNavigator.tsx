@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
@@ -19,6 +20,7 @@ import { setOnNetworkChange } from "../api/client";
 import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
+import { HelpHistoryScreen } from "../screens/caregiver/HelpHistoryScreen";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
@@ -26,6 +28,8 @@ import { useHelpAlert } from "../hooks/useHelpAlert";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
+
+const CaregiverStack = createNativeStackNavigator();
 
 const SCREEN_W = Dimensions.get("window").width;
 const SCREEN_H = Dimensions.get("window").height;
@@ -332,7 +336,12 @@ function CaregiverView({
     <View style={styles.root}>
       <Header onOpenDrawer={onOpenDrawer} user={user} notifCount={pendingCount} onOpenNotif={openNotif} />
       <OfflineBanner />
-      <CaregiverTabNavigator helpPendingCount={pendingCount} />
+      <CaregiverStack.Navigator screenOptions={{ headerShown: false }}>
+        <CaregiverStack.Screen name="CaregiverTabs">
+          {() => <CaregiverTabNavigator helpPendingCount={pendingCount} />}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="HelpHistory" component={HelpHistoryScreen} />
+      </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
 
       {/* Notifications panel */}

@@ -119,10 +119,13 @@ router.patch("/:id/pin", authMiddleware, async (req, res) => {
         { $set: { pinned: false } }
       );
     }
-    await db.collection("caregiver_notes").updateOne(
+    const updateResult = await db.collection("caregiver_notes").updateOne(
       { _id: noteId, caregiverId: user.supabaseUid },
       { $set: { pinned: newPinned } }
     );
+    if (updateResult.matchedCount === 0) {
+      return res.status(403).json({ detail: "Not authorized to pin this note" });
+    }
     const updated = await db.collection("caregiver_notes").findOne({ _id: noteId });
     res.json(noteOut(updated));
   } catch (err) {

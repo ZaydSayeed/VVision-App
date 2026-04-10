@@ -105,6 +105,11 @@ export interface HelpAlert {
   patient_id?: string;
   timestamp: string;
   dismissed: boolean;
+  cancelled?: boolean;
+  resolved?: boolean;
+  note?: string;
+  cause?: string;
+  resolved_at?: string;
 }
 
 // ── Caregiver Profiles ───────────────────────────────────

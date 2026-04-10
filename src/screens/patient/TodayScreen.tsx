@@ -29,6 +29,7 @@ import { NotesHistoryModal } from "../../components/NotesHistoryModal";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CheckRow } from "../../components/shared/CheckRow";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { TimeSlider } from "../../components/shared/TimeSlider";
@@ -36,6 +37,7 @@ import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { registerReminderReload } from "../../utils/reminderEvents";
 
 const SCREEN_W = Dimensions.get("window").width;
+const SCREEN_H = Dimensions.get("window").height;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
 
 function getGreeting(hour: number): { text: string; icon: keyof typeof Ionicons.glyphMap } {
@@ -47,6 +49,7 @@ function getGreeting(hour: number): { text: string; icon: keyof typeof Ionicons.
 
 export function TodayScreen() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
@@ -540,6 +543,7 @@ export function TodayScreen() {
     modalSheet: {
       backgroundColor: colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28,
       padding: spacing.xxl, gap: spacing.sm,
+      maxHeight: SCREEN_H * 0.80,
     },
     modalHandle: {
       width: 40, height: 4, borderRadius: 2,
@@ -882,7 +886,7 @@ export function TodayScreen() {
 
       {/* ── Add Task modal ─────────────────────────────────────── */}
       <Modal visible={showTaskModal} transparent animationType="none">
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <PanGestureHandler
             onGestureEvent={({ nativeEvent }) => {
               taskModalY.setValue(Math.max(0, taskModalBaseY.current + nativeEvent.translationY));
@@ -917,7 +921,7 @@ export function TodayScreen() {
 
       {/* ── Edit Task modal ───────────────────────────────────── */}
       <Modal visible={editingTask !== null} transparent animationType="none">
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <PanGestureHandler
             onGestureEvent={({ nativeEvent }) => {
               editModalY.setValue(Math.max(0, editModalBaseY.current + nativeEvent.translationY));
@@ -952,7 +956,7 @@ export function TodayScreen() {
 
       {/* ── Edit Med modal ─────────────────────────────────────── */}
       <Modal visible={editingMed !== null} transparent animationType="none">
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <PanGestureHandler
             onGestureEvent={({ nativeEvent }) => {
               editMedModalY.setValue(Math.max(0, editMedModalBaseY.current + nativeEvent.translationY));
@@ -967,10 +971,16 @@ export function TodayScreen() {
             <Animated.View style={[styles.modalSheet, { transform: [{ translateY: editMedModalY }] }]}>
               <View style={styles.modalHandle} />
               <Text style={styles.modalTitle}>Edit Medication</Text>
-              <Text style={styles.fieldLabel}>MEDICATION NAME</Text>
-              <TextInput style={styles.input} value={editMedName} onChangeText={setEditMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
-              <Text style={styles.fieldLabel}>DOSAGE</Text>
-              <TextInput style={styles.input} value={editMedDosage} onChangeText={setEditMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
+              <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>NAME</Text>
+                  <TextInput style={styles.input} value={editMedName} onChangeText={setEditMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>DOSAGE</Text>
+                  <TextInput style={styles.input} value={editMedDosage} onChangeText={setEditMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
+                </View>
+              </View>
               <Text style={styles.fieldLabel}>TIME</Text>
               <TimeSlider value={editMedTime} onChange={setEditMedTime} />
               {editMedError ? <Text style={styles.error}>{editMedError}</Text> : null}
@@ -995,7 +1005,7 @@ export function TodayScreen() {
 
       {/* ── Add Med modal ──────────────────────────────────────── */}
       <Modal visible={showMedModal} transparent animationType="none">
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <PanGestureHandler
             onGestureEvent={({ nativeEvent }) => {
               medModalY.setValue(Math.max(0, medModalBaseY.current + nativeEvent.translationY));
@@ -1010,10 +1020,16 @@ export function TodayScreen() {
             <Animated.View style={[styles.modalSheet, { transform: [{ translateY: medModalY }] }]}>
               <View style={styles.modalHandle} />
               <Text style={styles.modalTitle}>Add Medication</Text>
-              <Text style={styles.fieldLabel}>MEDICATION NAME</Text>
-              <TextInput style={styles.input} value={medName} onChangeText={setMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
-              <Text style={styles.fieldLabel}>DOSAGE</Text>
-              <TextInput style={styles.input} value={medDosage} onChangeText={setMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
+              <View style={{ flexDirection: "row", gap: spacing.sm }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>NAME</Text>
+                  <TextInput style={styles.input} value={medName} onChangeText={setMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.fieldLabel}>DOSAGE</Text>
+                  <TextInput style={styles.input} value={medDosage} onChangeText={setMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
+                </View>
+              </View>
               <Text style={styles.fieldLabel}>TIME</Text>
               <TimeSlider value={medTime} onChange={setMedTime} />
               {medError ? <Text style={styles.error}>{medError}</Text> : null}

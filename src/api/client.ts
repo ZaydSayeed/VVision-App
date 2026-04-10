@@ -298,6 +298,13 @@ export async function dismissHelpAlert(id: string): Promise<HelpAlert> {
   });
 }
 
+export async function resolveHelpAlert(id: string, cause: string, note?: string): Promise<HelpAlert> {
+  return request<HelpAlert>(`/api/help-alerts/${id}/resolve`, {
+    method: "PATCH",
+    body: JSON.stringify({ cause, note }),
+  });
+}
+
 // ── Caregiver profiles ───────────────────────────────────
 export async function fetchCaregiverProfiles(): Promise<
   { id: string; name: string; email: string }[]

@@ -4,6 +4,7 @@ import {
   fetchHelpAlerts,
   createHelpAlert,
   dismissHelpAlert,
+  resolveHelpAlert,
 } from "../api/client";
 
 const MAX_RETRIES = 3;
@@ -66,6 +67,15 @@ export function useHelpAlert() {
     }
   }, []);
 
+  const resolveAlert = useCallback(async (id: string, cause: string, note?: string) => {
+    try {
+      const updated = await resolveHelpAlert(id, cause, note);
+      setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    } catch (e: any) {
+      throw e;
+    }
+  }, []);
+
   const clearSentState = useCallback(() => {
     setSentAt(null);
     setSendError(null);
@@ -73,5 +83,5 @@ export function useHelpAlert() {
 
   const pendingCount = alerts.filter((a) => !a.dismissed).length;
 
-  return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, clearSentState, reload: load };
+  return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, resolveAlert, clearSentState, reload: load };
 }

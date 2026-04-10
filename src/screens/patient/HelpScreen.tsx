@@ -33,6 +33,24 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   const sent = !!sentAt;
   const failed = !!sendError;
 
+  const [handledVisible, setHandledVisible] = useState(false);
+  const prevAlertsRef = useRef<typeof alerts>([]);
+
+  useEffect(() => {
+    const prev = prevAlertsRef.current;
+    prevAlertsRef.current = alerts;
+
+    // Detect when an alert we sent (not cancelled) just got resolved by caregiver
+    const justResolved = alerts.find(
+      (a) => a.resolved && !a.cancelled && !prev.find((p) => p.id === a.id)?.resolved
+    );
+    if (justResolved) {
+      setHandledVisible(true);
+      clearSentState();
+      setTimeout(() => setHandledVisible(false), 3000);
+    }
+  }, [alerts]);
+
   async function handlePress() {
     clearSentState();
     await sendHelp();
@@ -249,13 +267,16 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
       {/* Header */}
       <View style={styles.headerSection}>
         <Text style={styles.headerTitle}>
-          {sent ? "Help is coming!" : "Need help?"}
+          {handledVisible ? "Help is coming!" : sent ? "Help is coming!" : "Need help?"}
         </Text>
         <Text style={styles.headerSub}>
-          {sent
-            ? <Text><Text style={styles.headerSubName}>{caregiverDisplay}</Text> has been notified.</Text>
-            : <Text>Don't worry, <Text style={styles.headerSubName}>{patientName}</Text>. We're here.</Text>
-          }
+          {handledVisible ? (
+            <Text><Text style={styles.headerSubName}>{caregiverDisplay}</Text> is on their way.</Text>
+          ) : sent ? (
+            <Text><Text style={styles.headerSubName}>{caregiverDisplay}</Text> has been notified.</Text>
+          ) : (
+            <Text>Don't worry, <Text style={styles.headerSubName}>{patientName}</Text>. We're here.</Text>
+          )}
         </Text>
       </View>
 
@@ -275,12 +296,12 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
           <TouchableOpacity
             onPress={handlePress}
             activeOpacity={0.88}
-            disabled={sent || sending}
+            disabled={sent || sending || handledVisible}
             style={styles.btnOuter}
             accessibilityRole="button"
             accessibilityLabel="Send help alert to caregiver"
             accessibilityHint="Double tap to immediately notify your caregiver that you need assistance"
-            accessibilityState={{ disabled: sent || sending }}
+            accessibilityState={{ disabled: sent || sending || handledVisible }}
           >
             <LinearGradient
               colors={["#D95F5F", "#E87878"]}
@@ -288,7 +309,12 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
               end={{ x: 1, y: 1 }}
               style={styles.btnGradient}
             >
-              {sent ? (
+              {handledVisible ? (
+                <>
+                  <Ionicons name="checkmark-circle" size={72} color="#FFFFFF" />
+                  <Text style={styles.btnLabelSent}>{"Your caregiver\nis on the way!"}</Text>
+                </>
+              ) : sent ? (
                 <>
                   <Ionicons name="checkmark-circle" size={72} color="#FFFFFF" />
                   <Text style={styles.btnLabelSent}>Help is on{"\n"}the way!</Text>
@@ -315,7 +341,7 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
             {" "}immediately
           </Text>
         )}
-        {sent && (
+        {sent && !handledVisible && (
           <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel} activeOpacity={0.75}>
             <Text style={styles.cancelBtnText}>Cancel Request</Text>
           </TouchableOpacity>

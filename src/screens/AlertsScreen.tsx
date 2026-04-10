@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { spacing, fonts, radius } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 import { Alert as AlertType } from "../types";
 import { formatRelativeTime, formatTimeShort } from "../hooks/useDashboardData";
+import { useNavigation } from "@react-navigation/native";
+import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 
 interface AlertsScreenProps {
   alerts: AlertType[];
@@ -26,8 +28,10 @@ interface AlertsScreenProps {
 
 export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) {
   const { colors } = useTheme();
-  const { alerts: helpAlerts, dismissAlert: dismissHelp, reload: reloadHelp } = useHelpAlert();
+  const { alerts: helpAlerts, dismissAlert: dismissHelp, resolveAlert, reload: reloadHelp } = useHelpAlert();
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed);
+  const navigation = useNavigation();
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   const handleRefresh = useCallback(() => {
     onRefresh();
@@ -220,6 +224,63 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
       color: colors.violet,
       ...fonts.medium,
     },
+    historyCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      gap: spacing.xs,
+    },
+    historyLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      flexWrap: "wrap",
+    },
+    historyTime: {
+      fontSize: 13,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    causePill: {
+      backgroundColor: colors.coralSoft,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 3,
+    },
+    causePillCancelled: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 3,
+    },
+    causePillText: {
+      fontSize: 11,
+      color: colors.coral,
+      ...fonts.medium,
+    },
+    causePillTextCancelled: {
+      fontSize: 11,
+      color: colors.muted,
+      ...fonts.medium,
+    },
+    historyNote: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      lineHeight: 18,
+    },
+    viewAllBtn: {
+      marginTop: spacing.sm,
+      alignItems: "flex-end",
+    },
+    viewAllText: {
+      fontSize: 13,
+      color: colors.violet,
+      ...fonts.medium,
+    },
   }), [colors]);
 
   const totalAlerts = alerts.length + pendingHelp.length;
@@ -265,7 +326,7 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
                   style={styles.helpDismissBtn}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    dismissHelp(alert.id);
+                    setResolvingId(alert.id);
                   }}
                   activeOpacity={0.85}
                   accessibilityRole="button"
@@ -277,6 +338,50 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
             ))
           )}
         </View>
+
+        {/* ── Today's History ── */}
+        {(() => {
+          const today = new Date().toISOString().slice(0, 10);
+          const todayHistory = helpAlerts.filter(
+            (a) => (a.resolved || a.cancelled) && a.timestamp.slice(0, 10) === today
+          );
+          if (todayHistory.length === 0) return null;
+          return (
+            <View style={styles.section}>
+              <View style={styles.sectionLabelRow}>
+                <View style={[styles.sectionDot, { backgroundColor: colors.muted }]} />
+                <Text style={[styles.sectionLabel, { color: colors.muted }]}>Today's History</Text>
+              </View>
+              {todayHistory.map((alert) => (
+                <View key={alert.id} style={styles.historyCard}>
+                  <View style={styles.historyLeft}>
+                    <Text style={styles.historyTime}>{formatRelativeTime(alert.timestamp)}</Text>
+                    {alert.cause && !alert.cancelled && (
+                      <View style={styles.causePill}>
+                        <Text style={styles.causePillText}>{alert.cause}</Text>
+                      </View>
+                    )}
+                    {alert.cancelled && (
+                      <View style={styles.causePillCancelled}>
+                        <Text style={styles.causePillTextCancelled}>Cancelled</Text>
+                      </View>
+                    )}
+                  </View>
+                  {alert.note ? (
+                    <Text style={styles.historyNote} numberOfLines={2}>{alert.note}</Text>
+                  ) : null}
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.viewAllBtn}
+                onPress={() => (navigation as any).navigate("HelpHistory")}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.viewAllText}>View All History →</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
         {/* ── Face Recognition Alerts ── */}
         <View style={styles.section}>
@@ -318,6 +423,24 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
           )}
         </View>
       </ScrollView>
+      <ResolveSheet
+        visible={resolvingId !== null}
+        onResolve={async (cause: HelpCause, note: string) => {
+          if (!resolvingId) return;
+          try {
+            await resolveAlert(resolvingId, cause, note || undefined);
+          } catch {
+            // silently fail — polling will reconcile
+          }
+          setResolvingId(null);
+        }}
+        onSkip={async () => {
+          if (!resolvingId) return;
+          try { await dismissHelp(resolvingId); } catch { /* ignore */ }
+          setResolvingId(null);
+        }}
+        onCancel={() => setResolvingId(null)}
+      />
     </View>
   );
 }

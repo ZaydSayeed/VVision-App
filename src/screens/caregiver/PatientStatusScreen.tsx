@@ -15,9 +15,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
+import { useNotes } from "../../hooks/useNotes";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
+import { NotesHistoryModal } from "../../components/NotesHistoryModal";
+import { AddNoteSheet } from "../../components/AddNoteSheet";
+import { createNote } from "../../api/client";
 import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
@@ -31,6 +35,15 @@ export function PatientStatusScreen() {
   const { tasks, isCompletedToday } = useRoutine(patientId);
   const { meds, isTakenToday } = useMeds(patientId);
   const { alerts } = useHelpAlert();
+  const { pinnedNote, notes: caregiverNotes, reload: reloadNotes } = useNotes(patientId);
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
+  const [addNoteVisible, setAddNoteVisible] = useState(false);
+
+  async function handleSaveNote(text: string, pinned: boolean) {
+    if (!patientId) return;
+    await createNote(patientId, text, pinned);
+    await reloadNotes();
+  }
 
   const [clock, setClock] = useState(new Date());
   const [notifOpen, setNotifOpen] = useState(false);
@@ -370,6 +383,46 @@ export function PatientStatusScreen() {
       marginTop: spacing.xs,
     },
 
+    // ── Notes section ───────────────────────────────────────────
+    noteSection: { marginTop: spacing.lg },
+    noteCard: {
+      backgroundColor: colors.bg,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.violet,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    noteCardTop: {
+      flexDirection: "row", alignItems: "center",
+      justifyContent: "space-between", marginBottom: spacing.xs,
+    },
+    noteLabel: {
+      fontSize: 10, color: colors.violet, ...fonts.medium,
+      letterSpacing: 1, textTransform: "uppercase",
+    },
+    noteViewAll: { flexDirection: "row", alignItems: "center", gap: 2 },
+    noteViewAllText: { fontSize: 12, color: colors.violet, ...fonts.medium },
+    noteText: { fontSize: 14, color: colors.text, ...fonts.regular, lineHeight: 21 },
+    notePlaceholder: { fontSize: 14, color: colors.muted, ...fonts.regular, fontStyle: "italic" },
+    noteTimestamp: { fontSize: 11, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
+    noteFooter: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: spacing.sm },
+    notePlusBtn: {
+      width: 28, height: 28, borderRadius: 14,
+      backgroundColor: colors.violet,
+      alignItems: "center", justifyContent: "center",
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.35,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    notePlusBtnText: { color: "#fff", fontSize: 18, lineHeight: 22, fontWeight: "400" as const },
+
     // ── Read-only list items ─────────────────────────────────────
     section: { marginTop: spacing.lg },
     noItems: {
@@ -639,7 +692,54 @@ export function PatientStatusScreen() {
             ))
           )}
         </View>
+
+        {/* ── Caregiver Notes ── */}
+        <View style={styles.noteSection}>
+          <SectionHeader label="Notes" />
+          <View style={styles.noteCard}>
+            <View style={styles.noteCardTop}>
+              <Text style={styles.noteLabel}>
+                {pinnedNote ? "Pinned Note" : "Notes"}
+              </Text>
+              {caregiverNotes.length > 0 && (
+                <TouchableOpacity style={styles.noteViewAll} onPress={() => setNotesModalVisible(true)} activeOpacity={0.75}>
+                  <Text style={styles.noteViewAllText}>{caregiverNotes.length} note{caregiverNotes.length !== 1 ? "s" : ""}</Text>
+                  <Ionicons name="chevron-forward" size={13} color={colors.violet} />
+                </TouchableOpacity>
+              )}
+            </View>
+            {pinnedNote ? (
+              <>
+                <Text style={styles.noteText}>{pinnedNote.text}</Text>
+                <Text style={styles.noteTimestamp}>{formatRelativeTime(pinnedNote.timestamp)}</Text>
+              </>
+            ) : (
+              <Text style={styles.notePlaceholder}>No notes yet. Add one below.</Text>
+            )}
+            <View style={styles.noteFooter}>
+              <TouchableOpacity
+                style={styles.notePlusBtn}
+                onPress={() => setAddNoteVisible(true)}
+                activeOpacity={0.8}
+                accessibilityLabel="Add a note for this patient"
+              >
+                <Text style={styles.notePlusBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </ScrollView>
+
+      <NotesHistoryModal
+        visible={notesModalVisible}
+        notes={caregiverNotes}
+        onClose={() => setNotesModalVisible(false)}
+      />
+      <AddNoteSheet
+        visible={addNoteVisible}
+        onSave={handleSaveNote}
+        onClose={() => setAddNoteVisible(false)}
+      />
     </View>
   );
 }

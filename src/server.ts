@@ -76,7 +76,7 @@ app.use("/api/help-alerts", helpAlertRoutes);
 app.use("/api/caregiver-profiles", caregiverProfileRoutes);
 app.use("/stream", streamRoutes);
 app.use("/api/reminders", reminderRoutes);
-app.use("/api/notes", generalLimiter, noteRoutes);
+app.use("/api/notes", noteRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/assistant", assistantRoutes);
 

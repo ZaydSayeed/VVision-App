@@ -40,8 +40,17 @@ router.get("/", authMiddleware, async (req, res) => {
   if (!patientId || !ObjectId.isValid(String(patientId))) {
     return res.status(400).json({ detail: "Valid patientId required" });
   }
+  const user = await resolveUser(req, res);
+  if (!user) return;
+
+  // Verify caller is linked to this patient
+  const db = getDb();
+  const userDoc = await db.collection("users").findOne({ supabase_uid: user.supabaseUid });
+  if (!userDoc || String(userDoc.patient_id) !== String(patientId)) {
+    return res.status(403).json({ detail: "Not authorized to view notes for this patient" });
+  }
+
   try {
-    const db = getDb();
     const docs = await db.collection("caregiver_notes")
       .find({ patientId: String(patientId) })
       .sort({ timestamp: -1 })
@@ -99,7 +108,8 @@ router.patch("/:id/pin", authMiddleware, async (req, res) => {
 
   try {
     const db = getDb();
-    const note = await db.collection("caregiver_notes").findOne({ _id: new ObjectId(req.params.id as string) });
+    const noteId = new ObjectId(req.params.id as string);
+    const note = await db.collection("caregiver_notes").findOne({ _id: noteId });
     if (!note) return res.status(404).json({ detail: "Note not found" });
 
     const newPinned = !note.pinned;
@@ -110,10 +120,10 @@ router.patch("/:id/pin", authMiddleware, async (req, res) => {
       );
     }
     await db.collection("caregiver_notes").updateOne(
-      { _id: new ObjectId(req.params.id as string) },
+      { _id: noteId, caregiverId: user.supabaseUid },
       { $set: { pinned: newPinned } }
     );
-    const updated = await db.collection("caregiver_notes").findOne({ _id: new ObjectId(req.params.id as string) });
+    const updated = await db.collection("caregiver_notes").findOne({ _id: noteId });
     res.json(noteOut(updated));
   } catch (err) {
     console.error("pin note error:", err);
@@ -131,7 +141,11 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
   try {
     const db = getDb();
-    await db.collection("caregiver_notes").deleteOne({ _id: new ObjectId(req.params.id as string) });
+    const result = await db.collection("caregiver_notes").deleteOne({
+      _id: new ObjectId(req.params.id as string),
+      caregiverId: user.supabaseUid,
+    });
+    if (result.deletedCount === 0) return res.status(404).json({ detail: "Note not found" });
     res.status(204).end();
   } catch (err) {
     console.error("delete note error:", err);

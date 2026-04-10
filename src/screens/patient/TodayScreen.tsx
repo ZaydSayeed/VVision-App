@@ -24,6 +24,9 @@ import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useReminders } from "../../hooks/useReminders";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
+import { useNotes } from "../../hooks/useNotes";
+import { NotesHistoryModal } from "../../components/NotesHistoryModal";
+import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { CheckRow } from "../../components/shared/CheckRow";
@@ -51,6 +54,8 @@ export function TodayScreen() {
   const { alerts } = useHelpAlert();
   const { reminders, deleteReminder, reload: reloadReminders } = useReminders();
   useEffect(() => { registerReminderReload(reloadReminders); }, [reloadReminders]);
+  const { pinnedNote, notes: caregiverNotes, reload: reloadNotes } = useNotes(patientId);
+  const [notesModalVisible, setNotesModalVisible] = useState(false);
   const dataError = routineError || medsError;
   const [refreshing, setRefreshing] = useState(false);
 
@@ -74,9 +79,9 @@ export function TodayScreen() {
   }
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([reloadRoutine(), reloadMeds(), reloadReminders()]);
+    await Promise.all([reloadRoutine(), reloadMeds(), reloadReminders(), reloadNotes()]);
     setRefreshing(false);
-  }, [reloadRoutine, reloadMeds, reloadReminders]);
+  }, [reloadRoutine, reloadMeds, reloadReminders, reloadNotes]);
 
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
@@ -302,6 +307,99 @@ export function TodayScreen() {
     content: { paddingHorizontal: spacing.xl, paddingBottom: 120 },
 
     section: { marginBottom: spacing.lg },
+
+    // ── Note card ──────────────────────────────────────────────
+    noteCard: {
+      marginHorizontal: spacing.xl,
+      marginBottom: spacing.md,
+      backgroundColor: colors.bg,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.violet,
+      shadowColor: colors.violet,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    noteCardTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: spacing.xs,
+    },
+    noteLabel: {
+      fontSize: 10, color: colors.violet, ...fonts.medium,
+      letterSpacing: 1, textTransform: "uppercase",
+    },
+    noteViewAll: {
+      flexDirection: "row", alignItems: "center", gap: 2,
+    },
+    noteViewAllText: { fontSize: 12, color: colors.violet, ...fonts.medium },
+    noteText: { fontSize: 14, color: colors.text, ...fonts.regular, lineHeight: 21 },
+    notePlaceholder: { fontSize: 14, color: colors.muted, ...fonts.regular, fontStyle: "italic" },
+    noteTimestamp: { fontSize: 11, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
+
+    // ── Split columns ──────────────────────────────────────────
+    splitRow: {
+      flexDirection: "row",
+      marginHorizontal: spacing.xl,
+      gap: spacing.md,
+      marginBottom: spacing.xl,
+    },
+    splitCard: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+      minHeight: 200,
+    },
+    splitCardHeader: {
+      fontSize: 10, ...fonts.medium,
+      letterSpacing: 1.2, textTransform: "uppercase",
+      marginBottom: spacing.sm,
+    },
+    splitItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingVertical: 5,
+    },
+    splitCheckbox: {
+      width: 18, height: 18, borderRadius: 4,
+      alignItems: "center", justifyContent: "center",
+    },
+    splitItemText: { fontSize: 13, color: colors.text, ...fonts.regular, flex: 1 },
+    splitItemDone: { color: colors.muted, textDecorationLine: "line-through" },
+    splitFooter: {
+      marginTop: "auto" as const,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingTop: spacing.sm,
+    },
+    splitProgress: {
+      flex: 1,
+    },
+    splitProgressTrack: {
+      height: 5, borderRadius: 3,
+      backgroundColor: colors.surface,
+    },
+    splitProgressFill: {
+      height: 5, borderRadius: 3,
+    },
+    splitProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
+    splitPlusBtn: {
+      width: 28, height: 28, borderRadius: 14,
+      alignItems: "center", justifyContent: "center",
+    },
+    splitPlusBtnText: { color: "#fff", fontSize: 18, lineHeight: 22, fontWeight: "400" as const },
 
     allDoneBanner: {
       borderRadius: radius.xl,
@@ -600,15 +698,6 @@ export function TodayScreen() {
         </View>
       </View>
 
-      {/* ── Progress summary ──────────────────────────────────── */}
-      <View style={styles.progressBar}>
-        <Ionicons name="checkmark-circle" size={20} color={colors.sage} />
-        <Text style={styles.progressText}>
-          <Text style={styles.progressBold}>{routineDone}/{tasks.length}</Text> tasks{"  ·  "}
-          <Text style={styles.progressBold}>{medsDone}/{meds.length}</Text> meds done today
-        </Text>
-      </View>
-
       {/* ── Data error banner ────────────────────────────────── */}
       {dataError ? (
         <View style={{ marginHorizontal: spacing.xl, marginBottom: spacing.sm, backgroundColor: colors.coralSoft, borderRadius: radius.lg, padding: spacing.md, flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
@@ -619,209 +708,140 @@ export function TodayScreen() {
 
       {/* ── Main content ─────────────────────────────────────── */}
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />
         }
       >
-
-        {/* Routine section */}
-        <View style={styles.section}>
-          <SectionHeader label="Your Routine" action={{ onPress: () => { setShowChooser(false); setShowTaskModal(true); } }} />
-          {allTasksDone && (
-            <Animated.View style={{
-              opacity: taskBannerAnim,
-              transform: [{ translateY: taskBannerAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] }) }],
-            }}>
-              <LinearGradient
-                colors={[...gradients.sage]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.allDoneBanner}
-              >
-                <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
-                <View>
-                  <Text style={styles.bannerText}>Routine complete!</Text>
-                  <Text style={styles.bannerSub}>All tasks done for today</Text>
-                </View>
-              </LinearGradient>
-            </Animated.View>
-          )}
-          {tasks.length === 0 ? (
-            <View style={styles.emptyCTA}>
-              <TouchableOpacity
-                style={[styles.emptyBtn, { backgroundColor: colors.sageSoft }]}
-                onPress={() => { setShowChooser(false); setShowTaskModal(true); }}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="add" size={36} color={colors.sage} />
+        {/* ── Caregiver Note Card ────────────────────────────── */}
+        <View style={styles.noteCard}>
+          <View style={styles.noteCardTop}>
+            <Text style={styles.noteLabel}>
+              {pinnedNote ? `Note from ${pinnedNote.caregiverName}` : "Caregiver Notes"}
+            </Text>
+            {caregiverNotes.length > 0 && (
+              <TouchableOpacity style={styles.noteViewAll} onPress={() => setNotesModalVisible(true)} activeOpacity={0.75}>
+                <Text style={styles.noteViewAllText}>{caregiverNotes.length} note{caregiverNotes.length !== 1 ? "s" : ""}</Text>
+                <Ionicons name="chevron-forward" size={13} color={colors.violet} />
               </TouchableOpacity>
-              <Text style={styles.emptyTitle}>No tasks yet</Text>
-              <Text style={styles.emptySub}>Tap + to build your daily routine</Text>
-            </View>
-          ) : (
-            tasks.map((task) => (
-              <Swipeable
-                key={task.id}
-                ref={(ref) => {
-                  if (ref) swipeableRefs.current.set(task.id, ref);
-                  else swipeableRefs.current.delete(task.id);
-                }}
-                renderLeftActions={() => (
-                  <View style={{
-                    backgroundColor: colors.violet,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: 80,
-                    borderRadius: radius.xl,
-                    marginBottom: spacing.md,
-                  }}>
-                    <Ionicons name="pencil-outline" size={20} color="#FFFFFF" />
-                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Edit</Text>
-                  </View>
-                )}
-                renderRightActions={() => (
-                  <View style={{
-                    backgroundColor: colors.coral,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: 80,
-                    borderRadius: radius.xl,
-                    marginBottom: spacing.md,
-                  }}>
-                    <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Delete</Text>
-                  </View>
-                )}
-                onSwipeableOpen={(direction) => {
-                  if (direction === "left") {
-                    // swiped right → edit
-                    swipeableRefs.current.get(task.id)?.close();
-                    setEditLabel(task.label);
-                    setEditTime(task.time);
-                    setEditError("");
-                    setEditingTask(task);
-                  } else {
-                    // swiped left → delete
-                    Alert.alert("Remove task?", `"${task.label}" will be removed from your routine.`, [
-                      { text: "Keep it", style: "cancel", onPress: () => swipeableRefs.current.get(task.id)?.close() },
-                      { text: "Remove", style: "destructive", onPress: () => deleteTask(task.id) },
-                    ]);
-                  }
-                }}
-                overshootLeft={false}
-                overshootRight={false}
-              >
-                <CheckRow
-                  label={task.label}
-                  subLabel={task.time}
-                  checked={isCompletedToday(task)}
-                  onToggle={() => toggleComplete(task.id)}
-                  accentColor={colors.sage}
-                />
-              </Swipeable>
-            ))
-          )}
-          <RemindersSection reminders={reminders} colors={colors} onDelete={deleteReminder} />
-        </View>
+            )}
+          </View>
 
-        {/* Medications section */}
-        <View style={styles.section}>
-          <SectionHeader label="Your Medications" action={{ onPress: () => { setShowChooser(false); setShowMedModal(true); } }} />
-          {allMedsDone && (
-            <Animated.View style={{
-              opacity: medBannerAnim,
-              transform: [{ translateY: medBannerAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] }) }],
-            }}>
-              <LinearGradient
-                colors={[...gradients.amber]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.allDoneBanner}
-              >
-                <Ionicons name="checkmark-circle" size={28} color="#FFFFFF" />
-                <View>
-                  <Text style={styles.bannerText}>All medications taken!</Text>
-                  <Text style={styles.bannerSub}>Great job today</Text>
-                </View>
-              </LinearGradient>
-            </Animated.View>
-          )}
-          {meds.length === 0 ? (
-            <View style={styles.emptyCTA}>
-              <TouchableOpacity
-                style={[styles.emptyBtn, { backgroundColor: colors.amberSoft }]}
-                onPress={() => { setShowChooser(false); setShowMedModal(true); }}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="add" size={36} color={colors.amber} />
-              </TouchableOpacity>
-              <Text style={styles.emptyTitle}>No medications yet</Text>
-              <Text style={styles.emptySub}>Tap + to track your medications</Text>
-            </View>
+          {pinnedNote ? (
+            <>
+              <Text style={styles.noteText}>{pinnedNote.text}</Text>
+              <Text style={styles.noteTimestamp}>{formatRelativeTime(pinnedNote.timestamp)}</Text>
+            </>
           ) : (
-            meds.map((med) => (
-              <Swipeable
-                key={med.id}
-                ref={(ref) => {
-                  if (ref) medSwipeableRefs.current.set(med.id, ref);
-                  else medSwipeableRefs.current.delete(med.id);
-                }}
-                renderLeftActions={() => (
-                  <View style={{
-                    backgroundColor: colors.violet,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: 80,
-                    borderRadius: radius.xl,
-                    marginBottom: spacing.md,
-                  }}>
-                    <Ionicons name="pencil-outline" size={20} color="#FFFFFF" />
-                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Edit</Text>
-                  </View>
-                )}
-                renderRightActions={() => (
-                  <View style={{
-                    backgroundColor: colors.coral,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: 80,
-                    borderRadius: radius.xl,
-                    marginBottom: spacing.md,
-                  }}>
-                    <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
-                    <Text style={{ color: "#FFFFFF", fontSize: 12, marginTop: 4, ...fonts.medium }}>Delete</Text>
-                  </View>
-                )}
-                onSwipeableOpen={(direction) => {
-                  if (direction === "left") {
-                    medSwipeableRefs.current.get(med.id)?.close();
-                    setEditMedName(med.name);
-                    setEditMedDosage(med.dosage);
-                    setEditMedTime(med.time);
-                    setEditMedError("");
-                    setEditingMed(med);
-                  } else {
-                    Alert.alert("Remove medication?", `"${med.name}" will be removed.`, [
-                      { text: "Keep it", style: "cancel", onPress: () => medSwipeableRefs.current.get(med.id)?.close() },
-                      { text: "Remove", style: "destructive", onPress: () => deleteMed(med.id) },
-                    ]);
-                  }
-                }}
-                overshootLeft={false}
-                overshootRight={false}
-              >
-                <CheckRow
-                  label={med.name}
-                  subLabel={`${med.dosage} · ${med.time}`}
-                  checked={isTakenToday(med)}
-                  onToggle={() => toggleTaken(med.id)}
-                  accentColor={colors.amber}
-                />
-              </Swipeable>
-            ))
+            <Text style={styles.notePlaceholder}>No notes from your caregiver yet.</Text>
           )}
         </View>
 
+        {/* ── Split Columns ─────────────────────────────────── */}
+        <View style={styles.splitRow}>
+
+          {/* Medications */}
+          <View style={styles.splitCard}>
+            <Text style={[styles.splitCardHeader, { color: colors.amber }]}>Medications</Text>
+
+            {meds.length === 0 ? (
+              <Text style={{ color: colors.muted, fontSize: 12, ...fonts.regular }}>No meds added yet.</Text>
+            ) : (
+              meds.map((med) => {
+                const taken = isTakenToday(med);
+                return (
+                  <TouchableOpacity
+                    key={med.id}
+                    style={styles.splitItem}
+                    onPress={() => toggleTaken(med.id)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.splitCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
+                      {taken && <Ionicons name="checkmark" size={12} color="#fff" />}
+                    </View>
+                    <Text style={[styles.splitItemText, taken && styles.splitItemDone]} numberOfLines={2}>
+                      {med.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+
+            <View style={styles.splitFooter}>
+              <View style={styles.splitProgress}>
+                <View style={styles.splitProgressTrack}>
+                  <View style={[styles.splitProgressFill, {
+                    backgroundColor: colors.amber,
+                    width: meds.length > 0 ? `${Math.round((medsDone / meds.length) * 100)}%` as any : "0%",
+                  }]} />
+                </View>
+                <Text style={styles.splitProgressText}>{medsDone} of {meds.length} taken</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.splitPlusBtn, { backgroundColor: colors.amber }]}
+                onPress={() => setShowMedModal(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.splitPlusBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Tasks (includes reminders) */}
+          <View style={styles.splitCard}>
+            <Text style={[styles.splitCardHeader, { color: colors.sage }]}>Tasks</Text>
+
+            {tasks.length === 0 && reminders.length === 0 ? (
+              <Text style={{ color: colors.muted, fontSize: 12, ...fonts.regular }}>No tasks yet.</Text>
+            ) : (
+              [...tasks.map((t) => ({ id: t.id, label: t.label, time: t.time, done: isCompletedToday(t), type: "task" as const })),
+               ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const }))]
+                .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+                .map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.splitItem}
+                    onPress={() => item.type === "task" ? toggleComplete(item.id) : undefined}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.splitCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
+                      {item.done && <Ionicons name="checkmark" size={12} color="#fff" />}
+                    </View>
+                    <Text style={[styles.splitItemText, item.done && styles.splitItemDone]} numberOfLines={2}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+            )}
+
+            <View style={styles.splitFooter}>
+              {(() => {
+                const allItems = tasks.length + reminders.length;
+                const doneItems = tasks.filter(isCompletedToday).length + reminders.filter((r) => !!r.completed_date).length;
+                return (
+                  <View style={styles.splitProgress}>
+                    <View style={styles.splitProgressTrack}>
+                      <View style={[styles.splitProgressFill, {
+                        backgroundColor: colors.sage,
+                        width: allItems > 0 ? `${Math.round((doneItems / allItems) * 100)}%` as any : "0%",
+                      }]} />
+                    </View>
+                    <Text style={styles.splitProgressText}>{doneItems} of {allItems} done</Text>
+                  </View>
+                );
+              })()}
+              <TouchableOpacity
+                style={[styles.splitPlusBtn, { backgroundColor: colors.sage }]}
+                onPress={() => setShowTaskModal(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.splitPlusBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+        </View>
       </ScrollView>
 
       {/* ── Chooser sheet ─────────────────────────────────────── */}
@@ -966,6 +986,12 @@ export function TodayScreen() {
           </PanGestureHandler>
         </KeyboardAvoidingView>
       </Modal>
+
+      <NotesHistoryModal
+        visible={notesModalVisible}
+        notes={caregiverNotes}
+        onClose={() => setNotesModalVisible(false)}
+      />
 
       {/* ── Add Med modal ──────────────────────────────────────── */}
       <Modal visible={showMedModal} transparent animationType="none">

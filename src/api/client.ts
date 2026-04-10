@@ -11,6 +11,7 @@ import {
   PatientSummary,
   Reminder,
   ConversationTurn,
+  CaregiverNote,
 } from "../types";
 
 // ── Token management ──────────────────────────────────────
@@ -381,4 +382,24 @@ export async function saveConversationTurn(role: "user" | "assistant", content: 
 
 export async function fetchConversations(): Promise<ConversationTurn[]> {
   return request<ConversationTurn[]>("/api/conversations");
+}
+
+// ── Caregiver Notes ───────────────────────────────────────
+export async function fetchNotes(patientId: string): Promise<CaregiverNote[]> {
+  return request(`/api/notes?patientId=${patientId}`);
+}
+
+export async function createNote(patientId: string, text: string, pinned: boolean): Promise<CaregiverNote> {
+  return request("/api/notes", {
+    method: "POST",
+    body: JSON.stringify({ patientId, text, pinned }),
+  });
+}
+
+export async function pinNote(id: string): Promise<CaregiverNote> {
+  return request(`/api/notes/${id}/pin`, { method: "PATCH" });
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  return request(`/api/notes/${id}`, { method: "DELETE" });
 }

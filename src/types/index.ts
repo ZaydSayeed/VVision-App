@@ -150,3 +150,14 @@ export interface ConversationTurn {
   content: string;
   created_at: string;
 }
+
+// ── Caregiver Notes ──────────────────────────────────────
+export interface CaregiverNote {
+  id: string;
+  patientId: string;
+  caregiverId: string;
+  caregiverName: string;
+  text: string;
+  pinned: boolean;
+  timestamp: string;
+}

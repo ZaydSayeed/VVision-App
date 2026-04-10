@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { HelpAlert } from "../types";
 import {
   fetchHelpAlerts,
@@ -29,11 +29,20 @@ export function useHelpAlert() {
     }
   }, []);
 
+  // Adaptive polling: 4s when active, 15s when idle
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     load();
-    const interval = setInterval(load, 15000);
-    return () => clearInterval(interval);
   }, [load]);
+
+  const isActive = sending || !!sentAt || !!sendError || alerts.some((a) => !a.dismissed && !a.resolved && !a.cancelled);
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const ms = isActive ? 4000 : 15000;
+    intervalRef.current = setInterval(load, ms);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isActive, load]);
 
   const sendHelp = useCallback(async () => {
     setSending(true);

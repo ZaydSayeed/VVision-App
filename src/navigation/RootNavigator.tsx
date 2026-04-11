@@ -26,6 +26,8 @@ import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 
@@ -42,6 +44,22 @@ export function RootNavigator() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
   const contentOpacity = useRef(new Animated.Value(0)).current;
+
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setOnboardingDone(null);
+      return;
+    }
+    AsyncStorage.getItem(`@vela/onboarding_complete:${user.id}`).then(
+      (val) => setOnboardingDone(val === "true")
+    );
+  }, [user]);
+
+  const completeOnboarding = useCallback(() => {
+    setOnboardingDone(true);
+  }, []);
 
   useEffect(() => {
     setOnNetworkChange(setOffline);
@@ -87,6 +105,19 @@ export function RootNavigator() {
   }
 
   if (!user) return <LoginScreen />;
+
+  if (onboardingDone === null) {
+    return (
+      <View style={styles.splash}>
+        <Image source={require("../../assets/icon.png")} style={styles.splashLogo} resizeMode="contain" />
+        <Text style={styles.splashText}>Vela Vision</Text>
+      </View>
+    );
+  }
+
+  if (!onboardingDone) {
+    return <OnboardingScreen onComplete={completeOnboarding} />;
+  }
 
   if (user.role === "caregiver") {
     return (

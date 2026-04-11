@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
   ActivityIndicator,
   Animated,
   Dimensions,
@@ -46,11 +46,27 @@ export function VisionSheet({ visible, onClose }: Props) {
   const [inputText, setInputText] = useState("");
   const [sending, setSending] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
   const translateY = useRef(new Animated.Value(HALF_Y)).current;
   const baseY = useRef(HALF_Y);
   const isFullRef = useRef(false);
+
+  // Track keyboard height manually (KeyboardAvoidingView doesn't work with absolute sheets)
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      // Auto-snap to full screen when keyboard opens
+      if (!isFullRef.current) snapTo(FULL_Y);
+      // Keep latest messages visible
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   function snapTo(toValue: number) {
     baseY.current = toValue;
@@ -139,7 +155,6 @@ export function VisionSheet({ visible, onClose }: Props) {
       backgroundColor: colors.bg,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      paddingBottom: 24,
     },
     handleZone: {
       width: "100%",
@@ -189,6 +204,11 @@ export function VisionSheet({ visible, onClose }: Props) {
     },
     visionText: { fontSize: 13, color: colors.text, lineHeight: 20, ...fonts.regular },
     userText: { fontSize: 13, color: "#FFFFFF", lineHeight: 20, ...fonts.regular },
+    inputWrap: {
+      paddingBottom: isFullScreen
+        ? keyboardHeight + insets.bottom + spacing.sm
+        : HALF_Y + spacing.lg,
+    },
     inputBar: {
       flexDirection: "row", alignItems: "center",
       marginHorizontal: spacing.lg, marginTop: spacing.sm,
@@ -222,7 +242,7 @@ export function VisionSheet({ visible, onClose }: Props) {
       color: colors.violet,
       ...fonts.medium,
     },
-  }), [colors]);
+  }), [colors, isFullScreen, keyboardHeight, insets.bottom]);
 
   // When full screen, pad the pill below the dynamic island
   const handleTopPad = isFullScreen ? insets.top + 14 : 14;
@@ -234,10 +254,7 @@ export function VisionSheet({ visible, onClose }: Props) {
       animationType="none"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={styles.overlay}>
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
           <PanGestureHandler
             onGestureEvent={({ nativeEvent }) => {
@@ -323,45 +340,47 @@ export function VisionSheet({ visible, onClose }: Props) {
             )}
           </ScrollView>
 
-          {messages.length === 0 && !sending && (
-            <View style={styles.chipsRow}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
-                {SUGGESTION_CHIPS.map((chip) => (
-                  <TouchableOpacity
-                    key={chip}
-                    style={styles.chip}
-                    activeOpacity={0.7}
-                    onPress={() => handleSend(chip)}
-                  >
-                    <Text style={styles.chipText}>{chip}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          <View style={styles.inputWrap}>
+            {messages.length === 0 && !sending && (
+              <View style={styles.chipsRow}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+                  {SUGGESTION_CHIPS.map((chip) => (
+                    <TouchableOpacity
+                      key={chip}
+                      style={styles.chip}
+                      activeOpacity={0.7}
+                      onPress={() => handleSend(chip)}
+                    >
+                      <Text style={styles.chipText}>{chip}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
-          <View style={styles.inputBar}>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Ask Vision anything..."
-              placeholderTextColor={colors.muted}
-              onSubmitEditing={() => handleSend()}
-              returnKeyType="send"
-              editable={!sending}
-            />
-            <TouchableOpacity onPress={() => handleSend()} activeOpacity={0.8} style={styles.micBtn} disabled={sending}>
-              <LinearGradient
-                colors={[...gradients.primary]}
-                style={{ width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" }}
-              >
-                <Ionicons name="send" size={14} color="#FFFFFF" />
-              </LinearGradient>
-            </TouchableOpacity>
+            <View style={styles.inputBar}>
+              <TextInput
+                style={styles.input}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Ask Vision anything..."
+                placeholderTextColor={colors.muted}
+                onSubmitEditing={() => handleSend()}
+                returnKeyType="send"
+                editable={!sending}
+              />
+              <TouchableOpacity onPress={() => handleSend()} activeOpacity={0.8} style={styles.micBtn} disabled={sending}>
+                <LinearGradient
+                  colors={[...gradients.primary]}
+                  style={{ width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" }}
+                >
+                  <Ionicons name="send" size={14} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

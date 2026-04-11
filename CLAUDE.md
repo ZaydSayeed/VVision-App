@@ -110,12 +110,15 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 ## Key Files
 
 ### Navigation
-- `src/navigation/RootNavigator.tsx` — top-level routing + white logo header + violet time banner + side drawer
+- `src/navigation/RootNavigator.tsx` — top-level routing + white logo header + violet time banner + side drawer. Checks onboarding completion on first login. Vision FAB on both patient and caregiver sides.
 - `src/navigation/PatientTabNavigator.tsx` — 3-tab patient nav with coral FAB
 - `src/navigation/CaregiverTabNavigator.tsx` — 5-tab caregiver nav
 
+### Onboarding
+- `src/screens/OnboardingScreen.tsx` — 3-screen swipeable onboarding shown once after signup (not on regular login). Patient screens: Welcome, Your Day, Get Help. Caregiver screens: Welcome, Stay Connected, Smart Alerts. Completion tracked per-user in AsyncStorage (`@vela/onboarding_complete:{userId}`). Has Skip button and dot indicators.
+
 ### Patient Screens
-- `src/screens/patient/TodayScreen.tsx` — **main patient home screen** (merged routine + meds + greeting). Uses `useRoutine` + `useMeds`. Time-aware greeting (morning/afternoon/evening/night). Sage accent for tasks, amber for meds. Slide-out notification panel. Delete confirmations via Alert.alert. Pull-to-refresh reloads both routines and meds.
+- `src/screens/patient/TodayScreen.tsx` — **main patient home screen** (merged routine + meds + greeting). Uses `useRoutine` + `useMeds`. Time-aware greeting (morning/afternoon/evening/night). Sage accent for tasks, amber for meds. Slide-out notification panel. Delete confirmations via Alert.alert. Pull-to-refresh reloads both routines and meds. Listens for AI-triggered task/med reload events.
 - `src/screens/patient/FacesScreen.tsx` — uses theme colors (light/dark aware). Pulsing glasses status chip. 88×88 initials rings with violet gradients. Modal uses theme colors. Delete requires confirmation. Shows cache age ("last synced X ago") when offline. Pull-to-refresh supported.
 - `src/screens/patient/HelpScreen.tsx` — coral gradient bg, large ring button, inline error banner if send fails. Auto-retries up to 3 times with exponential backoff. Shows "Sending…" state. Pull-to-refresh reloads recent alerts.
 
@@ -126,6 +129,7 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - `src/screens/caregiver/PatientStatusScreen.tsx` — caregiver's read-only view of a single patient (slide-out notification reminders panel)
 
 ### Components
+- `src/components/VisionSheet.tsx` — AI assistant bottom sheet (chat UI). Half-screen by default, swipe up for full. Auto-snaps to full when keyboard opens. Manual keyboard height tracking (not KeyboardAvoidingView). Suggestion chips when chat is empty. Triggers task/med/reminder reloads when AI creates items. Available on both patient and caregiver sides.
 - `src/components/SideDrawer.tsx` — slide-in left menu (profile, link code, dark mode toggle, sign out). Static styles import `colors` from theme.ts directly.
 - `src/components/shared/CheckRow.tsx` — 72px min-height, 44×44 checkbox, 20px label, `accentColor` prop, `subLabelChecked` style (opacity 0.45 when done)
 - `src/components/shared/SectionHeader.tsx` — bold section label with optional action
@@ -138,6 +142,10 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - `src/hooks/useHelpAlert.ts` — exposes `alerts`, `pendingCount`, `sending`, `sentAt`, `sendError`, `sendHelp`, `dismissAlert`, `clearSentState`, `reload`. `sendHelp` auto-retries 3× with backoff.
 - `src/hooks/useCaregiver.ts` — caregiver data, exposes `loadError`
 - `src/hooks/useDashboardData.ts` — polls every 15s (was 5s), `computeStats` and `buildTimeline` memoized
+- `src/hooks/useNotes.ts` — caregiver notes with 30s polling
+
+### Utils
+- `src/utils/reminderEvents.ts` — cross-component data reload callbacks. Exports `triggerReminderReload`/`registerReminderReload`, `triggerTaskReload`/`registerTaskReload`, `triggerMedReload`/`registerMedReload`. Used by VisionSheet to notify TodayScreen when AI creates items.
 
 ### Config / Context / API
 - `src/config/theme.ts` — all design tokens (colors, gradients, spacing, radius, fonts, typography, shadow). `shadow.sm/md/lg/fab` tokens. `typography.heroStyle/titleStyle/bodyStyle` etc.
@@ -150,6 +158,8 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - `src/server-routes/auth.ts` — Supabase sync with Zod validation
 - `src/server-routes/patients.ts` — patient linking, link code lookup. `DELETE /api/patients/mine/unlink` (caregiver unlinks). `DELETE /api/patients/mine/caregivers/:id` (patient removes caregiver).
 - `src/server-routes/people.ts` — face enroll/delete. MIME type + 5MB upload validation.
+- `src/server-routes/assistant.ts` — Vision AI chat endpoint. Uses Groq SDK with `llama-3.3-70b-versatile` and tool calling. Three tools: `create_reminder`, `create_task`, `create_medication`. Fetches patient's routines, meds, reminders, conversations as context. Returns `{ reply, reminderCreated, taskCreated, medicationCreated }`.
+- `src/server-routes/notes.ts` — caregiver notes CRUD with ownership checks
 - `src/server-routes/routines.ts`, `medications.ts`, `helpAlerts.ts`, `caregiverProfiles.ts` — all have Zod validation + ObjectId guards
 
 ---

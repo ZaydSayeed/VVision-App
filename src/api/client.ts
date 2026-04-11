@@ -365,8 +365,18 @@ export async function deleteReminder(id: string): Promise<void> {
 }
 
 // ── Vision Assistant ───────────────────────────────────────
-export async function sendVisionMessage(message: string): Promise<{ reply: string; reminderCreated?: boolean }> {
-  return request<{ reply: string; reminderCreated?: boolean }>("/api/assistant/chat", {
+export async function sendVisionMessage(message: string): Promise<{
+  reply: string;
+  reminderCreated?: boolean;
+  taskCreated?: boolean;
+  medicationCreated?: boolean;
+}> {
+  return request<{
+    reply: string;
+    reminderCreated?: boolean;
+    taskCreated?: boolean;
+    medicationCreated?: boolean;
+  }>("/api/assistant/chat", {
     method: "POST",
     body: JSON.stringify({ message }),
   });

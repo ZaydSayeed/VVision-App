@@ -34,7 +34,7 @@ import { CheckRow } from "../../components/shared/CheckRow";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { TimeSlider } from "../../components/shared/TimeSlider";
 import { fonts, spacing, radius, gradients } from "../../config/theme";
-import { registerReminderReload } from "../../utils/reminderEvents";
+import { registerReminderReload, registerTaskReload, registerMedReload } from "../../utils/reminderEvents";
 
 const SCREEN_W = Dimensions.get("window").width;
 const SCREEN_H = Dimensions.get("window").height;
@@ -57,6 +57,8 @@ export function TodayScreen() {
   const { alerts } = useHelpAlert();
   const { reminders, deleteReminder, reload: reloadReminders } = useReminders();
   useEffect(() => { registerReminderReload(reloadReminders); }, [reloadReminders]);
+  useEffect(() => { registerTaskReload(reloadRoutine); }, [reloadRoutine]);
+  useEffect(() => { registerMedReload(reloadMeds); }, [reloadMeds]);
   const { pinnedNote, notes: caregiverNotes, reload: reloadNotes } = useNotes(patientId);
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const dataError = routineError || medsError;

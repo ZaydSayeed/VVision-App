@@ -161,6 +161,8 @@ function CaregiverView({
   const { colors } = useTheme();
   const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert } = useHelpAlert();
 
+  const [visionOpen, setVisionOpen] = useState(false);
+
   // Notifications slide panel
   const [notifOpen, setNotifOpen] = useState(false);
   const notifX = useRef(new Animated.Value(SCREEN_W)).current;
@@ -374,6 +376,24 @@ function CaregiverView({
         <CaregiverStack.Screen name="HelpHistory" component={HelpHistoryScreen} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
+      <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
+      <TouchableOpacity
+        onPress={() => setVisionOpen(true)}
+        style={{
+          position: "absolute", bottom: 108, right: 24,
+          width: 56, height: 56, borderRadius: 28,
+          shadowColor: colors.violet, shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.45, shadowRadius: 14, elevation: 12, overflow: "hidden",
+        }}
+        activeOpacity={0.85}
+      >
+        <LinearGradient colors={[...gradients.primary]} style={{
+          width: 56, height: 56, borderRadius: 28,
+          alignItems: "center", justifyContent: "center",
+        }}>
+          <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+        </LinearGradient>
+      </TouchableOpacity>
 
       {/* Notifications panel */}
       {notifOpen && (

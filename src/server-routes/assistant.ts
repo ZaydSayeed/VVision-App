@@ -104,6 +104,37 @@ ${conversationHistory}`;
           },
         },
       },
+      {
+        type: "function",
+        function: {
+          name: "create_task",
+          description: "Create a daily routine task for the patient. Call this when the patient asks to add something to their routine or schedule.",
+          parameters: {
+            type: "object",
+            properties: {
+              label: { type: "string", description: "Short description of the task, e.g. 'Morning walk'" },
+              time: { type: "string", description: "Time for the task, e.g. '8:00 AM'. Default to '9:00 AM' if not specified." },
+            },
+            required: ["label"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_medication",
+          description: "Add a medication to the patient's schedule. Call this when the patient mentions a new medication they need to take.",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Name of the medication, e.g. 'Donepezil'" },
+              dosage: { type: "string", description: "Dosage amount, e.g. '10mg'. Default to 'as prescribed' if not specified." },
+              time: { type: "string", description: "Time to take it, e.g. '8:00 AM'. Default to '9:00 AM' if not specified." },
+            },
+            required: ["name"],
+          },
+        },
+      },
     ];
 
     const firstCompletion = await groq.chat.completions.create({
@@ -121,12 +152,14 @@ ${conversationHistory}`;
     const firstChoice = firstCompletion.choices[0];
     let reply: string;
     let reminderCreated = false;
+    let taskCreated = false;
+    let medicationCreated = false;
 
     if (firstChoice?.finish_reason === "tool_calls" && firstChoice.message.tool_calls?.length) {
-      // Process all tool calls in parallel (supports multiple reminders in one message)
       const toolResults = await Promise.all(
         firstChoice.message.tool_calls.map(async (toolCall) => {
           let result = "Done.";
+
           if (toolCall.function.name === "create_reminder") {
             try {
               const args = JSON.parse(toolCall.function.arguments);
@@ -145,12 +178,43 @@ ${conversationHistory}`;
               result = "Sorry, I couldn't save that reminder.";
               console.error("create_reminder tool error:", e);
             }
+          } else if (toolCall.function.name === "create_task") {
+            try {
+              const args = JSON.parse(toolCall.function.arguments);
+              await db.collection("routines").insertOne({
+                label: args.label,
+                time: args.time ?? "9:00 AM",
+                completed_date: null,
+                patient_id: patientId,
+              });
+              result = "Task added to routine.";
+              taskCreated = true;
+            } catch (e) {
+              result = "Sorry, I couldn't add that task.";
+              console.error("create_task tool error:", e);
+            }
+          } else if (toolCall.function.name === "create_medication") {
+            try {
+              const args = JSON.parse(toolCall.function.arguments);
+              await db.collection("medications").insertOne({
+                name: args.name,
+                dosage: args.dosage ?? "as prescribed",
+                time: args.time ?? "9:00 AM",
+                taken_date: null,
+                patient_id: patientId,
+              });
+              result = "Medication added.";
+              medicationCreated = true;
+            } catch (e) {
+              result = "Sorry, I couldn't add that medication.";
+              console.error("create_medication tool error:", e);
+            }
           }
+
           return { toolCall, result };
         })
       );
 
-      // Second call with all tool results so Groq generates a natural confirmation reply
       const secondCompletion = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
         messages: [
@@ -167,12 +231,12 @@ ${conversationHistory}`;
         temperature: 0.7,
       });
 
-      reply = secondCompletion.choices[0]?.message?.content?.trim() ?? "Done! I've set that reminder for you.";
+      reply = secondCompletion.choices[0]?.message?.content?.trim() ?? "Done! I've taken care of that for you.";
     } else {
       reply = firstChoice?.message?.content?.trim() ?? "Sorry, I couldn't respond right now.";
     }
 
-    res.json({ reply, reminderCreated });
+    res.json({ reply, reminderCreated, taskCreated, medicationCreated });
   } catch (err) {
     console.error("assistant chat error:", err);
     res.status(500).json({ detail: "Internal server error" });

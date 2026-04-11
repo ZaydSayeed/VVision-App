@@ -21,12 +21,18 @@ import { useTheme } from "../context/ThemeContext";
 import { fonts, spacing, radius, gradients } from "../config/theme";
 import { sendVisionMessage, saveConversationTurn, fetchConversations } from "../api/client";
 import { ConversationTurn } from "../types";
-import { triggerReminderReload } from "../utils/reminderEvents";
+import { triggerReminderReload, triggerTaskReload, triggerMedReload } from "../utils/reminderEvents";
 
 const SCREEN_H = Dimensions.get("window").height;
 const HALF_Y = SCREEN_H * 0.25;   // sheet shows bottom 75%
 const FULL_Y = 0;                  // sheet fills screen
 const DISMISS_Y = SCREEN_H;        // sheet off screen
+
+const SUGGESTION_CHIPS = [
+  "What's left today?",
+  "Add a reminder",
+  "How's the routine going?",
+];
 
 interface Props {
   visible: boolean;
@@ -79,8 +85,8 @@ export function VisionSheet({ visible, onClose }: Props) {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    const text = inputText.trim();
+  const handleSend = async (overrideText?: string) => {
+    const text = (overrideText ?? inputText).trim();
     if (!text || sending) return;
     setInputText("");
     setSending(true);
@@ -92,8 +98,10 @@ export function VisionSheet({ visible, onClose }: Props) {
     };
     setMessages((prev) => [...prev, userMsg]);
     try {
-      const { reply, reminderCreated } = await sendVisionMessage(text);
+      const { reply, reminderCreated, taskCreated, medicationCreated } = await sendVisionMessage(text);
       if (reminderCreated) triggerReminderReload();
+      if (taskCreated) triggerTaskReload();
+      if (medicationCreated) triggerMedReload();
       const assistantMsg: ConversationTurn = {
         id: String(Date.now() + 1),
         role: "assistant",
@@ -192,6 +200,27 @@ export function VisionSheet({ visible, onClose }: Props) {
     micBtn: {
       width: 34, height: 34, borderRadius: radius.pill,
       alignItems: "center", justifyContent: "center", overflow: "hidden",
+    },
+    chipsRow: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.xs,
+    },
+    chipsScroll: {
+      gap: spacing.sm,
+    },
+    chip: {
+      backgroundColor: colors.violet50,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.violet300,
+    },
+    chipText: {
+      fontSize: 12,
+      color: colors.violet,
+      ...fonts.medium,
     },
   }), [colors]);
 
@@ -294,6 +323,23 @@ export function VisionSheet({ visible, onClose }: Props) {
             )}
           </ScrollView>
 
+          {messages.length === 0 && !sending && (
+            <View style={styles.chipsRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+                {SUGGESTION_CHIPS.map((chip) => (
+                  <TouchableOpacity
+                    key={chip}
+                    style={styles.chip}
+                    activeOpacity={0.7}
+                    onPress={() => handleSend(chip)}
+                  >
+                    <Text style={styles.chipText}>{chip}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <View style={styles.inputBar}>
             <TextInput
               style={styles.input}
@@ -301,11 +347,11 @@ export function VisionSheet({ visible, onClose }: Props) {
               onChangeText={setInputText}
               placeholder="Ask Vision anything..."
               placeholderTextColor={colors.muted}
-              onSubmitEditing={handleSend}
+              onSubmitEditing={() => handleSend()}
               returnKeyType="send"
               editable={!sending}
             />
-            <TouchableOpacity onPress={handleSend} activeOpacity={0.8} style={styles.micBtn} disabled={sending}>
+            <TouchableOpacity onPress={() => handleSend()} activeOpacity={0.8} style={styles.micBtn} disabled={sending}>
               <LinearGradient
                 colors={[...gradients.primary]}
                 style={{ width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" }}

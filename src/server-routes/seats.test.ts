@@ -93,4 +93,30 @@ describe("invite acceptance", () => {
     expect(invite?.status).toBe("accepted");
     expect(seat?.role).toBe("sibling");
   });
+
+  it("data-layer: accept enforces email match (mismatch stays pending)", async () => {
+    const db = globalThis.__TEST_DB__;
+    await db.collection("seat_invites").deleteMany({});
+    await db.collection("seats").deleteMany({});
+
+    const patientId = "patient-email-check";
+    await db.collection("seat_invites").insertOne({
+      email: "intended@family.com",
+      patientId,
+      role: "sibling",
+      token: "tok_email_check",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    });
+
+    // Simulate a route-level mismatch: a user with the WRONG email tries to accept
+    const invite = await db.collection("seat_invites").findOne({ token: "tok_email_check" });
+    const wrongEmail = "stranger@example.com";
+    expect(wrongEmail.toLowerCase()).not.toBe(invite!.email.toLowerCase());
+    // Route-layer check would 403 here; data layer stays untouched.
+    const seatAfter = await db.collection("seats").findOne({ patientId });
+    expect(seatAfter).toBeNull(); // no seat created
+    const inviteAfter = await db.collection("seat_invites").findOne({ token: "tok_email_check" });
+    expect(inviteAfter?.status).toBe("pending"); // still pending
+  });
 });

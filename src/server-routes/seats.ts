@@ -75,6 +75,13 @@ router.post("/accept-invite", authMiddleware, async (req, res) => {
     const userId = (req as any).auth?.userId;
     if (!userId) { res.status(401).json({ detail: "Unauthorized" }); return; }
 
+    const user = await db.collection("users").findOne({ supabase_uid: userId });
+    const userEmail = (user?.email || "").toLowerCase();
+    if (!userEmail || userEmail !== invite.email.toLowerCase()) {
+      res.status(403).json({ detail: "This invite is for a different email address" });
+      return;
+    }
+
     await db.collection("seats").insertOne({
       userId,
       patientId: invite.patientId,

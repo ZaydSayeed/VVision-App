@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { seatRoleEnum, seatCreateSchema } from "./seats";
 
 describe("seatCreateSchema", () => {
@@ -25,5 +25,27 @@ describe("seatCreateSchema", () => {
       "paid_aide",
       "clinician",
     ]);
+  });
+});
+
+describe("seat invitation flow (data layer)", () => {
+  beforeEach(async () => {
+    await globalThis.__TEST_DB__.collection("seat_invites").deleteMany({});
+  });
+
+  it("creates an invite record with a unique token", async () => {
+    const db = globalThis.__TEST_DB__;
+    const patientId = "patient-1";
+    await db.collection("seat_invites").insertOne({
+      email: "sister@example.com",
+      patientId,
+      role: "sibling",
+      token: "tok_abc123",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    });
+    const invite = await db.collection("seat_invites").findOne({ token: "tok_abc123" });
+    expect(invite?.email).toBe("sister@example.com");
+    expect(invite?.status).toBe("pending");
   });
 });

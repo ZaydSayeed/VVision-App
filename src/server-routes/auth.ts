@@ -55,6 +55,12 @@ router.post("/sync", authMiddleware, async (req, res) => {
         const patientId = String(patientResult.insertedId);
         await users.updateOne({ _id: existing._id }, { $set: { patient_id: patientId } });
         existing.patient_id = patientId;
+        await db.collection("seats").insertOne({
+          userId: req.auth!.userId,
+          patientId,
+          role: "primary_caregiver",
+          createdAt: new Date().toISOString(),
+        });
       }
       res.json(userOut(existing));
       return;
@@ -103,6 +109,12 @@ router.post("/sync", authMiddleware, async (req, res) => {
       const patientResult = await db.collection("patients").insertOne(patientDoc);
       patientId = String(patientResult.insertedId);
       await users.updateOne({ _id: result.insertedId }, { $set: { patient_id: patientId } });
+      await db.collection("seats").insertOne({
+        userId: req.auth!.userId,
+        patientId,
+        role: "primary_caregiver",
+        createdAt: new Date().toISOString(),
+      });
     }
 
     res.json({

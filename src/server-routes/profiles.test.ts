@@ -50,3 +50,24 @@ describe("profileUpdateSchema", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("PATCH /api/profiles/mine handler", () => {
+  it("updates stage and triggers on existing patient", async () => {
+    const db = globalThis.__TEST_DB__;
+    const insert = await db.collection("patients").insertOne({
+      name: "Mom",
+      created_at: new Date().toISOString(),
+    });
+    const patientId = insert.insertedId.toString();
+
+    const updates = { stage: "moderate", triggers: ["4pm"] };
+    await db.collection("patients").updateOne(
+      { _id: insert.insertedId },
+      { $set: { ...updates, updated_at: new Date().toISOString() } }
+    );
+
+    const doc = await db.collection("patients").findOne({ _id: insert.insertedId });
+    expect(doc?.stage).toBe("moderate");
+    expect(doc?.triggers).toEqual(["4pm"]);
+  });
+});

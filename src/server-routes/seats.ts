@@ -65,4 +65,34 @@ router.get("/:patientId/seats", authMiddleware, requireSeat, async (req, res) =>
   }
 });
 
+router.post("/accept-invite", authMiddleware, async (req, res) => {
+  const parsed = z.object({ token: z.string().min(1).max(200) }).safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
+  try {
+    const db = getDb();
+    const invite = await db.collection("seat_invites").findOne({ token: parsed.data.token, status: "pending" });
+    if (!invite) { res.status(404).json({ detail: "Invite not found or already used" }); return; }
+    const userId = (req as any).auth?.userId;
+    if (!userId) { res.status(401).json({ detail: "Unauthorized" }); return; }
+
+    await db.collection("seats").insertOne({
+      userId,
+      patientId: invite.patientId,
+      role: invite.role,
+      createdAt: new Date().toISOString(),
+    });
+    await db.collection("seat_invites").updateOne(
+      { _id: invite._id },
+      { $set: { status: "accepted", acceptedAt: new Date().toISOString() } }
+    );
+    res.json({ ok: true, patientId: invite.patientId, role: invite.role });
+  } catch (err: any) {
+    if (err.code === 11000) {
+      res.status(409).json({ detail: "You already have a seat on this profile" }); return;
+    }
+    console.error("accept invite error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 export default router;

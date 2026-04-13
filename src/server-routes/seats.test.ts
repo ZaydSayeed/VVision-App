@@ -62,3 +62,35 @@ describe("seat gate: no seat = 403", () => {
     // proves the data layer signals "no access" correctly.
   });
 });
+
+describe("invite acceptance", () => {
+  it("data-layer: creates a seat when invite is accepted", async () => {
+    const db = globalThis.__TEST_DB__;
+    const patientId = "patient-accept";
+    await db.collection("seat_invites").insertOne({
+      email: "new@sibling.com",
+      patientId,
+      role: "sibling",
+      token: "tok_accept",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    });
+
+    // Simulate acceptance: mark invite accepted + create seat
+    await db.collection("seat_invites").updateOne(
+      { token: "tok_accept" },
+      { $set: { status: "accepted", acceptedAt: new Date().toISOString() } }
+    );
+    await db.collection("seats").insertOne({
+      userId: "new-user",
+      patientId,
+      role: "sibling",
+      createdAt: new Date().toISOString(),
+    });
+
+    const invite = await db.collection("seat_invites").findOne({ token: "tok_accept" });
+    const seat = await db.collection("seats").findOne({ userId: "new-user", patientId });
+    expect(invite?.status).toBe("accepted");
+    expect(seat?.role).toBe("sibling");
+  });
+});

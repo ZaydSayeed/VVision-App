@@ -49,3 +49,16 @@ describe("seat invitation flow (data layer)", () => {
     expect(invite?.status).toBe("pending");
   });
 });
+
+import { resolveSeatForRequest } from "../server-core/seatResolver";
+
+describe("seat gate: no seat = 403", () => {
+  it("returns null for a user with no seat (gate should 403)", async () => {
+    const db = globalThis.__TEST_DB__;
+    await db.collection("seats").deleteMany({});
+    const seat = await resolveSeatForRequest(db, "rando-user", "some-patient-id");
+    expect(seat).toBeNull();
+    // The middleware converts a null seat to HTTP 403. This unit check
+    // proves the data layer signals "no access" correctly.
+  });
+});

@@ -5,6 +5,15 @@ import { authMiddleware } from "../server-core/security";
 import { config } from "../server-core/config";
 import { generateUniqueLinkCode } from "../server-core/linkCode";
 
+async function createPrimaryCaregiverSeat(db: import("mongodb").Db, userId: string, patientId: string) {
+  await db.collection("seats").insertOne({
+    userId,
+    patientId,
+    role: "primary_caregiver",
+    createdAt: new Date().toISOString(),
+  });
+}
+
 const router = Router();
 
 const syncSchema = z.object({
@@ -55,6 +64,15 @@ router.post("/sync", authMiddleware, async (req, res) => {
         const patientId = String(patientResult.insertedId);
         await users.updateOne({ _id: existing._id }, { $set: { patient_id: patientId } });
         existing.patient_id = patientId;
+        try {
+          await createPrimaryCaregiverSeat(db, req.auth!.userId, patientId);
+        } catch (err) {
+          console.error("Critical: seat insert failed after patient created.", {
+            userId: req.auth!.userId, patientId, err
+          });
+          res.status(500).json({ detail: "Failed to initialize access control" });
+          return;
+        }
       }
       res.json(userOut(existing));
       return;
@@ -103,6 +121,15 @@ router.post("/sync", authMiddleware, async (req, res) => {
       const patientResult = await db.collection("patients").insertOne(patientDoc);
       patientId = String(patientResult.insertedId);
       await users.updateOne({ _id: result.insertedId }, { $set: { patient_id: patientId } });
+      try {
+        await createPrimaryCaregiverSeat(db, req.auth!.userId, patientId);
+      } catch (err) {
+        console.error("Critical: seat insert failed after patient created.", {
+          userId: req.auth!.userId, patientId, err
+        });
+        res.status(500).json({ detail: "Failed to initialize access control" });
+        return;
+      }
     }
 
     res.json({

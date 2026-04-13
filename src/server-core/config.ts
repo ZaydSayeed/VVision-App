@@ -12,4 +12,7 @@ export const config = {
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
   port: parseInt(process.env.PORT || "8000", 10),
   groqApiKey: process.env.GROQ_API_KEY || "",
+  mem0ApiKey: process.env.MEM0_API_KEY || "",
+  mem0OrgId: process.env.MEM0_ORG_ID || "",
+  mem0ProjectId: process.env.MEM0_PROJECT_ID || "",
 };

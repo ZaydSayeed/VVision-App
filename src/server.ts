@@ -18,6 +18,9 @@ import reminderRoutes from "./server-routes/reminders";
 import conversationRoutes from "./server-routes/conversations";
 import assistantRoutes from "./server-routes/assistant";
 import noteRoutes from "./server-routes/notes";
+import profileRoutes from "./server-routes/profiles";
+import seatRoutes from "./server-routes/seats";
+import memoryRoutes from "./server-routes/memories";
 
 const app = express();
 
@@ -68,6 +71,9 @@ app.use("/api", generalLimiter);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
+app.use("/api/profiles", profileRoutes);
+app.use("/api/profiles", seatRoutes);
+app.use("/api/profiles", memoryRoutes);
 app.use("/api/people", peopleRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/routines", routineRoutes);

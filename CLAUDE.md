@@ -183,3 +183,8 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - **All backend routes** validate input with Zod and guard `req.params.id` with `ObjectId.isValid()` before use.
 - **Offline caching** stores a timestamp alongside data. FacesScreen shows "last synced X ago" when offline.
 - **CheckRow** uses a native-driver opacity overlay for its flash animation (not background color) — keeps 60fps on check/uncheck.
+
+### Living Profile (2026-04-13 pivot)
+- Every patient is modelled as a Living Profile with structured fields (stage, history, triggers, routines, medications, providers) + a Mem0-backed memory layer scoped by `patient_id`.
+- Access is controlled by role-tagged seats in the `seats` collection. Middleware `requireSeat` (see `src/server-core/seatResolver.ts`) gates every profile-scoped route. Only `primary_caregiver` may invite.
+- Memory writes/reads MUST go through `src/server-core/memory.ts` (`addMemory`, `searchMemory`). Never call the Mem0 SDK directly from route handlers.

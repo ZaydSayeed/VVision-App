@@ -186,6 +186,24 @@ See `.env.example` for reference.
 
 ---
 
+## Living Profile API (v1 foundation)
+
+Base: `https://vvision-app.onrender.com/api/profiles`
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET  | `/mine` | Get current user's linked profile |
+| PATCH| `/mine` | Update profile fields (stage, history, triggers, routines, meds, providers) |
+| POST | `/:patientId/seats` | Invite a sibling/aide to this profile (primary_caregiver only) |
+| GET  | `/:patientId/seats` | List seats and pending invites |
+| POST | `/accept-invite` | Accept a seat invite by token |
+| POST | `/:patientId/memory` | Write a memory event to the profile (Mem0) |
+| GET  | `/:patientId/memory/search?q=...` | Semantic search on the profile's memory |
+
+See `docs/superpowers/specs/2026-04-13-caregiver-living-profile-design.md` for design rationale.
+
+---
+
 ## License
 
 MIT

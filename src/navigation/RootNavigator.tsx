@@ -25,6 +25,10 @@ import CheckInScreen from "../screens/caregiver/CheckInScreen";
 import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import VisitsScreen from "../screens/caregiver/VisitsScreen";
 import ScheduleVisitScreen from "../screens/caregiver/ScheduleVisitScreen";
+import SensorSettingsScreen from "../screens/caregiver/SensorSettingsScreen";
+import { startHomeKitListeners } from "../lib/homekit";
+import { useSensorPrefs } from "../hooks/useSensorPrefs";
+import { flush } from "../lib/eventBatcher";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
@@ -164,6 +168,16 @@ function CaregiverView({
 }) {
   const { colors } = useTheme();
   const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert } = useHelpAlert();
+  const { prefs } = useSensorPrefs();
+
+  // HomeKit listeners + periodic flush when smart home enabled
+  useEffect(() => {
+    if (!prefs.smartHomeEnabled || !user.patient_id) return;
+    let dispose: (() => void) | null = null;
+    startHomeKitListeners(user.patient_id).then(d => { dispose = d; });
+    const flushInterval = setInterval(() => flush(), 2 * 60 * 1000);
+    return () => { dispose?.(); clearInterval(flushInterval); };
+  }, [prefs.smartHomeEnabled, user.patient_id]);
 
   const [visionOpen, setVisionOpen] = useState(false);
 
@@ -382,6 +396,7 @@ function CaregiverView({
         <CaregiverStack.Screen name="CheckInText" component={CheckInTextScreen} options={{ headerShown: true, title: "Text Check-In" }} />
         <CaregiverStack.Screen name="Visits" component={VisitsScreen} options={{ headerShown: true, title: "Visits" }} />
         <CaregiverStack.Screen name="ScheduleVisit" component={ScheduleVisitScreen} options={{ headerShown: true, title: "Schedule Visit" }} />
+        <CaregiverStack.Screen name="SensorSettings" component={SensorSettingsScreen} options={{ headerShown: true, title: "Sensors" }} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />

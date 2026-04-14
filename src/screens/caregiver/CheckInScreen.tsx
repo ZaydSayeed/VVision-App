@@ -3,6 +3,8 @@ import { View, Text, Pressable, ScrollView, Alert } from "react-native";
 import { useVoiceSession } from "../../hooks/useVoiceSession";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { authFetch } from "../../api/authFetch";
+import { captureGaitWindow } from "../../lib/biomarkers/gait";
+import { queueEvent, flush } from "../../lib/eventBatcher";
 
 export default function CheckInScreen({ navigation }: any) {
   const { patientId } = useCurrentProfile();
@@ -26,6 +28,17 @@ export default function CheckInScreen({ navigation }: any) {
     } finally { setSaving(false); }
   };
 
+  const startWithGait = async () => {
+    // Capture 30s gait window in parallel with voice start — fire-and-forget
+    start();
+    captureGaitWindow(30000).then(async (result) => {
+      if (patientId && result.sampleCount > 0) {
+        await queueEvent({ kind: "gait", capturedAt: new Date().toISOString(), data: result as any, patientId });
+        flush();
+      }
+    }).catch(() => {}); // non-blocking
+  };
+
   return (
     <View style={{ flex: 1, padding: 24 }}>
       <Text style={{ fontSize: 22, fontWeight: "700" }}>How is Mom today?</Text>
@@ -43,7 +56,7 @@ export default function CheckInScreen({ navigation }: any) {
             <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>Stop</Text>
           </Pressable>
         ) : (
-          <Pressable onPress={start} style={{ flex: 1, backgroundColor: "#6366f1", padding: 18, borderRadius: 14 }}>
+          <Pressable onPress={startWithGait} style={{ flex: 1, backgroundColor: "#6366f1", padding: 18, borderRadius: 14 }}>
             <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>
               {state === "connecting" ? "Connecting…" : "🎙️  Start"}
             </Text>

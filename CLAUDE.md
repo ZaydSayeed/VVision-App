@@ -9,6 +9,21 @@ Authentication is handled by **Supabase**. Data is stored in **MongoDB Atlas**. 
 
 ---
 
+## Product Direction (updated 2026-04-12)
+Following the advisor sync with **Ayman Hassen** on 2026-04-11, the product is pivoting **caregiver-first**: the primary paying user is now the adult child (45–65) of a dementia patient, not the patient themselves. Glasses hardware becomes an optional V2 upsell rather than the entry product. Three revenue streams planned:
+1. **Caregiver SaaS** — $29/mo family plan (routines, meds, AI assistant, care team)
+2. **Clinical trial recruitment** — paid referrals to CROs ($500–5,000/enrollment)
+3. **Data licensing** — de-identified behavioral/cognitive/adherence data to pharma (Tier 1, decided). Whether to also license facial/biometric/location data under consent (Tier 2) is an **open team debate** — not ruled out, not committed.
+
+Reasoning, comps, 90-day execution plan, and team discussion deck live at:
+- `docs/pivot-deck.html` — 10-slide presentation for the team (includes browser-native narration)
+- Copy for sharing: `~/Downloads/Vela-Pivot-Deck.html`
+- BRAIN · `Project Docs/VelaVision Strategic Pivot.md` — full rationale
+
+Patient-facing screens (`src/screens/patient/*`) remain in the codebase and still ship, but caregiver screens are the primary product surface going forward.
+
+---
+
 ## How to Run
 
 **Start the app (backend is always running on Render — no need to start it):**
@@ -188,3 +203,9 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - Every patient is modelled as a Living Profile with structured fields (stage, history, triggers, routines, medications, providers) + a Mem0-backed memory layer scoped by `patient_id`.
 - Access is controlled by role-tagged seats in the `seats` collection. Middleware `requireSeat` (see `src/server-core/seatResolver.ts`) gates every profile-scoped route. Only `primary_caregiver` may invite.
 - Memory writes/reads MUST go through `src/server-core/memory.ts` (`addMemory`, `searchMemory`). Never call the Mem0 SDK directly from route handlers.
+
+### Voice UI (Plan C, 2026-04-13)
+- Gemini API key MUST stay on the backend. Clients never receive it directly.
+- Audio capture in v1 uses chunked WAV (Expo Audio.Recording), not true PCM streaming. When we want sub-second latency, swap in `react-native-live-audio-stream` — note the native module requirement.
+- The text-fallback CheckInTextScreen is a first-class path, not a graceful degradation — it stays shipped even after voice is stable.
+- `authFetch` in `src/api/authFetch.ts` is a thin fetch wrapper injecting the auth token. It is kept in sync with `setAuthToken` via `setAuthFetchToken` calls in `AuthContext.tsx`.

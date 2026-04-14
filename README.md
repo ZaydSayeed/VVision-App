@@ -202,6 +202,14 @@ Base: `https://vvision-app.onrender.com/api/profiles`
 
 See `docs/superpowers/specs/2026-04-13-caregiver-living-profile-design.md` for design rationale.
 
+### Voice Check-In (Plan C)
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/live/session/:patientId` | Get config to open a Live WebSocket |
+| WS | `/api/live/ws?patientId=...` | Bridged connection to Gemini Live |
+
+Client hook: `useVoiceSession(patientId)` in `src/hooks/useVoiceSession.ts`.
+
 ---
 
 ## License

@@ -24,6 +24,7 @@ import profileRoutes from "./server-routes/profiles";
 import seatRoutes from "./server-routes/seats";
 import memoryRoutes from "./server-routes/memories";
 import liveRoutes from "./server-routes/live";
+import patternRoutes from "./server-routes/patterns";
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/assistant", assistantRoutes);
 app.use("/api/live", liveRoutes);
+app.use("/api/profiles", patternRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

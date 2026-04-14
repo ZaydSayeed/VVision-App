@@ -29,6 +29,8 @@ export async function connectDb(): Promise<void> {
   await db.collection("seats").createIndex({ patientId: 1 });
   await db.collection("seat_invites").createIndex({ email: 1, patientId: 1 }, { unique: true });
   await db.collection("seat_invites").createIndex({ token: 1 }, { unique: true });
+  await db.collection("patterns").createIndex({ patientId: 1, confidence: -1, lastObserved: -1 });
+  await db.collection("patterns").createIndex({ patientId: 1, title: 1 }, { unique: true });
   console.log("Indexes ensured");
 }
 

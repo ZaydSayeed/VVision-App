@@ -202,6 +202,14 @@ Base: `https://vvision-app.onrender.com/api/profiles`
 
 See `docs/superpowers/specs/2026-04-13-caregiver-living-profile-design.md` for design rationale.
 
+### Events & Sensors (Plan D)
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/profiles/:patientId/events` | Ingest batch of passive events (max 100/batch) |
+| GET | `/api/profiles/:patientId/events?since=&kind=` | Read recent events (last 24h default) |
+
+Event kinds: `motion`, `door`, `presence`, `sleep`, `gait`, `typing_cadence`, `voice_sample`.
+
 ### Pattern Learning + Visit Prep (Plan F)
 | Method | Path | Purpose |
 |---|---|---|

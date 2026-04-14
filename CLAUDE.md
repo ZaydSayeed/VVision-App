@@ -215,3 +215,10 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - PDFs are written to `uploads/visit-prep/<patientId>/<visitId>.pdf`. On Render free tier this storage is ephemeral — for production swap to S3 or equivalent.
 - Cron schedules: nightly 03:00 UTC for inference, every 6h for visit prep check.
 - PatternsCard silently fails if there are no patterns (returns null) — this is intentional.
+
+### Sensors (Plan D, 2026-04-13)
+- Never mark a biomarker as diagnostic. The copy says "general wellness." Any change to wellness-vs-medical claim language requires a legal review.
+- HomeKit is iOS-only in v1. Android Matter integration is a v2 plan.
+- All passive writes flow through `src/lib/eventBatcher.ts` — queued offline, flushed when online.
+- `react-native-homekit` is a bare workflow module — not available in Expo Go. The try/catch in `src/lib/homekit/index.ts` ensures graceful fallback.
+- Sensor prefs are stored in AsyncStorage under `vela:sensor_prefs` — user can opt out of any sensor independently.

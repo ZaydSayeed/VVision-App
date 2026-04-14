@@ -17,7 +17,8 @@
       "bundleIdentifier": "com.velavision.caregiver",
       "infoPlist": {
         "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
-        "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos."
+        "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
+        "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning."
       }
     },
     "android": {

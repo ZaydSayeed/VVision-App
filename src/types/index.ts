@@ -78,6 +78,7 @@ export interface PatientSummary {
   tasksDone: number;
   medsTotal: number;
   medsDone: number;
+  pendingHelp?: number;
 }
 
 // ── Routine Tasks ────────────────────────────────────────

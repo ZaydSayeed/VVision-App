@@ -47,13 +47,6 @@ function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
   );
 }
 
-function getCompletionRatio(patient: PatientSummary): number {
-  const total = (patient.tasksTotal ?? 0) + (patient.medsTotal ?? 0);
-  if (total === 0) return 1;
-  const done = (patient.tasksDone ?? 0) + (patient.medsDone ?? 0);
-  return done / total;
-}
-
 export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props) {
   const { colors } = useTheme();
   const { patients, loading, refresh } = usePatients();
@@ -275,10 +268,9 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
           </View>
         ) : (
           patients.map((patient) => {
-            const ratio = getCompletionRatio(patient);
-            const isGood = ratio >= 0.7;
-            const accentColor = isGood ? colors.sage : colors.amber;
-            const softColor = isGood ? colors.sageSoft : colors.amberSoft;
+            const needsHelp = (patient.pendingHelp ?? 0) > 0;
+            const accentColor = needsHelp ? colors.amber : colors.sage;
+            const softColor = needsHelp ? colors.amberSoft : colors.sageSoft;
 
             const taskRatio = (patient.tasksTotal ?? 0) > 0
               ? (patient.tasksDone ?? 0) / (patient.tasksTotal ?? 1)
@@ -287,7 +279,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
               ? (patient.medsDone ?? 0) / (patient.medsTotal ?? 1)
               : 1;
 
-            const statusLabel = isGood ? "On track" : "Needs attention";
+            const statusLabel = needsHelp ? "Needs attention" : "On track";
 
             return (
               <TouchableOpacity

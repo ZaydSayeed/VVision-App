@@ -259,9 +259,10 @@ router.get("/linked", authMiddleware, async (req, res) => {
     const patientId = String(patient._id);
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    const [routines, medications] = await Promise.all([
+    const [routines, medications, pendingHelp] = await Promise.all([
       db.collection("routines").find({ patient_id: patientId }).toArray(),
       db.collection("medications").find({ patient_id: patientId }).toArray(),
+      db.collection("help_alerts").countDocuments({ patient_id: patientId, dismissed: false }),
     ]);
 
     res.json([{
@@ -271,6 +272,7 @@ router.get("/linked", authMiddleware, async (req, res) => {
       tasksDone: routines.filter((r: any) => r.completed_date === todayStr).length,
       medsTotal: medications.length,
       medsDone: medications.filter((m: any) => m.taken_date === todayStr).length,
+      pendingHelp,
     }]);
   } catch (err) {
     console.error("linked patients error:", err);

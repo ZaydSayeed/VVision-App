@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import { config } from "./server-core/config";
 import { connectDb, closeDb } from "./server-core/database";
 import { attachLiveBridge } from "./server-core/liveBridge";
+import { startCron } from "./server-jobs/scheduler";
 
 import authRoutes from "./server-routes/auth";
 import patientRoutes from "./server-routes/patients";
@@ -25,6 +26,7 @@ import seatRoutes from "./server-routes/seats";
 import memoryRoutes from "./server-routes/memories";
 import liveRoutes from "./server-routes/live";
 import patternRoutes from "./server-routes/patterns";
+import visitRoutes from "./server-routes/visits";
 
 const app = express();
 
@@ -91,6 +93,7 @@ app.use("/api/conversations", conversationRoutes);
 app.use("/api/assistant", assistantRoutes);
 app.use("/api/live", liveRoutes);
 app.use("/api/profiles", patternRoutes);
+app.use("/api/profiles", visitRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {
@@ -123,6 +126,7 @@ async function start() {
   try {
     await connectDb();
     console.log("MongoDB connected");
+    startCron();
 
     const server = http.createServer(app);
     attachLiveBridge(server);

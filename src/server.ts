@@ -21,6 +21,7 @@ import noteRoutes from "./server-routes/notes";
 import profileRoutes from "./server-routes/profiles";
 import seatRoutes from "./server-routes/seats";
 import memoryRoutes from "./server-routes/memories";
+import liveRoutes from "./server-routes/live";
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use("/api/reminders", reminderRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/assistant", assistantRoutes);
+app.use("/api/live", liveRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

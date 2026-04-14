@@ -209,3 +209,9 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - Audio capture in v1 uses chunked WAV (Expo Audio.Recording), not true PCM streaming. When we want sub-second latency, swap in `react-native-live-audio-stream` — note the native module requirement.
 - The text-fallback CheckInTextScreen is a first-class path, not a graceful degradation — it stays shipped even after voice is stable.
 - `authFetch` in `src/api/authFetch.ts` is a thin fetch wrapper injecting the auth token. It is kept in sync with `setAuthToken` via `setAuthFetchToken` calls in `AuthContext.tsx`.
+
+### Pattern Learning + Visit Prep (Plan F, 2026-04-13)
+- Pattern inference requires GEMINI_API_KEY and ≥10 events in the last 30 days to run for a patient.
+- PDFs are written to `uploads/visit-prep/<patientId>/<visitId>.pdf`. On Render free tier this storage is ephemeral — for production swap to S3 or equivalent.
+- Cron schedules: nightly 03:00 UTC for inference, every 6h for visit prep check.
+- PatternsCard silently fails if there are no patterns (returns null) — this is intentional.

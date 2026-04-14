@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import PatternsCard from "../components/PatternsCard";
 import { Ionicons } from "@expo/vector-icons";
 import { spacing, fonts, radius } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
@@ -264,6 +265,10 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
         <Ionicons name="mic" size={18} color="#FFFFFF" />
         <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>Check In</Text>
       </TouchableOpacity>
+
+      <View style={{ marginHorizontal: 20 }}>
+        <PatternsCard />
+      </View>
 
       <View style={styles.timelineSection}>
         <View style={styles.sectionLabelRow}>

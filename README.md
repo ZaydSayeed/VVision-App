@@ -202,6 +202,19 @@ Base: `https://vvision-app.onrender.com/api/profiles`
 
 See `docs/superpowers/specs/2026-04-13-caregiver-living-profile-design.md` for design rationale.
 
+### Pattern Learning + Visit Prep (Plan F)
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/profiles/:patientId/patterns` | List detected patterns |
+| POST | `/api/profiles/:patientId/patterns/:patternId/dismiss` | Dismiss a pattern |
+| POST | `/api/profiles/:patientId/visits` | Schedule a visit |
+| GET | `/api/profiles/:patientId/visits` | List upcoming visits |
+| DELETE | `/api/profiles/:patientId/visits/:visitId` | Delete a visit |
+| GET | `/api/profiles/:patientId/visits/:visitId/prep.pdf` | Download visit prep PDF |
+
+Cron jobs: nightly (03:00 UTC) pattern inference; every 6h visit prep generation.
+PDFs write to `uploads/visit-prep/` — ephemeral on Render free tier, swap to S3 for prod.
+
 ### Voice Check-In (Plan C)
 | Method | Path | Purpose |
 |---|---|---|

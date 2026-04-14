@@ -10,6 +10,7 @@ import { AppState, AppStateStatus } from "react-native";
 import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
 import { setAuthToken, setOnAuthExpired, syncProfile } from "../api/client";
+import { setAuthFetchToken } from "../api/authFetch";
 
 interface AuthContextValue {
   user: AppUser | null;
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     inactivityTimer.current = setTimeout(() => {
       supabase.auth.signOut();
       setUser(null);
-      setAuthToken(null);
+      setAuthToken(null); setAuthFetchToken(null);
     }, SESSION_TIMEOUT_MS);
   }, []);
 
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.access_token) {
-        setAuthToken(session.access_token);
+        setAuthToken(session.access_token); setAuthFetchToken(session.access_token);
         const appUser = sessionToUser(session);
         // Sync with backend to ensure patient_id is resolved
         if (appUser) {
@@ -104,11 +105,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // INITIAL_SESSION is handled by getSession above (which also loads patient_id)
       if (_event === "INITIAL_SESSION") return;
       if (session?.access_token) {
-        setAuthToken(session.access_token);
+        setAuthToken(session.access_token); setAuthFetchToken(session.access_token);
         setUser(sessionToUser(session));
         resetInactivityTimer();
       } else {
-        setAuthToken(null);
+        setAuthToken(null); setAuthFetchToken(null);
         setUser(null);
         if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
       }
@@ -136,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Check your email to confirm your account.");
       }
 
-      setAuthToken(data.session.access_token);
+      setAuthToken(data.session.access_token); setAuthFetchToken(data.session.access_token);
       const appUser = sessionToUser(data.session);
 
       // Sync to glasses backend and capture patient_id
@@ -158,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (error) throw new Error(error.message);
 
-    setAuthToken(data.session.access_token);
+    setAuthToken(data.session.access_token); setAuthFetchToken(data.session.access_token);
     const appUser = sessionToUser(data.session);
 
     // Sync to glasses backend and capture patient_id
@@ -174,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
-    setAuthToken(null);
+    setAuthToken(null); setAuthFetchToken(null);
     setUser(null);
   }, []);
 

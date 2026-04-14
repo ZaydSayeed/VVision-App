@@ -5,7 +5,9 @@ import {
   FlatList,
   RefreshControl,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { spacing, fonts, radius } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
@@ -60,6 +62,7 @@ function getEventSubtitle(event: TimelineEvent): string {
 
 export function TimelineScreen({ stats, timeline, loading, onRefresh }: TimelineScreenProps) {
   const { colors } = useTheme();
+  const navigation = useNavigation<any>();
 
   const todayLabel = new Date().toLocaleDateString([], {
     weekday: "long",
@@ -252,6 +255,15 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
           <Text style={styles.statLabel}>Most Visits</Text>
         </View>
       </View>
+
+      <TouchableOpacity
+        onPress={() => navigation.navigate("CheckIn")}
+        style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: "#6366f1", padding: 16, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="mic" size={18} color="#FFFFFF" />
+        <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>Check In</Text>
+      </TouchableOpacity>
 
       <View style={styles.timelineSection}>
         <View style={styles.sectionLabelRow}>

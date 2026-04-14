@@ -21,6 +21,8 @@ import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
 import { HelpHistoryScreen } from "../screens/caregiver/HelpHistoryScreen";
+import CheckInScreen from "../screens/caregiver/CheckInScreen";
+import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
@@ -374,6 +376,8 @@ function CaregiverView({
           {() => <CaregiverTabNavigator helpPendingCount={pendingCount} />}
         </CaregiverStack.Screen>
         <CaregiverStack.Screen name="HelpHistory" component={HelpHistoryScreen} />
+        <CaregiverStack.Screen name="CheckIn" component={CheckInScreen} options={{ headerShown: true, title: "Check In" }} />
+        <CaregiverStack.Screen name="CheckInText" component={CheckInTextScreen} options={{ headerShown: true, title: "Text Check-In" }} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />

@@ -13,7 +13,9 @@ export function useVoiceSession(patientId: string | undefined) {
   const start = useCallback(async () => {
     if (!patientId) return;
     setState("connecting"); setTranscript("");
-    await Audio.requestPermissionsAsync();
+    try {
+    const { granted } = await Audio.requestPermissionsAsync();
+    if (!granted) { setState("error"); return; }
     await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
 
     const session = await authFetch(`/api/live/session/${patientId}`, { method: "POST" }).then(r => r.json());
@@ -43,6 +45,10 @@ export function useVoiceSession(patientId: string | undefined) {
     };
     ws.onclose = () => setState("ended");
     ws.onerror = () => setState("error");
+    } catch (e) {
+      console.error("Voice session start failed:", e);
+      setState("error");
+    }
   }, [patientId]);
 
   const stop = useCallback(async () => {

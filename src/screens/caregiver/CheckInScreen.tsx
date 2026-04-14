@@ -50,6 +50,12 @@ export default function CheckInScreen({ navigation }: any) {
         </Text>
       </ScrollView>
 
+      {state === "error" && (
+        <Text style={{ color: "#dc2626", marginBottom: 8, textAlign: "center" }}>
+          Microphone unavailable. Check app permissions, or use the text option below.
+        </Text>
+      )}
+
       <View style={{ flexDirection: "row", gap: 12 }}>
         {state === "listening" ? (
           <Pressable onPress={stop} style={{ flex: 1, backgroundColor: "#dc2626", padding: 18, borderRadius: 14 }}>

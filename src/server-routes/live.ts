@@ -13,7 +13,7 @@ router.post("/session/:patientId", authMiddleware, requireSeat, async (req, res)
   try {
     const systemInstruction = `You are Vela, a caring voice companion helping a caregiver check in about their loved one with dementia. Keep responses warm, brief, and focused. The caregiver is speaking now.`;
     res.json({
-      wsUrl: `${req.protocol}://${req.get("host")}/api/live/ws?patientId=${encodeURIComponent(req.params.patientId)}`,
+      wsUrl: `${req.protocol}://${String(req.get("host"))}/api/live/ws?patientId=${encodeURIComponent(String(req.params.patientId))}`,
       model: config.geminiLiveModel,
       systemInstruction,
     });

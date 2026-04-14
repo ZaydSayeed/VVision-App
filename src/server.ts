@@ -1,9 +1,11 @@
+import http from "http";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { config } from "./server-core/config";
 import { connectDb, closeDb } from "./server-core/database";
+import { attachLiveBridge } from "./server-core/liveBridge";
 
 import authRoutes from "./server-routes/auth";
 import patientRoutes from "./server-routes/patients";
@@ -120,7 +122,9 @@ async function start() {
     await connectDb();
     console.log("MongoDB connected");
 
-    const server = app.listen(config.port, "0.0.0.0", () => {
+    const server = http.createServer(app);
+    attachLiveBridge(server);
+    server.listen(config.port, "0.0.0.0", () => {
       console.log(`Server running on http://0.0.0.0:${config.port}`);
     });
 

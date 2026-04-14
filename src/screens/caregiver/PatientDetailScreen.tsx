@@ -22,6 +22,7 @@ interface Props {
   patientId: string;
   patientName: string;
   onBack: () => void;
+  onViewLogs: () => void;
 }
 
 function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
@@ -36,7 +37,7 @@ function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
   );
 }
 
-export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
+export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { tasks, isCompletedToday } = useRoutine(patientId);
@@ -158,6 +159,17 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       color: colors.violet,
       ...fonts.medium,
     },
+    logsBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      backgroundColor: colors.bg, borderRadius: radius.lg,
+      padding: spacing.lg, marginBottom: spacing.xxl,
+      shadowColor: colors.violet, shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.07, shadowRadius: 10, elevation: 2,
+      borderLeftWidth: 4, borderLeftColor: colors.violet,
+    },
+    logsBtnLeft: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+    logsBtnText: { fontSize: 15, color: colors.text, ...fonts.medium },
+    logsBtnSub: { fontSize: 12, color: colors.muted, ...fonts.regular, marginTop: 2 },
     section: { marginTop: spacing.xl },
     noItems: {
       fontSize: 14,
@@ -234,6 +246,18 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
             <AnimatedBar ratio={medRatio} color={colors.amber} />
           </View>
         </View>
+
+        {/* Check-In Logs button */}
+        <TouchableOpacity style={styles.logsBtn} onPress={onViewLogs} activeOpacity={0.75}>
+          <View style={styles.logsBtnLeft}>
+            <Ionicons name="journal-outline" size={22} color={colors.violet} />
+            <View>
+              <Text style={styles.logsBtnText}>Check-In Logs</Text>
+              <Text style={styles.logsBtnSub}>View daily notes & AI summaries</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+        </TouchableOpacity>
 
         <SectionHeader label="Help Requests" />
         {pendingHelp.length === 0 ? (

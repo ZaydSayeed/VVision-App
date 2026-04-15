@@ -1,15 +1,28 @@
-import React, { useState, useRef } from "react";
-import { View, Text, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, TextInput, Pressable, Alert, Platform, Keyboard, KeyboardEvent, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { authFetch } from "../../api/authFetch";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
+import { usePatients } from "../../hooks/usePatients";
 import { computeTypingMetrics } from "../../lib/biomarkers/typing";
 import { queueEvent, flush } from "../../lib/eventBatcher";
 
 export default function CheckInTextScreen({ route, navigation }: any) {
   const [text, setText] = useState(route.params?.prefill ?? "");
   const [saving, setSaving] = useState(false);
-  const { patientId } = useCurrentProfile();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const { patientId: defaultPatientId } = useCurrentProfile();
+  const { patients } = usePatients();
+  const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
+  const patientId = selectedPatientId ?? defaultPatientId ?? undefined;
   const keystrokesRef = useRef<number[]>([]);
+  const selectedPatient = patients.find(p => p.id === patientId);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow", (e: KeyboardEvent) => setKeyboardHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide", () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   const save = async () => {
     if (!text.trim() || !patientId) return;
@@ -31,8 +44,35 @@ export default function CheckInTextScreen({ route, navigation }: any) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, padding: 24 }}>
-      <Text style={{ fontSize: 22, fontWeight: "700" }}>How is Mom today?</Text>
+    <View style={{ flex: 1, padding: 24, paddingBottom: keyboardHeight > 0 ? keyboardHeight + 16 : 24 }}>
+      <Text style={{ fontSize: 22, fontWeight: "700" }}>
+        {selectedPatient ? `How is ${selectedPatient.name} today?` : "How is your patient today?"}
+      </Text>
+
+      {patients.length > 1 && (
+        <View style={{ marginTop: 10, marginBottom: 4 }}>
+          <Text style={{ fontSize: 11, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Checking in for</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {patients.map(p => (
+              <TouchableOpacity
+                key={p.id}
+                onPress={() => setSelectedPatientId(p.id)}
+                style={{
+                  paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999,
+                  backgroundColor: patientId === p.id ? "#6366f1" : "#f1f5f9",
+                  flexDirection: "row", alignItems: "center", gap: 5,
+                }}
+              >
+                {patientId === p.id && <Ionicons name="checkmark" size={13} color="#fff" />}
+                <Text style={{ fontSize: 13, fontWeight: "600", color: patientId === p.id ? "#fff" : "#475569" }}>
+                  {p.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
       <TextInput
         multiline value={text}
         onChangeText={(t) => { keystrokesRef.current.push(Date.now()); setText(t); }}
@@ -45,6 +85,6 @@ export default function CheckInTextScreen({ route, navigation }: any) {
           {saving ? "Saving…" : "Save"}
         </Text>
       </Pressable>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

@@ -1,15 +1,22 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useVoiceSession } from "../../hooks/useVoiceSession";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
+import { usePatients } from "../../hooks/usePatients";
 import { authFetch } from "../../api/authFetch";
 import { captureGaitWindow } from "../../lib/biomarkers/gait";
 import { queueEvent, flush } from "../../lib/eventBatcher";
 
 export default function CheckInScreen({ navigation }: any) {
-  const { patientId } = useCurrentProfile();
+  const { patientId: defaultPatientId } = useCurrentProfile();
+  const { patients } = usePatients();
+  const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
+  const patientId = selectedPatientId ?? defaultPatientId ?? undefined;
   const { state, transcript, start, stop } = useVoiceSession(patientId);
   const [saving, setSaving] = useState(false);
+
+  const selectedPatient = patients.find(p => p.id === patientId);
 
   const save = async () => {
     if (!transcript.trim() || !patientId) return;
@@ -41,8 +48,35 @@ export default function CheckInScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, padding: 24 }}>
-      <Text style={{ fontSize: 22, fontWeight: "700" }}>How is Mom today?</Text>
+      <Text style={{ fontSize: 22, fontWeight: "700" }}>
+        {selectedPatient ? `How is ${selectedPatient.name} today?` : "How is your patient today?"}
+      </Text>
       <Text style={{ color: "#64748b", marginTop: 4 }}>Speak naturally for 30–60 seconds.</Text>
+
+      {/* Patient picker — only shown when caregiver has multiple patients */}
+      {patients.length > 1 && (
+        <View style={{ marginTop: 12, marginBottom: 4 }}>
+          <Text style={{ fontSize: 11, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Checking in for</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {patients.map(p => (
+              <TouchableOpacity
+                key={p.id}
+                onPress={() => setSelectedPatientId(p.id)}
+                style={{
+                  paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999,
+                  backgroundColor: patientId === p.id ? "#6366f1" : "#f1f5f9",
+                  flexDirection: "row", alignItems: "center", gap: 5,
+                }}
+              >
+                {patientId === p.id && <Ionicons name="checkmark" size={13} color="#fff" />}
+                <Text style={{ fontSize: 13, fontWeight: "600", color: patientId === p.id ? "#fff" : "#475569" }}>
+                  {p.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       <ScrollView style={{ flex: 1, backgroundColor: "#f8fafc", borderRadius: 12, padding: 16, marginVertical: 16 }}>
         <Text style={{ color: transcript ? "#0f172a" : "#94a3b8" }}>

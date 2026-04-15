@@ -1,11 +1,46 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
+import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { authMiddleware } from "../server-core/security";
-import { requireSeat } from "../server-core/seatResolver";
 import { addMemory, searchMemory } from "../server-core/memory";
 import { getDb } from "../server-core/database";
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../server-core/config";
+
+// Accepts caregivers linked via seats OR via the legacy caregiver_ids link system
+async function requirePatientAccess(req: Request, res: Response, next: NextFunction) {
+  const userId = (req as any).auth?.userId;
+  const patientId = String(req.params.patientId);
+  if (!userId || !patientId) { res.status(401).json({ detail: "Unauthorized" }); return; }
+  const db = getDb();
+
+  // Check seats first (Plan A invite system)
+  const seat = await db.collection("seats").findOne({ userId, patientId });
+  if (seat) {
+    req.seat = { userId: seat.userId, patientId: seat.patientId, role: seat.role };
+    next(); return;
+  }
+
+  // Fall back to legacy caregiver_ids link
+  if (ObjectId.isValid(patientId)) {
+    const patient = await db.collection("patients").findOne({ _id: new ObjectId(patientId) });
+    if (patient) {
+      const ids: string[] = patient.caregiver_ids ?? [];
+      if (ids.includes(userId)) {
+        req.seat = { userId, patientId, role: "primary_caregiver" };
+        next(); return;
+      }
+      // Also allow the patient themselves
+      const user = await db.collection("users").findOne({ supabase_uid: userId });
+      if (user && String(user.patient_id) === patientId) {
+        req.seat = { userId, patientId, role: "primary_caregiver" };
+        next(); return;
+      }
+    }
+  }
+
+  res.status(403).json({ detail: "No access to this profile" });
+}
 
 export const memoryAddSchema = z.object({
   content: z.string().min(1).max(5000),
@@ -20,7 +55,7 @@ export const memorySearchSchema = z.object({
 const router = Router();
 
 // POST /api/profiles/:patientId/memory
-router.post("/:patientId/memory", authMiddleware, requireSeat, async (req, res) => {
+router.post("/:patientId/memory", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = memoryAddSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
@@ -49,7 +84,7 @@ router.post("/:patientId/memory", authMiddleware, requireSeat, async (req, res) 
 });
 
 // GET /api/profiles/:patientId/memory/logs
-router.get("/:patientId/memory/logs", authMiddleware, requireSeat, async (req, res) => {
+router.get("/:patientId/memory/logs", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
     const logs = await db.collection("checkin_logs")
@@ -71,7 +106,7 @@ const summarizeSchema = z.object({
 });
 
 // POST /api/profiles/:patientId/memory/logs/summarize
-router.post("/:patientId/memory/logs/summarize", authMiddleware, requireSeat, async (req, res) => {
+router.post("/:patientId/memory/logs/summarize", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = summarizeSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   if (!config.geminiApiKey) { res.status(503).json({ detail: "Gemini API key not configured" }); return; }
@@ -130,7 +165,7 @@ Return ONLY the JSON object, no markdown or other text.`;
 });
 
 // GET /api/profiles/:patientId/memory/search?q=...
-router.get("/:patientId/memory/search", authMiddleware, requireSeat, async (req, res) => {
+router.get("/:patientId/memory/search", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = memorySearchSchema.safeParse(req.query);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {

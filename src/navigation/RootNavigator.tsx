@@ -25,7 +25,6 @@ import CheckInScreen from "../screens/caregiver/CheckInScreen";
 import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import VisitReportsScreen from "../screens/caregiver/VisitReportsScreen";
 import { CaregiverHealthScreen } from "../screens/caregiver/CaregiverHealthScreen";
-import SensorSettingsScreen from "../screens/caregiver/SensorSettingsScreen";
 import { startHomeKitListeners } from "../lib/homekit";
 import { useSensorPrefs } from "../hooks/useSensorPrefs";
 import { flush } from "../lib/eventBatcher";
@@ -416,7 +415,6 @@ function CaregiverView({
             return <VisitReportsScreen patientId={patientId} patientName={patientName} onBack={() => navigation.goBack()} />;
           }}
         </CaregiverStack.Screen>
-        <CaregiverStack.Screen name="SensorSettings" component={SensorSettingsScreen} options={{ headerShown: true, title: "Sensors" }} />
         <CaregiverStack.Screen name="CaregiverHealth" component={CaregiverHealthScreen} options={{ headerShown: true, title: "Health", headerBackTitle: "Back" }} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />

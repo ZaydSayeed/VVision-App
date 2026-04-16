@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Vela Pivot — Strategic Brief · Apr 11 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,400;1,9..144,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0E0B18;
+    --ink-2: #15111F;
+    --ink-3: #1D1830;
+    --cream: #F2ECE0;
+    --cream-2: #D9D2C2;
+    --muted: #8A8293;
+    --violet: #9B8BFF;
+    --violet-deep: #6F56D9;
+    --amber: #F0AD72;
+    --coral: #E87878;
+    --sage: #7AB5A0;
+    --rule: rgba(242,236,224,0.14);
+    --rule-soft: rgba(242,236,224,0.06);
+    --serif: "Fraunces", "Times New Roman", serif;
+    --sans: "DM Sans", -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: var(--sans);
+    font-optical-sizing: auto;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.92  0 0 0 0 0.88  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%);
+  }
+
+  .deck { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 44px 72px 58px;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .55s cubic-bezier(.2,.7,.2,1), transform .55s cubic-bezier(.2,.7,.2,1);
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .slide::-webkit-scrollbar { display: none; }
+  .slide.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .topbar .left { display: flex; gap: 22px; align-items: center; }
+  .topbar .dot {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--violet); display: inline-block;
+    box-shadow: 0 0 14px var(--violet);
+  }
+  .topbar .right { text-align: right; }
+  .topbar .right span { display: block; }
+  .topbar .right .num {
+    font-family: var(--serif);
+    font-size: 13px;
+    font-style: italic;
+    color: var(--cream);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .bottombar {
+    position: absolute;
+    left: 72px; right: 72px; bottom: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+  }
+  .progress { flex: 1; height: 1px; background: var(--rule-soft); margin: 0 24px; position: relative; overflow: hidden; }
+  .progress::after {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--cream); width: var(--p, 0%); transition: width .5s ease;
+  }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted);
+  }
+  .eyebrow.accent { color: var(--violet); }
+  .eyebrow.amber  { color: var(--amber); }
+  .eyebrow.coral  { color: var(--coral); }
+  .eyebrow.sage   { color: var(--sage); }
+
+  h1.display {
+    font-family: var(--serif); font-weight: 300;
+    font-size: clamp(48px, 7.2vw, 120px);
+    line-height: 0.92; letter-spacing: -0.025em; color: var(--cream);
+  }
+  h1.display em { font-style: italic; font-weight: 300; color: var(--cream); }
+
+  h2.title {
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(32px, 4.4vw, 64px);
+    line-height: 1.0; letter-spacing: -0.02em;
+  }
+  h2.title em { font-style: italic; color: var(--amber); font-weight: 400; }
+  h2.title .v { color: var(--violet); font-style: italic; }
+  h2.title .c { color: var(--coral); font-style: italic; }
+  h2.title .s { color: var(--sage); font-style: italic; }
+
+  h3.sub {
+    font-family: var(--sans); font-size: 22px; font-weight: 400;
+    line-height: 1.35; color: var(--cream-2); max-width: 58ch;
+  }
+
+  p.body {
+    font-family: var(--sans); font-size: 17px; line-height: 1.55;
+    color: var(--cream-2); max-width: 62ch;
+  }
+  p.body b { color: var(--cream); font-weight: 500; }
+
+  p.small {
+    font-family: var(--sans); font-size: 14px; line-height: 1.5;
+    color: var(--muted); max-width: 60ch;
+  }
+
+  .rule { height: 1px; background: var(--rule); width: 100%; }
+  .rule-short { width: 64px; height: 1px; background: var(--cream); }
+
+  .verdict {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 10px 20px 10px 16px; border: 1px solid var(--cream);
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.28em; text-transform: uppercase; color: var(--cream);
+    border-radius: 2px;
+  }
+  .verdict::before {
+    content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--cream);
+  }
+  .verdict.good { border-color: var(--sage); color: var(--sage); }
+  .verdict.good::before { background: var(--sage); box-shadow: 0 0 12px var(--sage); }
+  .verdict.warn { border-color: var(--amber); color: var(--amber); }
+  .verdict.warn::before { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+  .verdict.bad  { border-color: var(--coral); color: var(--coral); }
+  .verdict.bad::before  { background: var(--coral); box-shadow: 0 0 12px var(--coral); }
+  .verdict.hero { font-size: 14px; padding: 14px 26px 14px 22px; letter-spacing: 0.3em; }
+
+  .fill { flex: 1; display: flex; flex-direction: column; }
+  .center { justify-content: center; }
+  .stack-sm > * + * { margin-top: 12px; }
+  .stack-md > * + * { margin-top: 18px; }
+  .stack-lg > * + * { margin-top: 26px; }
+  .row { display: flex; gap: 24px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+
+  .callout { border-left: 2px solid var(--violet); padding: 2px 0 2px 22px; }
+  .callout.amber { border-color: var(--amber); }
+  .callout.coral { border-color: var(--coral); }
+  .callout.sage  { border-color: var(--sage); }
+
+  .pullquote {
+    font-family: var(--serif); font-weight: 300; font-style: italic;
+    font-size: clamp(32px, 3.6vw, 54px); line-height: 1.18;
+    letter-spacing: -0.01em; color: var(--cream);
+    position: relative; padding-left: 1.2em; max-width: 22ch;
+  }
+  .pullquote::before {
+    content: "\201C"; position: absolute; left: -0.15em; top: -0.35em;
+    font-size: 2.2em; line-height: 1; color: var(--amber); font-style: normal;
+  }
+  .pullquote .attr {
+    display: block; margin-top: 22px; font-family: var(--mono);
+    font-style: normal; font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted);
+  }
+
+  .kv { display: grid; grid-template-columns: 180px 1fr; gap: 10px 28px; align-items: baseline; }
+  .kv dt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding-top: 6px; }
+  .kv dd { font-size: 17px; line-height: 1.5; color: var(--cream); border-bottom: 1px solid var(--rule-soft); padding-bottom: 14px; }
+  .kv dd:last-of-type { border-bottom: 0; }
+
+  /* Angle columns for the "three paths rejected" slide */
+  .angles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--rule); }
+  .angles > div { padding: 28px 28px 32px; border-right: 1px solid var(--rule); position: relative; min-height: 380px; display: flex; flex-direction: column; }
+  .angles > div:last-child { border-right: 0; }
+  .angles .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .angles h4 { font-family: var(--serif); font-size: 28px; font-weight: 400; line-height: 1.1; letter-spacing: -0.01em; margin-bottom: 18px; color: var(--cream); }
+  .angles h4 em { font-style: italic; }
+  .angles ul { list-style: none; padding: 0; margin-top: 6px; }
+  .angles li { font-size: 14px; line-height: 1.55; color: var(--cream-2); padding: 10px 0; border-top: 1px solid var(--rule-soft); }
+  .angles .stamp { margin-top: auto; padding-top: 22px; }
+
+  .tomb {
+    border: 1px solid var(--rule); padding: 22px 20px 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    position: relative; display: flex; flex-direction: column; min-height: 200px;
+  }
+  .tomb .rip { font-family: var(--mono); font-size: 10px; letter-spacing: 0.4em; color: var(--coral); margin-bottom: 14px; }
+  .tomb .name { font-family: var(--serif); font-size: 22px; font-weight: 400; line-height: 1.05; letter-spacing: -0.01em; color: var(--cream); }
+  .tomb .years { font-family: var(--serif); font-style: italic; color: var(--muted); margin-top: 6px; font-size: 14px; }
+  .tomb .cause { margin-top: auto; font-size: 12px; line-height: 1.5; color: var(--cream-2); padding-top: 14px; border-top: 1px solid var(--rule-soft); }
+  .tomb .cross { position: absolute; top: 10px; right: 12px; font-family: var(--serif); color: var(--rule); font-size: 16px; }
+
+  /* Split before/after */
+  .split { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule); }
+  .split > div { padding: 20px 26px; }
+  .split > div:first-child { border-right: 1px solid var(--rule); background: linear-gradient(180deg, rgba(232,120,120,0.05), transparent 60%); }
+  .split > div:last-child { background: linear-gradient(180deg, rgba(122,181,160,0.05), transparent 60%); }
+  .split h5 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 10px; }
+  .split .x { color: var(--coral); }
+  .split .c { color: var(--sage); }
+  .split .head { font-family: var(--serif); font-size: 24px; font-weight: 400; line-height: 1.12; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .split ul { list-style: none; padding: 0; }
+  .split li { font-size: 13px; line-height: 1.5; color: var(--cream-2); padding: 7px 0; border-top: 1px solid var(--rule-soft); }
+
+  /* Streams */
+  .streams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--rule); }
+  .streams > div { padding: 24px 26px 28px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); position: relative; }
+  .streams > div:last-child { border-right: 0; }
+  .streams .num { font-family: var(--serif); font-style: italic; font-size: 40px; font-weight: 300; line-height: 1; color: var(--violet); margin-bottom: 8px; }
+  .streams .h { font-family: var(--serif); font-size: 22px; font-weight: 400; margin-bottom: 10px; }
+  .streams .d { font-size: 14px; line-height: 1.55; color: var(--cream-2); }
+  .streams .amt { margin-top: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--amber); text-transform: uppercase; }
+
+  /* Do / don't */
+  .dodont { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .dodont h4 { font-family: var(--serif); font-size: 26px; font-weight: 400; margin-bottom: 14px; letter-spacing: -0.01em; }
+  .dodont h4 .mk { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; margin-right: 10px; vertical-align: 4px; }
+  .dodont .yes h4 { color: var(--sage); }
+  .dodont .no h4 { color: var(--coral); }
+  .dodont ul { list-style: none; padding: 0; }
+  .dodont li { font-size: 15px; line-height: 1.5; color: var(--cream-2); padding: 10px 0; border-top: 1px solid var(--rule-soft); }
+  .dodont li:last-child { border-bottom: 1px solid var(--rule-soft); }
+
+  /* Timeline */
+  .timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--rule); }
+  .timeline > div { padding: 24px 26px 28px; border-right: 1px solid var(--rule); position: relative; }
+  .timeline > div:last-child { border-right: 0; }
+  .timeline .m { font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--amber); }
+  .timeline .t { font-family: var(--serif); font-size: 20px; font-weight: 400; margin: 10px 0 12px; line-height: 1.15; }
+  .timeline ul { list-style: none; padding: 0; }
+  .timeline li { font-size: 13px; line-height: 1.55; color: var(--cream-2); padding-left: 14px; position: relative; margin-bottom: 7px; }
+  .timeline li::before { content: "—"; position: absolute; left: 0; color: var(--muted); }
+
+  .hero-num {
+    font-family: var(--serif); font-weight: 300; font-style: italic;
+    font-size: clamp(90px, 14vw, 220px); line-height: 0.85;
+    letter-spacing: -0.04em; color: var(--cream);
+  }
+
+  .cover-mark { font-family: var(--serif); font-style: italic; font-weight: 300; font-size: 18px; color: var(--amber); }
+  .cover-sub { font-family: var(--serif); font-weight: 300; font-style: italic; font-size: 26px; color: var(--cream-2); max-width: 36ch; line-height: 1.25; }
+
+  .hint {
+    position: fixed; bottom: 14px; right: 20px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted);
+    opacity: 0.5; z-index: 10000;
+  }
+  .hint kbd { display: inline-block; padding: 2px 6px; border: 1px solid var(--rule); border-radius: 2px; margin: 0 2px; font-family: var(--mono); }
+
+  /* Narrator controls */
+  .narrator {
+    position: fixed;
+    bottom: 14px; left: 20px;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px 6px 6px;
+    background: rgba(14,11,24,0.85);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream-2);
+    transition: border-color .3s ease;
+  }
+  .narrator.speaking {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 1px rgba(122,181,160,0.25), 0 0 24px rgba(122,181,160,0.15);
+  }
+  .narrator button {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--cream); border: 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; color: var(--ink); transition: transform .15s ease;
+  }
+  .narrator button:hover { transform: scale(1.05); }
+  .narrator button:active { transform: scale(0.95); }
+  .narrator .icon { width: 12px; height: 12px; display: block; fill: currentColor; }
+  .narrator .voice {
+    background: transparent; border: 0; color: var(--cream-2);
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 2px 6px; cursor: pointer;
+    border-left: 1px solid var(--rule); padding-left: 10px;
+    max-width: 140px;
+  }
+  .narrator .voice option { background: var(--ink); color: var(--cream); }
+  .narrator .toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 4px; cursor: pointer; user-select: none;
+    border-left: 1px solid var(--rule); padding-left: 10px;
+  }
+  .narrator .toggle .box {
+    width: 10px; height: 10px; border: 1px solid var(--muted); border-radius: 2px;
+    display: inline-block; position: relative;
+  }
+  .narrator .toggle.on .box { background: var(--sage); border-color: var(--sage); }
+  .narrator .toggle.on .box::after {
+    content: ""; position: absolute; left: 2px; top: 0;
+    width: 3px; height: 6px; border: solid var(--ink);
+    border-width: 0 1.5px 1.5px 0; transform: rotate(45deg);
+  }
+
+  .slide.active .reveal { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; }
+  .slide.active .reveal.d1 { animation-delay: .05s; }
+  .slide.active .reveal.d2 { animation-delay: .14s; }
+  .slide.active .reveal.d3 { animation-delay: .24s; }
+  .slide.active .reveal.d4 { animation-delay: .36s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+<!-- ============== 01 · COVER ============== -->
+<section class="slide" data-title="Cover">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> VELA VISION · INTERNAL</div>
+    <div class="right"><span class="num">01 / 10</span><span>2026 · 04 · 11</span></div>
+  </div>
+  <div class="fill center stack-lg" style="margin-top: 6vh;">
+    <div class="reveal d1 cover-mark">A strategic reassessment</div>
+    <h1 class="display reveal d2">The Vela<br><em>Pivot.</em></h1>
+    <div class="rule-short reveal d3"></div>
+    <p class="cover-sub reveal d4">Written after the advisor sync with <b style="color:var(--cream);font-weight:500;">Ayman Hassen</b> — what the data says, what we should do next, and what we absolutely should not.</p>
+  </div>
+  <div class="bottombar"><span>Prepared for the Vela team</span><div class="progress"></div><span>Press → to begin</span></div>
+</section>
+
+<!-- ============== 02 · WHAT AYMAN SAID ============== -->
+<section class="slide" data-title="What Ayman Said">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 01 · THE FEEDBACK</div>
+    <div class="right"><span class="num">02 / 10</span><span>FROM THE ADVISOR SYNC</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow amber">He didn't say we can't validate. He said to prove it first.</div>
+      <h2 class="title">Six things that <em>should change the plan.</em></h2>
+    </div>
+    <div class="grid3 reveal d2">
+      <div class="callout amber stack-sm">
+        <div class="eyebrow amber">01 · Prove before raising</div>
+        <p class="body">Don't raise for 8 months. Validate utility across real dementia patients in multiple states first.</p>
+      </div>
+      <div class="callout coral stack-sm">
+        <div class="eyebrow coral">02 · The patient can't pay</div>
+        <p class="body">Dementia patients on fixed income (~$1,800/mo) can't afford $499 + $40/mo. That demographic is the wrong buyer.</p>
+      </div>
+      <div class="callout coral stack-sm">
+        <div class="eyebrow coral">03 · Hardware is risky</div>
+        <p class="body">Foundation is unproven. Hardware capital is expensive. VCs won't write meaningful checks without validation.</p>
+      </div>
+      <div class="callout amber stack-sm">
+        <div class="eyebrow amber">04 · Meta is coming</div>
+        <p class="body">Ray-Ban Meta ships similar features. Could own the dementia software layer on their platform — or fight a losing hardware war.</p>
+      </div>
+      <div class="callout coral stack-sm">
+        <div class="eyebrow coral">05 · Insurance is a trap</div>
+        <p class="body">CPT code process: 13–18 months, up to $1M. For now we can only market as General Wellness — not medical device.</p>
+      </div>
+      <div class="callout sage stack-sm">
+        <div class="eyebrow sage">06 · Adult children, not patients</div>
+        <p class="body">The real customer may be the adult children of dementia patients. DTC to that cohort could make more money than selling to patients directly.</p>
+      </div>
+    </div>
+  </div>
+  <div class="bottombar"><span>Ayman's feedback</span><div class="progress"></div><span>02 / 10</span></div>
+</section>
+
+<!-- ============== 03 · THE BUYER REFRAME ============== -->
+<section class="slide" data-title="The Buyer">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 02 · THE BUYER</div>
+    <div class="right"><span class="num">03 / 10</span><span>WHO ACTUALLY HAS THE MONEY</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow sage">Ayman's most important insight, backed with data</div>
+      <h2 class="title">The patient can't pay.<br><em class="s">Their children can.</em></h2>
+    </div>
+
+    <div class="reveal d2" style="display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule); border-radius: 2px;">
+      <div style="padding: 22px 26px; border-right: 1px solid var(--rule); background: linear-gradient(180deg, rgba(232,120,120,0.05), transparent 70%);">
+        <div class="eyebrow coral" style="margin-bottom: 10px;">The dementia patient</div>
+        <div style="font-family:var(--serif);font-weight:300;font-size:56px;line-height:0.9;color:var(--muted);letter-spacing:-0.03em;">
+          <span style="font-size:0.45em;vertical-align:0.55em;">$</span>1,800<span style="font-size:0.38em;color:var(--muted);font-style:italic;"> /mo</span>
+        </div>
+        <p class="small" style="margin-top: 12px; color: var(--cream-2);">
+          Fixed Social Security / Medicaid income. Cannot absorb $499 + $40/mo. Ayman was right — <b style="color:var(--cream);">wrong buyer.</b>
+        </p>
+      </div>
+      <div style="padding: 22px 26px; background: linear-gradient(180deg, rgba(122,181,160,0.06), transparent 70%);">
+        <div class="eyebrow sage" style="margin-bottom: 10px;">Their adult child (45–65)</div>
+        <div style="font-family:var(--serif);font-weight:300;font-size:56px;line-height:0.9;color:var(--cream);letter-spacing:-0.03em;">
+          <span style="font-size:0.45em;vertical-align:0.55em;">$</span>364–410<span style="font-size:0.38em;color:var(--amber);font-style:italic;"> K</span>
+        </div>
+        <p class="small" style="margin-top: 12px; color: var(--cream-2);">
+          Median <b style="color:var(--cream);">household net worth</b> (Fed SCF 2022). <b style="color:var(--cream);">8–12M US households</b> have an aging parent and the capacity for $1K+/yr on care tech.
+        </p>
+      </div>
+    </div>
+
+    <div class="reveal d3" style="border-top: 1px solid var(--rule); padding-top: 16px;">
+      <div class="eyebrow amber" style="margin-bottom: 12px;">Proven comps — families already pay this</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr) 1.4fr; gap: 24px; align-items: baseline;">
+        <div><div style="font-family:var(--serif);font-size:22px;color:var(--cream);">Grandpad</div><p class="small" style="margin-top:4px;"><b style="color:var(--cream);">$79/mo</b> family-pay tablet · ~100K subs · profitable.</p></div>
+        <div><div style="font-family:var(--serif);font-size:22px;color:var(--cream);">Honor</div><p class="small" style="margin-top:4px;"><b style="color:var(--cream);">$30+/hr</b> in-home care, family-pay · $325M raised.</p></div>
+        <div><div style="font-family:var(--serif);font-size:22px;color:var(--cream);">Homethrive</div><p class="small" style="margin-top:4px;"><b style="color:var(--cream);">$40M+</b> raised · caregiver concierge for adult children.</p></div>
+        <p class="small" style="border-left: 2px solid var(--sage); padding-left: 16px; color: var(--cream-2); font-size: 13px;">Every profitable dementia-tech co. has an intermediary payer. <b style="color:var(--cream);">The adult child is ours.</b></p>
+      </div>
+    </div>
+  </div>
+  <div class="bottombar"><span>The buyer</span><div class="progress"></div><span>03 / 10</span></div>
+</section>
+
+<!-- ============== 04 · THREE PATHS REJECTED ============== -->
+<section class="slide" data-title="Three Paths Rejected">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 03 · PATHS WE TESTED</div>
+    <div class="right"><span class="num">04 / 10</span><span>THREE ANGLES · THREE VERDICTS</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow">What we pressure-tested before choosing a direction</div>
+      <h2 class="title">Three paths we <em class="c">rejected</em> — and why.</h2>
+    </div>
+    <div class="angles reveal d2">
+      <div>
+        <div class="lbl">Path A</div>
+        <h4>Keep selling glasses to <em>patients.</em></h4>
+        <ul>
+          <li>TAM Ayman cited ($50–80B) is total care spend. Real consumer SAM is $800M–$2B.</li>
+          <li>Patient-DTC has <b>zero profitable comp</b>. Every successful dementia-tech co. has an intermediary payer.</li>
+          <li>$300K+ needed to do hardware properly. Mismatched with our capital.</li>
+        </ul>
+        <div class="stamp"><div class="verdict warn">VIABLE · MISFRAMED</div></div>
+      </div>
+      <div>
+        <div class="lbl">Path B</div>
+        <h4>Software only on <em class="v">Meta's</em> glasses.</h4>
+        <ul>
+          <li>Ray-Ban Meta has <b>no third-party SDK</b>. No dev program.</li>
+          <li>Meta offers <b>no BAA</b> — makes HIPAA compliance impossible on their hardware.</li>
+          <li>Raw camera access sandboxed. Face recognition may be physically blocked.</li>
+          <li>Meta's Orion demos already showed face ID — they eat verticals.</li>
+        </ul>
+        <div class="stamp"><div class="verdict bad">LIKELY A TRAP</div></div>
+      </div>
+      <div>
+        <div class="lbl">Path C</div>
+        <h4>$40 glasses. <em class="c">Sell the data.</em></h4>
+        <ul>
+          <li>BOM floor: $55–85. Above the proposed $70 retail price.</li>
+          <li>Anonymized behavioral data wholesale: $1–3/user/mo. Model needs 10–50× more.</li>
+          <li>BIPA fined Facebook $650M. Texas CUBI fined Meta $1.4B. One class action ends us.</li>
+          <li>Every consumer camera wearable under $200 has failed. See next slide.</li>
+        </ul>
+        <div class="stamp"><div class="verdict bad">FUNDAMENTALLY BROKEN</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="bottombar"><span>Three paths rejected</span><div class="progress"></div><span>04 / 10</span></div>
+</section>
+
+<!-- ============== 04 · THE GRAVEYARD ============== -->
+<section class="slide" data-title="The Graveyard">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 04 · CONSUMER-WEARABLE HISTORY</div>
+    <div class="right"><span class="num">05 / 10</span><span>WHO TRIED THIS BEFORE</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow coral">Better-funded teams burned hundreds of millions</div>
+      <h2 class="title">The <em class="c">graveyard</em> of consumer camera wearables.</h2>
+    </div>
+    <div class="grid4 reveal d2">
+      <div class="tomb"><div class="cross">✝</div><div class="rip">R . I . P</div><div class="name">Google Glass</div><div class="years">2013 — 2015</div><div class="cause">$1,500 price. "Glasshole" backlash poisoned the category for a decade.</div></div>
+      <div class="tomb"><div class="cross">✝</div><div class="rip">R . I . P</div><div class="name">Snap Spectacles</div><div class="years">2016 — present</div><div class="cause">$40M inventory write-off on Gen 1. Cumulative &gt;$3B in hardware losses.</div></div>
+      <div class="tomb"><div class="cross">✝</div><div class="rip">R . I . P</div><div class="name">Humane Ai Pin</div><div class="years">2023 — 2025</div><div class="cause">$240M raised. Sold to HP for $116M. More returns than activations.</div></div>
+      <div class="tomb"><div class="cross">✝</div><div class="rip">R . I . P</div><div class="name">Rabbit R1</div><div class="years">2024 — 2024</div><div class="cause">Sold ~100K. Active users collapsed &gt;90% after reviews.</div></div>
+    </div>
+    <p class="small reveal d3" style="margin-top: 14px; text-align: center;">
+      Only Ray-Ban Meta has worked — because Meta subsidizes losses to harvest AI training data at a scale we can't approach.
+    </p>
+  </div>
+  <div class="bottombar"><span>The graveyard</span><div class="progress"></div><span>05 / 10</span></div>
+</section>
+
+<!-- ============== 05 · THE PIVOT ============== -->
+<section class="slide" data-title="The Pivot">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 05 · THE DIRECTION</div>
+    <div class="right"><span class="num">06 / 10</span><span>WHAT WE DO INSTEAD</span></div>
+  </div>
+  <div class="fill center stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow sage">The one path that survives scrutiny — and matches Ayman's own suggestion</div>
+      <h2 class="title">Stay in dementia.<br>Change <em class="s">who we sell to.</em></h2>
+    </div>
+    <div class="reveal d2"><div class="verdict good hero">CAREGIVER · FIRST</div></div>
+    <p class="body reveal d3" style="font-size: 19px; max-width: 68ch;">
+      Stop selling glasses to dementia patients. Start selling peace-of-mind software to their worried adult children. Let the glasses become the upsell, not the entry product.
+    </p>
+  </div>
+  <div class="bottombar"><span>The pivot</span><div class="progress"></div><span>06 / 10</span></div>
+</section>
+
+<!-- ============== 06 · BEFORE / AFTER ============== -->
+<section class="slide" data-title="Before / After">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 06 · WHAT CHANGES</div>
+    <div class="right"><span class="num">07 / 10</span><span>BEFORE · AFTER</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow">One small change. Every constraint flips.</div>
+      <h2 class="title">Same team. Same codebase. <em>Different buyer.</em></h2>
+    </div>
+    <div class="split reveal d2">
+      <div>
+        <h5 class="x">× BEFORE — PATIENT-FIRST</h5>
+        <div class="head">The patient wears the glasses and learns the app.</div>
+        <ul>
+          <li>Primary user: person with cognitive decline</li>
+          <li>Biggest unknown: will they tolerate wearable tech</li>
+          <li>Buyer ≠ user. Daughter buys, Dad refuses to wear.</li>
+          <li>Hardware-first. $300K+ to do properly.</li>
+          <li>HIPAA blocker on day one</li>
+        </ul>
+      </div>
+      <div>
+        <h5 class="c">✓ AFTER — CAREGIVER-FIRST</h5>
+        <div class="head">The adult child uses the app to care for their parent.</div>
+        <ul>
+          <li>Primary user: adult child, 45–65, tech-literate, has income</li>
+          <li>Buyer = user = decision-maker. Same person.</li>
+          <li>Software-only launch. Hardware as V2 upsell.</li>
+          <li>Can start selling in &lt;3 months</li>
+          <li>Non-PHI features ship first. HIPAA layers in.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small reveal d3">The caregiver app is already the stronger half of our codebase. We've been building this product all along — we just led with the glasses.</p>
+  </div>
+  <div class="bottombar"><span>Before / after</span><div class="progress"></div><span>07 / 10</span></div>
+</section>
+
+<!-- ============== 07 · THREE REVENUE STREAMS ============== -->
+<section class="slide" data-title="Three Streams">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 07 · BUSINESS MODEL</div>
+    <div class="right"><span class="num">08 / 10</span><span>ONE CUSTOMER · THREE STREAMS</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow accent">Each stream feeds the next</div>
+      <h2 class="title">One customer. <em>Three ways to pay us.</em></h2>
+    </div>
+    <div class="streams reveal d2">
+      <div>
+        <div class="num">01</div>
+        <div class="h">Caregiver SaaS</div>
+        <div class="d">$29/mo family plan. Routines, meds, AI assistant, care-team coordination, notes. Low friction, fast to ship.</div>
+        <div class="amt">$348 / family / yr</div>
+      </div>
+      <div>
+        <div class="num">02</div>
+        <div class="h">Trial recruitment</div>
+        <div class="d">Match opted-in families to nearby Alzheimer's trials. CROs and academic medical centers pay per enrollment.</div>
+        <div class="amt">$500–5,000 / enrollment</div>
+      </div>
+      <div>
+        <div class="num">03</div>
+        <div class="h">Data licensing</div>
+        <div class="d">De-identified behavioral, adherence, cognitive-decline patterns to pharma. Explicit consent.</div>
+        <div class="amt">$50–500 / pt / yr</div>
+      </div>
+    </div>
+    <p class="small reveal d3" style="margin-top: 14px;">
+      Each caregiver becomes a <b style="color:var(--cream);">$1,500–3,500 annual opportunity</b> instead of $348. Same sign-up. Three times the revenue ceiling.
+    </p>
+  </div>
+  <div class="bottombar"><span>Three streams</span><div class="progress"></div><span>08 / 10</span></div>
+</section>
+
+<!-- ============== 08 · DATA: YES, BUT ============== -->
+<section class="slide" data-title="Data strategy">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 08 · DATA STRATEGY</div>
+    <div class="right"><span class="num">09 / 10</span><span>THE LINE WE WILL NOT CROSS</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow accent">Two tiers — one decided, one I want your take on</div>
+      <h2 class="title">What we sell. <em>What's on the table.</em></h2>
+    </div>
+    <div class="dodont reveal d2">
+      <div class="yes">
+        <h4><span class="mk">✓</span>Clear path · sell with consent</h4>
+        <ul>
+          <li>Medication adherence patterns over time</li>
+          <li>Task completion and routine stability</li>
+          <li>Caregiver-reported symptom progression</li>
+          <li>Sleep and activity rhythms (aggregate)</li>
+          <li>Cognitive-decline trajectory markers</li>
+        </ul>
+        <p class="small" style="margin-top:12px;">De-identified via HIPAA Safe Harbor. Opt-in, paid per cohort. Buyer: pharma + CROs. Real comps: Evidation ($153M), Flatiron ($1.9B exit), Tempus (~$8B).</p>
+      </div>
+      <div class="no" style="--coral: var(--amber);">
+        <h4 style="color: var(--amber);"><span class="mk">?</span>On the table · want your opinion</h4>
+        <ul>
+          <li>Facial recognition vectors (with consent)</li>
+          <li>Photos of recognized people</li>
+          <li>Raw camera frames from the glasses</li>
+          <li>Real-time location traces</li>
+        </ul>
+        <p class="small" style="margin-top:12px;">
+          <b style="color:var(--cream);">Upside:</b> potentially far higher value per user than behavioral data — pharma, insurers, AI training buyers.<br>
+          <b style="color:var(--cream);">Risk:</b> classified as biometric under Illinois BIPA ($650M Meta settlement) and Texas CUBI ($1.4B Meta fine). Even with consent, consent-flow defects = class actions. Do we think the upside justifies building the compliance infrastructure, or do we keep all of this on-device?
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="bottombar"><span>Data strategy</span><div class="progress"></div><span>09 / 10</span></div>
+</section>
+
+<!-- ============== 09 · PLAN + OUTCOME ============== -->
+<section class="slide" data-title="Plan + Outcome">
+  <div class="topbar">
+    <div class="left"><span class="dot"></span> 09 · EXECUTION</div>
+    <div class="right"><span class="num">10 / 10</span><span>90 DAYS · 12 MONTHS</span></div>
+  </div>
+  <div class="fill stack-lg">
+    <div class="reveal d1 stack-sm">
+      <div class="eyebrow accent">Concrete, dated, checkable</div>
+      <h2 class="title">The next ninety days. <em>One year out.</em></h2>
+    </div>
+    <div class="timeline reveal d2">
+      <div>
+        <div class="m">Month 01 · Apr — May</div>
+        <div class="t">Find the first customer.</div>
+        <ul>
+          <li>Reposition app as caregiver-first (copy + onboarding)</li>
+          <li>Ship paid tier on Stripe · $29/mo</li>
+          <li>Cold-email 15 CROs + UT Southwestern contact</li>
+          <li>Landing page: "Find a dementia trial near you"</li>
+          <li>$2K Meta ad test · spouses age 55–75</li>
+        </ul>
+      </div>
+      <div>
+        <div class="m">Month 02 · Jun</div>
+        <div class="t">Convert and instrument.</div>
+        <ul>
+          <li>Convert best CRO LOI → paid pilot ($500+/enrollment)</li>
+          <li>Add light MoCA-style screener in the app</li>
+          <li>First 10 paying families</li>
+          <li>Start HIPAA readiness work · FDA wellness opinion</li>
+        </ul>
+      </div>
+      <div>
+        <div class="m">Month 03 · Jul</div>
+        <div class="t">Prove the funnel.</div>
+        <ul>
+          <li>First 10 trial enrollments · $5–15K revenue booked</li>
+          <li>Document unit economics per stream</li>
+          <li>Open one pharma conversation for data licensing</li>
+          <li>Founder decision: extend runway on revenue, or raise on traction</li>
+        </ul>
+      </div>
+    </div>
+    <div class="reveal d3" style="display:flex; align-items: baseline; justify-content: space-between; margin-top: 22px; border-top: 1px solid var(--rule); padding-top: 22px;">
+      <div>
+        <div class="eyebrow sage">Realistic 12-month revenue</div>
+        <div style="font-family:var(--serif);font-weight:300;font-style:italic;font-size:72px;line-height:1;color:var(--cream);letter-spacing:-0.03em;margin-top:8px;">
+          <span style="font-size:0.5em;vertical-align:0.6em;color:var(--muted);">$</span>50–200<span style="font-size:0.4em;color:var(--amber);vertical-align:0.5em;font-style:normal;">K</span>
+        </div>
+      </div>
+      <p class="small" style="max-width: 42ch; text-align: right;">Satisfies Ayman's 8-month directive. Revenue-backed story for a real seed round. Hardware V2 fundable on a proven funnel — not as a blind hardware bet.</p>
+    </div>
+  </div>
+  <div class="bottombar"><span>Plan · outcome</span><div class="progress"></div><span>10 / 10</span></div>
+</section>
+
+</div>
+
+<div id="voiceHint" style="display:none; position: fixed; bottom: 58px; left: 20px; z-index: 10002; max-width: 360px; padding: 14px 16px 14px 18px; background: rgba(14,11,24,0.94); border: 1px solid var(--amber); border-left-width: 3px; border-radius: 4px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-family: var(--sans); color: var(--cream-2); font-size: 13px; line-height: 1.5; align-items: flex-start; gap: 12px;">
+  <div style="flex:1;">
+    <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px;">Sounds robotic?</div>
+    <div>Your Mac's premium voices aren't installed yet. Open <b style="color:var(--cream);">System Settings → Accessibility → Spoken Content → System Voice → Manage Voices</b>. Search for and download <b style="color:var(--cream);">Ava (Premium)</b>, <b style="color:var(--cream);">Zoe (Premium)</b>, or <b style="color:var(--cream);">Evan (Premium)</b>. Then refresh this page.</div>
+    <div style="margin-top: 8px; font-size: 12px; color: var(--muted);">Tip: if you're in Chrome, try opening this deck in <b style="color:var(--cream-2);">Safari</b> — Safari exposes Apple's new Siri neural voices, which sound the most natural.</div>
+  </div>
+  <button onclick="document.getElementById('voiceHint').style.display='none'" style="background: transparent; border: 1px solid var(--rule); color: var(--muted); width: 20px; height: 20px; border-radius: 999px; font-family: var(--mono); font-size: 12px; cursor: pointer; padding: 0; line-height: 1;">×</button>
+</div>
+
+<div class="narrator" id="narrator">
+  <button id="narratorBtn" title="Play / pause narration (P)" aria-label="Play narration">
+    <svg class="icon" id="narratorIcon" viewBox="0 0 12 12" aria-hidden="true">
+      <polygon points="2,1 11,6 2,11"></polygon>
+    </svg>
+  </button>
+  <span id="narratorLabel">Narrate</span>
+  <select class="voice" id="voiceSelect" title="Pick a voice (V)"></select>
+  <label class="toggle on" id="autoToggle" title="Auto-advance when narration finishes (A)">
+    <span class="box"></span>
+    <span>Auto</span>
+  </label>
+</div>
+
+<div class="hint">
+  <kbd>←</kbd><kbd>→</kbd> space · <kbd>P</kbd> play · <kbd>V</kbd> voice · <kbd>A</kbd> auto · <kbd>F</kbd> full
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+
+  function show(n) {
+    // Stop any ongoing narration on slide change
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    setSpeakingState(false);
+
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    const progress = ((i + 1) / slides.length) * 100;
+    document.querySelectorAll('.progress').forEach(p => p.style.setProperty('--p', progress + '%'));
+    location.hash = 's' + (i + 1);
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'SELECT') return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+      else document.exitFullscreen().catch(()=>{});
+    }
+    else if (e.key.toLowerCase() === 'p') { e.preventDefault(); toggleNarrate(); }
+    else if (e.key.toLowerCase() === 'v') { e.preventDefault(); cycleVoice(); }
+    else if (e.key.toLowerCase() === 'a') { e.preventDefault(); toggleAuto(); }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('a, button, kbd, select, label, .narrator')) return;
+    const x = e.clientX / window.innerWidth;
+    if (x > 0.55) next();
+    else if (x < 0.25) prev();
+  });
+
+  // ---- Narration ----
+  const narration = [
+    // 01 Cover
+    "Welcome. This is the Vela pivot — a strategic reassessment of our company direction following the advisor sync with Ayman Hassen on April 11th, 2026. Over the next ten slides we'll walk through what the data actually says, what we should do next, and what we absolutely should not.",
+    // 02 Ayman
+    "Let's start with the six things Ayman told us that should change our plan. Importantly, he did not say we can't validate — he said the opposite: prove utility first, then raise. One. Don't raise funding for eight months. Two. Dementia patients on fixed income can't afford our pricing, so they're the wrong buyer. Three. Hardware is risky without validation. Four. Meta is shipping similar features — we should think about whether to own the software layer on their platform. Five. The insurance path via new CPT codes is a thirteen to eighteen month, million-dollar trap. And six, the most important — adult children of dementia patients may be the real customer, not the patients themselves.",
+    // 03 Buyer
+    "Here's why that last point matters. On the left, the dementia patient — about eighteen hundred dollars a month on fixed income. Can't absorb our price. Ayman is right. On the right, their adult child, typically aged forty five to sixty five. Median household net worth of three hundred sixty four to four hundred ten thousand dollars. An estimated eight to twelve million U.S. households have an aging parent with cognitive decline and the discretionary capacity for a thousand dollars or more a year on care tech. And we have proven comps. Grandpad charges seventy nine dollars a month to families and has roughly a hundred thousand paying subscribers. Honor does thirty plus dollars an hour in family-paid home care, three hundred twenty five million raised. Homethrive raised over forty million as a caregiver concierge. Every profitable dementia-tech company has an intermediary payer. The adult child is ours.",
+    // 04 Three paths rejected
+    "We pressure-tested four strategic paths. Three don't work. Path A, keep selling glasses to patients directly — viable but misframed. The market is real, but we need an intermediary payer. Path B, software only on Meta's platform — likely a trap. Ray-Ban Meta has no third-party SDK, no developer program, no business associate agreement for HIPAA. Meta's own Orion demos already show face identification. We would be racing Meta's accessibility team on Meta's platform. Path C, cheap forty dollar glasses with data sales — fundamentally broken. Every consumer camera wearable under two hundred dollars has failed. Data wholesale is worth one to three dollars per user per month. Our model would need ten to fifty times that. And one BIPA class action ends a team of our size on day one.",
+    // 05 Graveyard
+    "Here's the graveyard. Google Glass — fifteen hundred dollar price, killed in two years, poisoned the category for a decade. Snap Spectacles — forty million dollar inventory write-off on generation one, cumulative hardware losses over three billion. Humane Ai Pin — raised two hundred forty million, sold to HP for one hundred sixteen million, more returns than activations. Rabbit R1 — sold about a hundred thousand units, active users collapsed over ninety percent after reviews. Only Ray-Ban Meta has worked, and only because Meta subsidizes billions in losses to harvest AI training data at a scale we can't approach. Better-funded teams than us have burned hundreds of millions trying.",
+    // 06 The Pivot
+    "So here's the direction. Stay in dementia. Change who we sell to. Caregiver-first. Stop selling glasses to dementia patients. Start selling peace-of-mind software to their worried adult children. Let the glasses become the upsell, not the entry product. This is consistent with Ayman's own suggestion — he pointed us at the adult child buyer. The data backs it up.",
+    // 07 Before/After
+    "Same team. Same codebase. Different buyer. Before — patient-first. The patient wears the glasses. The biggest unknown is whether they tolerate wearable tech. The daughter buys but Dad refuses to wear. Hardware-first needs three hundred thousand dollars or more to do properly. HIPAA blocks us on day one. After — caregiver-first. The adult child is the primary user. Buyer equals user equals decision-maker. Software-only launch with hardware as V2. We can start selling in under three months. Non-PHI features ship first, HIPAA layers in. The caregiver app is already the stronger half of our codebase. We've been building this product all along. We just led marketing with the glasses.",
+    // 08 Three Streams
+    "One customer. Three ways they pay us. Stream one, caregiver SaaS — twenty nine dollars a month family plan. Routines, meds, AI assistant, care team coordination. Three hundred forty eight dollars per family per year. Stream two, trial recruitment — we match opted-in families to nearby Alzheimer's trials. CROs and academic medical centers pay five hundred to five thousand dollars per enrollment. Stream three, data licensing — de-identified behavioral, adherence, and cognitive-decline data to pharma, with explicit consent. Fifty to five hundred dollars per patient per year. Each caregiver becomes a fifteen hundred to thirty five hundred dollar annual opportunity instead of three forty eight. Same sign-up. Three times the revenue ceiling.",
+    // 09 Data strategy
+    "Two tiers. One decided. One I want your take on. Clear path, sell with consent — medication adherence, task completion, symptom progression, sleep rhythms, cognitive decline trajectory. De-identified via HIPAA Safe Harbor. Real comps: Evidation raised one hundred fifty three million. Flatiron exited to Roche for one point nine billion. Tempus is valued around eight billion. On the table, want your opinion. Do we also sell facial recognition vectors, photos of recognized people, raw camera frames, and real-time location traces? Upside — potentially far higher value per user. Risk — classified as biometric under Illinois BIPA where Meta paid six hundred fifty million, and Texas CUBI where Meta paid one point four billion. Even with consent, consent-flow defects invite class actions. Do we think the upside justifies the compliance infrastructure, or do we keep all of this strictly on-device? That's for the team to decide.",
+    // 10 Plan + Outcome
+    "The next ninety days. Concrete, dated, checkable. Month one, April to May — find the first customer. Reposition the app as caregiver-first. Ship a twenty nine dollar a month paid tier on Stripe. Cold-email fifteen CROs plus our UT Southwestern contact. Landing page — find a dementia trial near you. Run two thousand dollars of Meta ads targeting spouses aged fifty five to seventy five. Month two, June — convert and instrument. Take the best CRO letter of intent and turn it into a paid pilot at five hundred dollars or more per enrollment. Add a light cognitive screener in the app to pre-qualify trial candidates. Hit our first ten paying families. Start HIPAA readiness and kick off the FDA General Wellness opinion. Month three, July — prove the funnel. First ten trial enrollments, five to fifteen thousand dollars in revenue booked. Document unit economics per stream. Open a pharma conversation for data licensing. Then we decide — extend runway on revenue, or raise seed on traction. Realistic twelve month revenue: fifty to two hundred thousand dollars. That satisfies Ayman's eight month directive, it's a revenue-backed story for a real seed round, and hardware V2 becomes fundable on a proven funnel, not a blind hardware bet. That's the plan. Over to you."
+  ];
+
+  const narratorEl = document.getElementById('narrator');
+  const narratorBtn = document.getElementById('narratorBtn');
+  const narratorIcon = document.getElementById('narratorIcon');
+  const narratorLabel = document.getElementById('narratorLabel');
+  const voiceSelect = document.getElementById('voiceSelect');
+  const autoToggle = document.getElementById('autoToggle');
+
+  let voices = [];
+  let autoAdvance = true;
+  let speaking = false;
+
+  const ICON_PLAY = '<polygon points="2,1 11,6 2,11"></polygon>';
+  const ICON_PAUSE = '<rect x="2" y="1" width="3" height="10"></rect><rect x="7" y="1" width="3" height="10"></rect>';
+
+  function setSpeakingState(s) {
+    speaking = s;
+    narratorEl.classList.toggle('speaking', s);
+    narratorIcon.innerHTML = s ? ICON_PAUSE : ICON_PLAY;
+    narratorLabel.textContent = s ? 'Speaking' : 'Narrate';
+  }
+
+  // Preferred voices (highest-quality neural / premium first)
+  const PREFERRED = [
+    // Apple's newest Siri neural voices (best on macOS Sonoma+ in Safari)
+    'Siri Voice 4', 'Siri Voice 3', 'Siri Voice 2', 'Siri Voice 1',
+    // Microsoft Edge / Azure neural voices
+    'Microsoft Ava Online (Natural) - English (United States)',
+    'Microsoft Aria Online (Natural) - English (United States)',
+    'Microsoft Jenny Online (Natural) - English (United States)',
+    'Microsoft Emma Online (Natural) - English (United States)',
+    'Microsoft Guy Online (Natural) - English (United States)',
+    'Microsoft Andrew Online (Natural) - English (United States)',
+    // Chrome's Google voice
+    'Google US English',
+    // Apple Premium / Enhanced (high quality after download)
+    'Ava (Premium)', 'Zoe (Premium)', 'Evan (Premium)', 'Nathan (Premium)',
+    'Joelle (Premium)', 'Allison (Premium)', 'Tom (Premium)', 'Noelle (Premium)',
+    'Ava (Enhanced)', 'Zoe (Enhanced)', 'Evan (Enhanced)', 'Nathan (Enhanced)',
+    'Joelle (Enhanced)', 'Allison (Enhanced)', 'Tom (Enhanced)', 'Samantha (Enhanced)',
+    // Fallbacks
+    'Ava', 'Zoe', 'Samantha', 'Allison', 'Tom', 'Karen', 'Moira'
+  ];
+
+  // Known robotic/legacy macOS voices we should hide or deprioritize
+  const LEGACY_BAD = ['Albert', 'Bad News', 'Bahh', 'Bells', 'Boing', 'Bubbles', 'Cellos', 'Deranged', 'Fred', 'Good News', 'Hysterical', 'Jester', 'Organ', 'Pipe Organ', 'Ralph', 'Superstar', 'Trinoids', 'Whisper', 'Wobble', 'Zarvox', 'Bruce', 'Junior', 'Kathy', 'Princess', 'Vicki', 'Victoria', 'Agnes'];
+
+  function qualityRank(name) {
+    if (name.includes('(Premium)') || name.includes('Natural') || name.startsWith('Siri Voice')) return 0;
+    if (name.includes('(Enhanced)')) return 1;
+    if (name === 'Google US English' || name.startsWith('Microsoft')) return 2;
+    if (LEGACY_BAD.includes(name)) return 9;
+    return 3;
+  }
+
+  function loadVoices() {
+    if (!window.speechSynthesis) return;
+    voices = speechSynthesis.getVoices().filter(v =>
+      v.lang.startsWith('en') && !LEGACY_BAD.includes(v.name)
+    );
+    voices.sort((a, b) => {
+      const pa = PREFERRED.indexOf(a.name);
+      const pb = PREFERRED.indexOf(b.name);
+      if (pa !== -1 && pb !== -1) return pa - pb;
+      if (pa !== -1) return -1;
+      if (pb !== -1) return 1;
+      const qa = qualityRank(a.name), qb = qualityRank(b.name);
+      if (qa !== qb) return qa - qb;
+      if (a.lang === 'en-US' && b.lang !== 'en-US') return -1;
+      if (b.lang === 'en-US' && a.lang !== 'en-US') return 1;
+      return a.name.localeCompare(b.name);
+    });
+    voiceSelect.innerHTML = '';
+    voices.forEach((v, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      let label = v.name
+        .replace(' (Premium)', ' ★')
+        .replace(' (Enhanced)', ' ◆')
+        .replace('Microsoft ', '')
+        .replace(' Online (Natural) - English (United States)', ' ◆◆')
+        .replace('Google US English', 'Google ◆');
+      opt.textContent = label;
+      voiceSelect.appendChild(opt);
+    });
+    const saved = localStorage.getItem('velaDeckVoice');
+    if (saved !== null && voices[saved]) {
+      voiceSelect.value = saved;
+    }
+    // Show hint if the top voice is still only a basic system voice
+    const topIsBasic = voices.length && qualityRank(voices[0].name) >= 3;
+    const hintEl = document.getElementById('voiceHint');
+    if (hintEl) hintEl.style.display = topIsBasic ? 'flex' : 'none';
+  }
+  if (window.speechSynthesis) {
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  voiceSelect.addEventListener('change', () => {
+    localStorage.setItem('velaDeckVoice', voiceSelect.value);
+    if (speaking) { speechSynthesis.cancel(); setSpeakingState(false); speakCurrent(); }
+  });
+
+  function getVoice() {
+    const idx = parseInt(voiceSelect.value || '0', 10);
+    return voices[idx] || voices[0];
+  }
+
+  function speakCurrent() {
+    if (!window.speechSynthesis) return;
+    const text = narration[i];
+    if (!text) return;
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const v = getVoice();
+    if (v) utter.voice = v;
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    utter.onstart = () => setSpeakingState(true);
+    utter.onend = () => {
+      setSpeakingState(false);
+      if (autoAdvance && i < slides.length - 1) setTimeout(next, 600);
+    };
+    utter.onerror = () => setSpeakingState(false);
+    speechSynthesis.speak(utter);
+  }
+
+  function toggleNarrate() {
+    if (!window.speechSynthesis) return;
+    if (speaking) {
+      speechSynthesis.cancel();
+      setSpeakingState(false);
+    } else {
+      speakCurrent();
+    }
+  }
+
+  function cycleVoice() {
+    if (!voices.length) return;
+    const n = (parseInt(voiceSelect.value || '0', 10) + 1) % voices.length;
+    voiceSelect.value = n;
+    voiceSelect.dispatchEvent(new Event('change'));
+  }
+
+  function toggleAuto() {
+    autoAdvance = !autoAdvance;
+    autoToggle.classList.toggle('on', autoAdvance);
+  }
+
+  narratorBtn.addEventListener('click', toggleNarrate);
+  autoToggle.addEventListener('click', toggleAuto);
+
+  // When the tab is hidden, cancel speech so it doesn't replay weirdly
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && speaking) { speechSynthesis.cancel(); setSpeakingState(false); }
+  });
+
+  const m = location.hash.match(/s(\d+)/);
+  show(m ? parseInt(m[1], 10) - 1 : 0);
+</script>
+</body>
+</html>

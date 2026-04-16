@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
-import { requireSeat } from "../server-core/seatResolver";
+import { requirePatientAccess } from "../server-core/seatResolver";
 
 export const patternSchema = z.object({
   title: z.string().min(1).max(200),
@@ -16,7 +16,7 @@ export const patternSchema = z.object({
 
 const router = Router();
 
-router.get("/:patientId/patterns", authMiddleware, requireSeat, async (req, res) => {
+router.get("/:patientId/patterns", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
     const rows = await db.collection("patterns").find({ patientId: req.params.patientId })
@@ -26,7 +26,7 @@ router.get("/:patientId/patterns", authMiddleware, requireSeat, async (req, res)
 });
 
 // Caregivers can dismiss a pattern
-router.post("/:patientId/patterns/:patternId/dismiss", authMiddleware, requireSeat, async (req, res) => {
+router.post("/:patientId/patterns/:patternId/dismiss", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const { ObjectId } = await import("mongodb");
     const db = getDb();

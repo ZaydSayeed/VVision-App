@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { createReadStream } from "fs";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
-import { requireSeat } from "../server-core/seatResolver";
+import { requirePatientAccess } from "../server-core/seatResolver";
 
 export const visitCreateSchema = z.object({
   providerName: z.string().min(1).max(200),
@@ -15,7 +15,7 @@ export const visitCreateSchema = z.object({
 
 const router = Router();
 
-router.post("/:patientId/visits", authMiddleware, requireSeat, async (req, res) => {
+router.post("/:patientId/visits", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = visitCreateSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
@@ -31,7 +31,7 @@ router.post("/:patientId/visits", authMiddleware, requireSeat, async (req, res) 
   } catch (err) { res.status(500).json({ detail: "Internal server error" }); }
 });
 
-router.get("/:patientId/visits", authMiddleware, requireSeat, async (req, res) => {
+router.get("/:patientId/visits", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
     const upcoming = await db.collection("visits").find({
@@ -41,7 +41,7 @@ router.get("/:patientId/visits", authMiddleware, requireSeat, async (req, res) =
   } catch (err) { res.status(500).json({ detail: "Internal server error" }); }
 });
 
-router.delete("/:patientId/visits/:visitId", authMiddleware, requireSeat, async (req, res) => {
+router.delete("/:patientId/visits/:visitId", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
     await db.collection("visits").deleteOne({ _id: new ObjectId(req.params.visitId), patientId: req.params.patientId });
@@ -49,7 +49,7 @@ router.delete("/:patientId/visits/:visitId", authMiddleware, requireSeat, async 
   } catch (err) { res.status(500).json({ detail: "Internal server error" }); }
 });
 
-router.get("/:patientId/visits/:visitId/prep.pdf", authMiddleware, requireSeat, async (req, res) => {
+router.get("/:patientId/visits/:visitId/prep.pdf", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
     const v = await db.collection("visits").findOne({ _id: new ObjectId(req.params.visitId), patientId: req.params.patientId });

@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import path from "path";
 import fs from "fs";
 import { authMiddleware } from "../server-core/security";
-import { requireSeat } from "../server-core/seatResolver";
+import { requirePatientAccess } from "../server-core/seatResolver";
 import { getDb } from "../server-core/database";
 import { buildReportBuffer, ReportInput, ReportBiomarker, ReportCheckInLog } from "../server-core/reportPdf";
 import { sendReportEmail } from "../server-core/reportEmail";
@@ -168,7 +168,7 @@ async function gatherAndBuild(patientId: string, startDate: string, endDate: str
 
 // ─── POST /api/profiles/:patientId/report — generate + return PDF ──────────
 
-router.post("/:patientId/report", authMiddleware, requireSeat, async (req: Request, res: Response) => {
+router.post("/:patientId/report", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
   const parsed = reportSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
@@ -186,7 +186,7 @@ router.post("/:patientId/report", authMiddleware, requireSeat, async (req: Reque
 
 // ─── POST /api/profiles/:patientId/report/email — generate + email ─────────
 
-router.post("/:patientId/report/email", authMiddleware, requireSeat, async (req: Request, res: Response) => {
+router.post("/:patientId/report/email", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
   const parsed = emailReportSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   if (!ObjectId.isValid(parsed.data.doctorId)) { res.status(400).json({ detail: "Invalid doctor id" }); return; }
@@ -219,7 +219,7 @@ router.post("/:patientId/report/email", authMiddleware, requireSeat, async (req:
 
 const REPORTS_DIR = path.join(process.cwd(), "uploads", "reports");
 
-router.post("/:patientId/report/link", authMiddleware, requireSeat, async (req: Request, res: Response) => {
+router.post("/:patientId/report/link", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
   const parsed = reportSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {

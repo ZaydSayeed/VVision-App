@@ -24,6 +24,9 @@ export async function summarizeLog(patientId: string, log: CheckInLog): Promise<
     method: "POST",
     body: JSON.stringify({ logId: log.id, content: log.content, capturedAt: log.capturedAt }),
   });
-  if (!res.ok) throw new Error(`Failed to summarize: ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Summarize failed (${res.status}). ${detail}`);
+  }
   return res.json();
 }

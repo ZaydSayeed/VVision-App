@@ -18,7 +18,10 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
         "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
-        "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning."
+        "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning.",
+        "UIBackgroundModes": ["fetch", "processing"],
+        "NSHealthShareUsageDescription": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing.",
+        "NSHealthUpdateUsageDescription": "Vela does not write to your health data."
       }
     },
     "android": {
@@ -41,7 +44,15 @@
     },
     "plugins": [
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "react-native-health",
+        {
+          "isClinicalDataEnabled": false,
+          "healthSharePermission": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing.",
+          "healthUpdatePermission": "Vela does not write to your health data."
+        }
+      ]
     ]
   }
 }

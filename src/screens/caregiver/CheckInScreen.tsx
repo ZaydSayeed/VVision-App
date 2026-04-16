@@ -5,8 +5,6 @@ import { useVoiceSession } from "../../hooks/useVoiceSession";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { usePatients } from "../../hooks/usePatients";
 import { authFetch } from "../../api/authFetch";
-import { captureGaitWindow } from "../../lib/biomarkers/gait";
-import { queueEvent, flush } from "../../lib/eventBatcher";
 
 export default function CheckInScreen({ navigation }: any) {
   const { patientId: defaultPatientId } = useCurrentProfile();
@@ -37,17 +35,6 @@ export default function CheckInScreen({ navigation }: any) {
     } catch (e: any) {
       Alert.alert("Save failed", e.message);
     } finally { setSaving(false); }
-  };
-
-  const startWithGait = async () => {
-    // Capture 30s gait window in parallel with voice start — fire-and-forget
-    start();
-    captureGaitWindow(30000).then(async (result) => {
-      if (patientId && result.sampleCount > 0) {
-        await queueEvent({ kind: "gait", capturedAt: new Date().toISOString(), data: result as any, patientId });
-        flush();
-      }
-    }).catch(() => {}); // non-blocking
   };
 
   return (
@@ -108,7 +95,7 @@ export default function CheckInScreen({ navigation }: any) {
         ) : (
           <Pressable
             disabled={!patientId}
-            onPress={startWithGait}
+            onPress={start}
             style={{ flex: 1, backgroundColor: patientId ? "#6366f1" : "#cbd5e1", padding: 18, borderRadius: 14 }}
           >
             <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>

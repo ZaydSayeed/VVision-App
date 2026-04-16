@@ -17,7 +17,7 @@ import { useTheme } from "../context/ThemeContext";
 import { fonts, spacing, radius } from "../config/theme";
 
 export function LoginScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { login, signup } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
@@ -68,34 +68,7 @@ export function LoginScreen() {
       alignItems: "center",
       marginBottom: spacing.xxxl,
     },
-    logoCircle: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: colors.violet50,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: spacing.md,
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.18,
-      shadowRadius: 14,
-      elevation: 5,
-    },
-    logoIcon: { width: 48, height: 48 },
-    logoText: {
-      fontSize: 24,
-      color: colors.text,
-      ...fonts.medium,
-      letterSpacing: 0.3,
-    },
-    tagline: {
-      fontSize: 15,
-      color: colors.muted,
-      ...fonts.regular,
-      marginTop: spacing.xs,
-      textAlign: "center",
-    },
+    brandLogo: { width: 180, height: 220 },
 
     // ── Mode toggle ──────────────────────────────────────────
     modeToggle: {
@@ -246,15 +219,11 @@ export function LoginScreen() {
       >
         {/* Brand */}
         <View style={styles.brandSection}>
-          <View style={styles.logoCircle}>
-            <Image
-              source={require("../../assets/icon.png")}
-              style={styles.logoIcon}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={styles.logoText}>Vela Vision</Text>
-          <Text style={styles.tagline}>Care made calm and simple.</Text>
+          <Image
+            source={isDark ? require("../../assets/logo-stacked-light.png") : require("../../assets/logo-stacked-dark.png")}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Mode toggle */}

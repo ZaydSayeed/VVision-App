@@ -12,7 +12,7 @@ export default function CheckInScreen({ navigation }: any) {
   const { patientId: defaultPatientId } = useCurrentProfile();
   const { patients } = usePatients();
   const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
-  const patientId = selectedPatientId ?? defaultPatientId ?? undefined;
+  const patientId = selectedPatientId ?? defaultPatientId ?? patients[0]?.id;
   const { state, transcript, start, stop } = useVoiceSession(patientId);
   const [saving, setSaving] = useState(false);
 

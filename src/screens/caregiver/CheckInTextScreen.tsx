@@ -14,7 +14,7 @@ export default function CheckInTextScreen({ route, navigation }: any) {
   const { patientId: defaultPatientId } = useCurrentProfile();
   const { patients } = usePatients();
   const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
-  const patientId = selectedPatientId ?? defaultPatientId ?? undefined;
+  const patientId = selectedPatientId ?? defaultPatientId ?? patients[0]?.id;
   const keystrokesRef = useRef<number[]>([]);
   const selectedPatient = patients.find(p => p.id === patientId);
 

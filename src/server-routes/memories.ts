@@ -30,13 +30,14 @@ async function requirePatientAccess(req: Request, res: Response, next: NextFunct
         req.seat = { userId, patientId, role: "primary_caregiver" };
         next(); return;
       }
-      // Also allow the patient themselves
-      const user = await db.collection("users").findOne({ supabase_uid: userId });
-      if (user && String(user.patient_id) === patientId) {
-        req.seat = { userId, patientId, role: "primary_caregiver" };
-        next(); return;
-      }
     }
+  }
+
+  // Fall back to users.patient_id link (same mechanism /api/patients/linked uses)
+  const user = await db.collection("users").findOne({ supabase_uid: userId });
+  if (user && String(user.patient_id) === patientId) {
+    req.seat = { userId, patientId, role: "primary_caregiver" };
+    next(); return;
   }
 
   res.status(403).json({ detail: "No access to this profile" });

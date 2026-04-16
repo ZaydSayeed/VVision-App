@@ -81,7 +81,7 @@ export function SplashScreen({ appReady, onDone }: SplashScreenProps) {
       <Animated.View style={{ transform: [{ scale: Animated.multiply(iconScale, pulseScale) }] }}>
         <View style={styles.iconWrap}>
           <Image
-            source={require("../../assets/icon.png")}
+            source={require("../../assets/logo-flame-dark.png")}
             style={styles.icon}
             resizeMode="contain"
           />
@@ -122,18 +122,13 @@ const styles = StyleSheet.create({
   },
   iconWrap: {
     width: 96,
-    height: 96,
-    borderRadius: 24,
-    overflow: "hidden",
-    shadowColor: colors.violet,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
+    height: 116,
+    alignItems: "center",
+    justifyContent: "center",
   },
   icon: {
     width: 96,
-    height: 96,
+    height: 116,
   },
   wordmark: {
     fontSize: 36,

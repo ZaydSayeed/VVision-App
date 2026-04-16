@@ -47,7 +47,7 @@ const PANEL_W = SCREEN_W * 0.85;
 
 export function RootNavigator() {
   const { user, loading } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { setOffline } = useNetwork();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
@@ -89,8 +89,7 @@ export function RootNavigator() {
       flex: 1, backgroundColor: colors.bg,
       alignItems: "center", justifyContent: "center", gap: 16,
     },
-    splashLogo: { width: 72, height: 72 },
-    splashText: { fontSize: 20, color: colors.violet, ...fonts.medium, letterSpacing: 0.3 },
+    splashLogo: { width: 160, height: 196 },
     visionFab: {
       position: "absolute", bottom: 108, right: 24,
       width: 56, height: 56, borderRadius: 28,
@@ -106,8 +105,11 @@ export function RootNavigator() {
   if (loading) {
     return (
       <View style={styles.splash}>
-        <Image source={require("../../assets/icon.png")} style={styles.splashLogo} resizeMode="contain" />
-        <Text style={styles.splashText}>Vela Vision</Text>
+        <Image
+          source={isDark ? require("../../assets/logo-stacked-light.png") : require("../../assets/logo-stacked-dark.png")}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
       </View>
     );
   }
@@ -117,8 +119,11 @@ export function RootNavigator() {
   if (onboardingDone === null) {
     return (
       <View style={styles.splash}>
-        <Image source={require("../../assets/icon.png")} style={styles.splashLogo} resizeMode="contain" />
-        <Text style={styles.splashText}>Vela Vision</Text>
+        <Image
+          source={isDark ? require("../../assets/logo-stacked-light.png") : require("../../assets/logo-stacked-dark.png")}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
       </View>
     );
   }
@@ -560,7 +565,11 @@ function Header({
     <View style={[headerStyles.wrap, { backgroundColor: colors.bg }]}>
       <View style={[headerStyles.bar, { shadowColor: colors.border }]}>
         <TouchableOpacity style={headerStyles.logo} onPress={onOpenDrawer} activeOpacity={0.8}>
-          <Image source={require("../../assets/icon.png")} style={headerStyles.logoIcon} resizeMode="contain" />
+          <Image
+            source={isDark ? require("../../assets/logo-flame-light.png") : require("../../assets/logo-flame-dark.png")}
+            style={headerStyles.logoIcon}
+            resizeMode="contain"
+          />
           <Text style={[headerStyles.logoText, { color: colors.text }]}>Vela Vision</Text>
         </TouchableOpacity>
 
@@ -601,7 +610,7 @@ const headerStyles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
   },
   logo: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logoIcon: { width: 28, height: 28 },
+  logoIcon: { width: 24, height: 28 },
   logoText: { fontSize: 17, ...fonts.medium, letterSpacing: 0.2 },
   rightRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   bellBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },

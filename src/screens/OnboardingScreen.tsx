@@ -150,7 +150,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           justifyContent: "center",
           paddingHorizontal: spacing.xxxl,
         },
-        logo: { width: 64, height: 64, marginBottom: spacing.xxl },
+        logo: { width: 140, height: 172, marginBottom: spacing.xxl },
         iconCircle: {
           width: 100,
           height: 100,
@@ -339,7 +339,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
                 style={styles.welcomeGradient}
               >
                 <Image
-                  source={require("../../assets/icon.png")}
+                  source={require("../../assets/logo-stacked-light.png")}
                   style={styles.logo}
                   resizeMode="contain"
                 />

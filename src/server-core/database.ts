@@ -34,12 +34,11 @@ export async function connectDb(): Promise<void> {
   await db.collection("visits").createIndex({ patientId: 1, scheduledFor: 1 });
   await db.collection("profile_events").createIndex({ patientId: 1, capturedAt: -1 });
   await db.collection("profile_events").createIndex({ patientId: 1, kind: 1, capturedAt: -1 });
-  const healthReadings = db.collection("patient_health_readings");
-  await healthReadings.createIndex(
+  await db.collection("patient_health_readings").createIndex(
     { patientId: 1, metric: 1, date: 1 },
     { unique: true, name: "patient_metric_date_unique" }
   );
-  await healthReadings.createIndex(
+  await db.collection("patient_health_readings").createIndex(
     { patientId: 1, metric: 1, date: -1 },
     { name: "patient_metric_date_desc" }
   );

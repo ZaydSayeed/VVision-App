@@ -28,6 +28,7 @@ import liveRoutes from "./server-routes/live";
 import patternRoutes from "./server-routes/patterns";
 import visitRoutes from "./server-routes/visits";
 import eventRoutes from "./server-routes/events";
+import doctorRoutes from "./server-routes/doctors";
 
 const app = express();
 
@@ -96,6 +97,7 @@ app.use("/api/live", liveRoutes);
 app.use("/api/profiles", patternRoutes);
 app.use("/api/profiles", visitRoutes);
 app.use("/api/profiles", eventRoutes);
+app.use("/api/profiles", doctorRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

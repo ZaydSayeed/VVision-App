@@ -38,7 +38,7 @@ router.post("/:patientId/doctors", authMiddleware, requireSeat, async (req, res)
       name: parsed.data.name,
       email: parsed.data.email,
       createdAt: new Date().toISOString(),
-      createdBy: (req as any).auth!.userId,
+      createdBy: req.seat!.userId,
     });
     res.status(201).json({ id: String(result.insertedId), name: parsed.data.name, email: parsed.data.email });
   } catch (err: any) {

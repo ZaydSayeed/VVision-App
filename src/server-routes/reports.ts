@@ -40,7 +40,7 @@ async function gatherAndBuild(patientId: string, startDate: string, endDate: str
   let visit: ReportInput["visit"] = null;
   if (visitId && ObjectId.isValid(visitId)) {
     const v = await db.collection("visits").findOne({ _id: new ObjectId(visitId) });
-    if (v) visit = { providerName: v.provider, scheduledFor: v.scheduledFor };
+    if (v) visit = { providerName: v.providerName, scheduledFor: v.scheduledFor };
   }
 
   // Medications (full current list)

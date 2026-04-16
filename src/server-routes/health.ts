@@ -76,4 +76,41 @@ router.get("/:patientId/health/summary", authMiddleware, requirePatientAccess, a
   }
 });
 
+export const trendsQuerySchema = z.object({
+  metric: z.enum(METRICS),
+  range: z.enum(["7d", "30d", "90d"]).default("30d"),
+});
+
+router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
+  const parsed = trendsQuerySchema.safeParse({
+    metric: req.query.metric,
+    range: req.query.range,
+  });
+  if (!parsed.success) {
+    res.status(400).json({ detail: parsed.error.issues[0].message });
+    return;
+  }
+  try {
+    const db = getDb();
+    const col = db.collection("patient_health_readings");
+    const patientId = String(req.params.patientId);
+    const days = parsed.data.range === "7d" ? 7 : parsed.data.range === "30d" ? 30 : 90;
+    const since = new Date();
+    since.setDate(since.getDate() - days + 1);
+    const sinceIso = since.toISOString().slice(0, 10);
+    const rows = await col
+      .find({ patientId, metric: parsed.data.metric, date: { $gte: sinceIso } })
+      .sort({ date: 1 })
+      .toArray();
+    res.json({
+      metric: parsed.data.metric,
+      range: parsed.data.range,
+      points: rows.map((r) => ({ date: r.date, value: r.value })),
+    });
+  } catch (err) {
+    console.error("[health/trends]", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 export default router;

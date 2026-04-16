@@ -14,6 +14,7 @@ import { usePatients } from "../../hooks/usePatients";
 import { PatientSummary } from "../../types";
 import { fonts, spacing, radius } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
+import { PatientHealthStrip } from "../../components/health/PatientHealthStrip";
 
 interface Props {
   onSelectPatient: (patient: PatientSummary) => void;
@@ -336,6 +337,8 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
                       <AnimatedBar ratio={medRatio} color={colors.amber} />
                     </View>
                   </View>
+
+                  <PatientHealthStrip patientId={String(patient.id)} />
                 </View>
               </TouchableOpacity>
             );

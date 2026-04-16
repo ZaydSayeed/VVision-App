@@ -11,6 +11,7 @@ import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
 import { setAuthToken, setOnAuthExpired, syncProfile } from "../api/client";
 import { setAuthFetchToken } from "../api/authFetch";
+import { syncNow, startBackgroundObservers, stopBackgroundObservers } from "../services/healthSync";
 
 interface AuthContextValue {
   user: AppUser | null;
@@ -73,6 +74,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
   }, [resetInactivityTimer]);
+
+  // HealthKit sync: fire initial sync + background observers when a patient logs in
+  useEffect(() => {
+    if (!user || user.role !== "patient" || !user.patient_id) return;
+    const pid = user.patient_id;
+
+    syncNow(pid).catch((e) => console.warn("[health] initial sync failed", e));
+    startBackgroundObservers(pid);
+
+    const sub = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") syncNow(pid).catch(() => {});
+    });
+
+    return () => {
+      sub.remove();
+      stopBackgroundObservers();
+    };
+  }, [user]);
 
   // Restore session on mount
   useEffect(() => {

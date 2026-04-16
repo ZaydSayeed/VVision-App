@@ -19,7 +19,10 @@
         "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
         "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
         "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning.",
-        "UIBackgroundModes": ["fetch", "processing"],
+        "UIBackgroundModes": [
+          "fetch",
+          "processing"
+        ],
         "NSHealthShareUsageDescription": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing.",
         "NSHealthUpdateUsageDescription": "Vela does not write to your health data."
       }
@@ -40,7 +43,10 @@
     "extra": {
       "apiBaseUrl": "https://vvision-app.onrender.com",
       "supabaseUrl": "https://xqqihmzbbqztfrvsbsnx.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcWlobXpiYnF6dGZydnNic254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTgzMjAsImV4cCI6MjA5MDQ3NDMyMH0.bstOKmv5I8kLmfKOtT2Ll58muLw4anhitQflzD1Iz4Y"
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxcWlobXpiYnF6dGZydnNic254Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTgzMjAsImV4cCI6MjA5MDQ3NDMyMH0.bstOKmv5I8kLmfKOtT2Ll58muLw4anhitQflzD1Iz4Y",
+      "eas": {
+        "projectId": "3c37394e-ce0d-4209-ae60-662d0bcac673"
+      }
     },
     "plugins": [
       "expo-font",
@@ -53,6 +59,7 @@
           "healthUpdatePermission": "Vela does not write to your health data."
         }
       ]
-    ]
+    ],
+    "owner": "haadi.siddiqui"
   }
 }

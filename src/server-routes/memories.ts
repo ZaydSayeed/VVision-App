@@ -61,9 +61,8 @@ router.post("/:patientId/memory", authMiddleware, requirePatientAccess, async (r
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
     const metadata = { ...parsed.data.metadata, author_user_id: req.seat!.userId };
-    const result = await addMemory({ patientId: String(req.params.patientId), content: parsed.data.content, metadata });
 
-    // Persist raw check-in text in MongoDB for the logs view
+    // Persist raw check-in text in MongoDB first — this is the user-facing record
     const source = parsed.data.metadata?.source as string | undefined;
     if (source === "voice_check_in" || source === "text_check_in") {
       const db = getDb();
@@ -75,6 +74,14 @@ router.post("/:patientId/memory", authMiddleware, requirePatientAccess, async (r
         createdAt: new Date().toISOString(),
         authorUserId: req.seat!.userId,
       });
+    }
+
+    // Best-effort Mem0 write for semantic memory; don't fail the request if it errors
+    let result: unknown = null;
+    try {
+      result = await addMemory({ patientId: String(req.params.patientId), content: parsed.data.content, metadata });
+    } catch (memErr: any) {
+      console.warn("mem0 add skipped:", memErr.message);
     }
 
     res.status(201).json({ ok: true, result });

@@ -160,6 +160,23 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </View>
             )}
 
+            {/* Sensors (caregiver only) */}
+            {user?.role === "caregiver" && (
+              <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity
+                  style={styles.row}
+                  activeOpacity={0.7}
+                  onPress={() => { onClose(); navigation.navigate("SensorSettings"); }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="pulse-outline" size={20} color={colors.violet} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>Sensors</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Sign out */}
             <View style={styles.section}>
               <TouchableOpacity

@@ -23,8 +23,7 @@ import { PatientTabNavigator } from "./PatientTabNavigator";
 import { HelpHistoryScreen } from "../screens/caregiver/HelpHistoryScreen";
 import CheckInScreen from "../screens/caregiver/CheckInScreen";
 import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
-import VisitsScreen from "../screens/caregiver/VisitsScreen";
-import ScheduleVisitScreen from "../screens/caregiver/ScheduleVisitScreen";
+import VisitReportsScreen from "../screens/caregiver/VisitReportsScreen";
 import SensorSettingsScreen from "../screens/caregiver/SensorSettingsScreen";
 import { startHomeKitListeners } from "../lib/homekit";
 import { useSensorPrefs } from "../hooks/useSensorPrefs";
@@ -399,8 +398,12 @@ function CaregiverView({
         <CaregiverStack.Screen name="HelpHistory" component={HelpHistoryScreen} />
         <CaregiverStack.Screen name="CheckIn" component={CheckInScreen} options={{ headerShown: true, title: "Check In" }} />
         <CaregiverStack.Screen name="CheckInText" component={CheckInTextScreen} options={{ headerShown: true, title: "Text Check-In" }} />
-        <CaregiverStack.Screen name="Visits" component={VisitsScreen} options={{ headerShown: true, title: "Visits" }} />
-        <CaregiverStack.Screen name="ScheduleVisit" component={ScheduleVisitScreen} options={{ headerShown: true, title: "Schedule Visit" }} />
+        <CaregiverStack.Screen name="VisitReports" options={{ headerShown: false }}>
+          {({ route, navigation }: any) => {
+            const { patientId, patientName } = route.params || {};
+            return <VisitReportsScreen patientId={patientId} patientName={patientName} onBack={() => navigation.goBack()} />;
+          }}
+        </CaregiverStack.Screen>
         <CaregiverStack.Screen name="SensorSettings" component={SensorSettingsScreen} options={{ headerShown: true, title: "Sensors" }} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />

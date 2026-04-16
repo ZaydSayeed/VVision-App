@@ -14,8 +14,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { usePatients } from "../hooks/usePatients";
 import { getMyLinkCode } from "../api/client";
 import { fonts, spacing, radius, colors } from "../config/theme";
 
@@ -29,9 +31,12 @@ interface SideDrawerProps {
 export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const { user, logout } = useAuth();
   const { colors, toggleTheme, isDark } = useTheme();
+  const navigation = useNavigation<any>();
+  const { patients } = usePatients();
   const [linkCode, setLinkCode] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showPatientPicker, setShowPatientPicker] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -131,6 +136,30 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </View>
             </View>
 
+            {/* Visit Reports (caregiver only) */}
+            {user?.role === "caregiver" && (
+              <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity
+                  style={styles.row}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    if (patients.length === 1) {
+                      onClose();
+                      navigation.navigate("VisitReports", { patientId: patients[0].id, patientName: patients[0].name });
+                    } else {
+                      setShowPatientPicker(true);
+                    }
+                  }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="document-text-outline" size={20} color={colors.violet} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>Visit Reports</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Sign out */}
             <View style={styles.section}>
               <TouchableOpacity
@@ -142,6 +171,29 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 <Text style={[styles.signOutText, { color: colors.violet }]}>Sign out</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Patient picker modal for Visit Reports */}
+            <Modal visible={showPatientPicker} transparent animationType="fade" onRequestClose={() => setShowPatientPicker(false)}>
+              <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} activeOpacity={1} onPress={() => setShowPatientPicker(false)}>
+                <View style={{ backgroundColor: colors.bg, borderRadius: 16, padding: 24, width: "80%" }}>
+                  <Text style={{ fontSize: 17, ...fonts.medium, color: colors.text, marginBottom: 16 }}>Which patient?</Text>
+                  {patients.map(p => (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}
+                      onPress={() => {
+                        setShowPatientPicker(false);
+                        onClose();
+                        navigation.navigate("VisitReports", { patientId: p.id, patientName: p.name });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontSize: 15, ...fonts.regular, color: colors.text }}>{p.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </TouchableOpacity>
+            </Modal>
           </ScrollView>
         </Animated.View>
       </View>

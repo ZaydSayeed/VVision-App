@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useHelpAlert } from "../../hooks/useHelpAlert";
 import { useTheme } from "../../context/ThemeContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { ExportFlowSheet } from "../../components/ExportFlowSheet";
 import { fonts, spacing, radius } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 
@@ -40,6 +42,8 @@ function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
 export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
+  const [exportOpen, setExportOpen] = useState(false);
   const { tasks, isCompletedToday } = useRoutine(patientId);
   const { meds, isTakenToday } = useMeds(patientId);
   const { alerts, dismissAlert } = useHelpAlert();
@@ -217,6 +221,29 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       ...fonts.regular,
       marginTop: 2,
     },
+    reportsCard: {
+      backgroundColor: colors.bg, borderRadius: radius.lg,
+      padding: spacing.lg, marginTop: spacing.lg,
+      shadowColor: colors.violet, shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.07, shadowRadius: 10, elevation: 2,
+    },
+    reportsLabel: {
+      fontSize: 11, color: colors.muted, ...fonts.medium,
+      letterSpacing: 1.2, textTransform: "uppercase",
+      marginBottom: spacing.md,
+    },
+    reportBtn: {
+      flex: 1, backgroundColor: colors.violet, borderRadius: radius.pill,
+      paddingVertical: spacing.md, flexDirection: "row", alignItems: "center",
+      justifyContent: "center", gap: spacing.xs,
+    },
+    reportBtnText: { fontSize: 13, color: "#FFFFFF", ...fonts.medium },
+    reportBtnAlt: {
+      flex: 1, borderWidth: 1.5, borderColor: colors.violet, borderRadius: radius.pill,
+      paddingVertical: spacing.md, flexDirection: "row", alignItems: "center",
+      justifyContent: "center", gap: spacing.xs,
+    },
+    reportBtnAltText: { fontSize: 13, color: colors.violet, ...fonts.medium },
   }), [colors]);
 
   return (
@@ -317,6 +344,30 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
             ))
           )}
         </View>
+        {/* Doctor Reports */}
+        <View style={styles.reportsCard}>
+          <Text style={styles.reportsLabel}>DOCTOR REPORTS</Text>
+          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+            <TouchableOpacity
+              style={styles.reportBtn}
+              onPress={() => setExportOpen(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="document-text-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.reportBtnText}>Generate Report</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.reportBtnAlt}
+              onPress={() => navigation.navigate("VisitReports", { patientId, patientName })}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="calendar-outline" size={16} color={colors.violet} />
+              <Text style={styles.reportBtnAltText}>Schedule Visit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ExportFlowSheet visible={exportOpen} patientId={patientId} onClose={() => setExportOpen(false)} />
       </ScrollView>
     </View>
   );

@@ -1,11 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Pressable, Alert, Platform, Keyboard, KeyboardEvent, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { authFetch } from "../../api/authFetch";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { usePatients } from "../../hooks/usePatients";
-import { computeTypingMetrics } from "../../lib/biomarkers/typing";
-import { queueEvent, flush } from "../../lib/eventBatcher";
 
 export default function CheckInTextScreen({ route, navigation }: any) {
   const [text, setText] = useState(route.params?.prefill ?? "");
@@ -15,7 +13,6 @@ export default function CheckInTextScreen({ route, navigation }: any) {
   const { patients } = usePatients();
   const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
   const patientId = selectedPatientId ?? defaultPatientId ?? (patients.length === 1 ? patients[0].id : undefined);
-  const keystrokesRef = useRef<number[]>([]);
   const selectedPatient = patients.find(p => p.id === patientId);
 
   useEffect(() => {
@@ -35,12 +32,6 @@ export default function CheckInTextScreen({ route, navigation }: any) {
       if (!res.ok) {
         const detail = await res.text().catch(() => "");
         throw new Error(`Save failed (${res.status}). ${detail}`);
-      }
-      // Queue typing biomarker
-      const m = computeTypingMetrics(keystrokesRef.current);
-      if (m.keystrokes >= 2) {
-        await queueEvent({ kind: "typing_cadence", capturedAt: new Date().toISOString(), data: m as any, patientId });
-        flush();
       }
       navigation.popToTop();
     } catch (e: any) { Alert.alert("Save failed", e.message); }
@@ -79,7 +70,7 @@ export default function CheckInTextScreen({ route, navigation }: any) {
 
       <TextInput
         multiline value={text}
-        onChangeText={(t) => { keystrokesRef.current.push(Date.now()); setText(t); }}
+        onChangeText={setText}
         placeholder="Type anything — this feeds Mom's Living Profile."
         style={{ flex: 1, marginVertical: 16, padding: 16, backgroundColor: "#f8fafc", borderRadius: 12, textAlignVertical: "top", fontSize: 16 }}
       />

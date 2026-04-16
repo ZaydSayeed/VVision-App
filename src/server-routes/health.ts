@@ -50,4 +50,30 @@ router.post("/:patientId/health/sync", authMiddleware, requirePatientAccess, asy
   }
 });
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+router.get("/:patientId/health/summary", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    const col = db.collection("patient_health_readings");
+    const patientId = String(req.params.patientId);
+    const today = todayIso();
+    const rows = await col.find({ patientId, date: today }).toArray();
+    const byMetric: Record<string, { value: number; unit: string }> = {};
+    for (const r of rows) byMetric[r.metric] = { value: r.value, unit: r.unit };
+    res.json({
+      date: today,
+      steps: byMetric.steps ?? null,
+      heartRate: byMetric.heart_rate ?? null,
+      activeMinutes: byMetric.active_minutes ?? null,
+      sleep: byMetric.sleep ?? null,
+    });
+  } catch (err) {
+    console.error("[health/summary]", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 export default router;

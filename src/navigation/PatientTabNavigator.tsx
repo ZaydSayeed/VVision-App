@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { TodayScreen } from "../screens/patient/TodayScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
 import { HelpScreen } from "../screens/patient/HelpScreen";
+import { HealthScreen } from "../screens/patient/HealthScreen";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 
@@ -19,6 +20,7 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Home: "home",
   Faces: "people",
   Help: "hand-left",
+  Health: "pulse",
 };
 
 export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
@@ -117,6 +119,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         {() => <HelpScreen patientName={patientName} />}
       </Tab.Screen>
       <Tab.Screen name="Faces" component={FacesScreen} />
+      <Tab.Screen name="Health" component={HealthScreen} />
     </Tab.Navigator>
   );
 }

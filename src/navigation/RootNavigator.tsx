@@ -35,10 +35,12 @@ import { useHelpAlert } from "../hooks/useHelpAlert";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
+import { HealthOnboardingScreen } from "../screens/patient/HealthOnboardingScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 
 const CaregiverStack = createNativeStackNavigator();
+const PatientStack = createNativeStackNavigator();
 
 const SCREEN_W = Dimensions.get("window").width;
 const SCREEN_H = Dimensions.get("window").height;
@@ -148,7 +150,16 @@ export function RootNavigator() {
     <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
       <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} />
       <OfflineBanner />
-      <PatientTabNavigator patientName={user.name} />
+      <PatientStack.Navigator screenOptions={{ headerShown: false }}>
+        <PatientStack.Screen name="PatientTabs">
+          {() => <PatientTabNavigator patientName={user.name} />}
+        </PatientStack.Screen>
+        <PatientStack.Screen
+          name="HealthOnboarding"
+          component={HealthOnboardingScreen}
+          options={{ headerShown: false }}
+        />
+      </PatientStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
       <TouchableOpacity onPress={() => setVisionOpen(true)} style={styles.visionFab} activeOpacity={0.85}>

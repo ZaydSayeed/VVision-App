@@ -28,10 +28,14 @@ export default function CheckInTextScreen({ route, navigation }: any) {
     if (!text.trim() || !patientId) return;
     setSaving(true);
     try {
-      await authFetch(`/api/profiles/${patientId}/memory`, {
+      const res = await authFetch(`/api/profiles/${patientId}/memory`, {
         method: "POST",
         body: JSON.stringify({ content: text, metadata: { source: "text_check_in" } }),
       });
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        throw new Error(`Save failed (${res.status}). ${detail}`);
+      }
       // Queue typing biomarker
       const m = computeTypingMetrics(keystrokesRef.current);
       if (m.keystrokes >= 2) {

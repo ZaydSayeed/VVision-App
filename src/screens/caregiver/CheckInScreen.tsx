@@ -22,13 +22,17 @@ export default function CheckInScreen({ navigation }: any) {
     if (!transcript.trim() || !patientId) return;
     setSaving(true);
     try {
-      await authFetch(`/api/profiles/${patientId}/memory`, {
+      const res = await authFetch(`/api/profiles/${patientId}/memory`, {
         method: "POST",
         body: JSON.stringify({
           content: transcript,
           metadata: { source: "voice_check_in", capturedAt: new Date().toISOString() },
         }),
       });
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        throw new Error(`Save failed (${res.status}). ${detail}`);
+      }
       navigation.goBack();
     } catch (e: any) {
       Alert.alert("Save failed", e.message);

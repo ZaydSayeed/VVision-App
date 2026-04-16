@@ -30,6 +30,7 @@ import visitRoutes from "./server-routes/visits";
 import eventRoutes from "./server-routes/events";
 import doctorRoutes from "./server-routes/doctors";
 import reportRoutes from "./server-routes/reports";
+import healthRoutes from "./server-routes/health";
 
 const app = express();
 
@@ -101,6 +102,7 @@ app.use("/api/profiles", eventRoutes);
 app.use("/api/profiles", doctorRoutes);
 app.use("/api/profiles", reportRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/profiles", healthRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

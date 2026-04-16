@@ -14,7 +14,7 @@ export default function CheckInTextScreen({ route, navigation }: any) {
   const { patientId: defaultPatientId } = useCurrentProfile();
   const { patients } = usePatients();
   const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
-  const patientId = selectedPatientId ?? defaultPatientId ?? patients[0]?.id;
+  const patientId = selectedPatientId ?? defaultPatientId ?? (patients.length === 1 ? patients[0].id : undefined);
   const keystrokesRef = useRef<number[]>([]);
   const selectedPatient = patients.find(p => p.id === patientId);
 
@@ -79,8 +79,13 @@ export default function CheckInTextScreen({ route, navigation }: any) {
         placeholder="Type anything — this feeds Mom's Living Profile."
         style={{ flex: 1, marginVertical: 16, padding: 16, backgroundColor: "#f8fafc", borderRadius: 12, textAlignVertical: "top", fontSize: 16 }}
       />
-      <Pressable onPress={save} disabled={!text.trim() || saving}
-        style={{ backgroundColor: text.trim() ? "#059669" : "#cbd5e1", padding: 18, borderRadius: 14 }}>
+      {!patientId && patients.length > 1 && (
+        <Text style={{ color: "#94a3b8", textAlign: "center", marginBottom: 12, fontSize: 13 }}>
+          Pick a patient above to begin.
+        </Text>
+      )}
+      <Pressable onPress={save} disabled={!text.trim() || saving || !patientId}
+        style={{ backgroundColor: text.trim() && patientId ? "#059669" : "#cbd5e1", padding: 18, borderRadius: 14 }}>
         <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>
           {saving ? "Saving…" : "Save"}
         </Text>

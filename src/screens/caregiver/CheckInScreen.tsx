@@ -12,7 +12,7 @@ export default function CheckInScreen({ navigation }: any) {
   const { patientId: defaultPatientId } = useCurrentProfile();
   const { patients } = usePatients();
   const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(undefined);
-  const patientId = selectedPatientId ?? defaultPatientId ?? patients[0]?.id;
+  const patientId = selectedPatientId ?? defaultPatientId ?? (patients.length === 1 ? patients[0].id : undefined);
   const { state, transcript, start, stop } = useVoiceSession(patientId);
   const [saving, setSaving] = useState(false);
 
@@ -90,22 +90,32 @@ export default function CheckInScreen({ navigation }: any) {
         </Text>
       )}
 
+      {!patientId && patients.length > 1 && (
+        <Text style={{ color: "#94a3b8", textAlign: "center", marginBottom: 12, fontSize: 13 }}>
+          Pick a patient above to begin.
+        </Text>
+      )}
+
       <View style={{ flexDirection: "row", gap: 12 }}>
         {state === "listening" ? (
           <Pressable onPress={stop} style={{ flex: 1, backgroundColor: "#dc2626", padding: 18, borderRadius: 14 }}>
             <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>Stop</Text>
           </Pressable>
         ) : (
-          <Pressable onPress={startWithGait} style={{ flex: 1, backgroundColor: "#6366f1", padding: 18, borderRadius: 14 }}>
+          <Pressable
+            disabled={!patientId}
+            onPress={startWithGait}
+            style={{ flex: 1, backgroundColor: patientId ? "#6366f1" : "#cbd5e1", padding: 18, borderRadius: 14 }}
+          >
             <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>
               {state === "connecting" ? "Connecting…" : "🎙️  Start"}
             </Text>
           </Pressable>
         )}
         <Pressable
-          disabled={!transcript || saving}
+          disabled={!transcript || saving || !patientId}
           onPress={save}
-          style={{ flex: 1, backgroundColor: transcript ? "#059669" : "#cbd5e1", padding: 18, borderRadius: 14 }}
+          style={{ flex: 1, backgroundColor: transcript && patientId ? "#059669" : "#cbd5e1", padding: 18, borderRadius: 14 }}
         >
           <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>
             {saving ? "Saving…" : "Save"}

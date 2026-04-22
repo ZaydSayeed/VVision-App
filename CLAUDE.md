@@ -222,3 +222,9 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - All passive writes flow through `src/lib/eventBatcher.ts` — queued offline, flushed when online.
 - `react-native-homekit` is a bare workflow module — not available in Expo Go. The try/catch in `src/lib/homekit/index.ts` ensures graceful fallback.
 - Sensor prefs are stored in AsyncStorage under `vela:sensor_prefs` — user can opt out of any sensor independently.
+
+### Subscription (Plan B, 2026-04-13)
+- Pricing controlled by RevenueCat. Entitlements: `starter` (2 seats) and `unlimited`. Configure at https://app.revenuecat.com.
+- `useSubscription()` hook returns `{ tier, ready, trialActive }` — use at any screen that gates features.
+- Backend enforcement: `POST /:patientId/seats` rejects with 402 when tier is free or at Starter cap. Client detects 402 and routes to `PaywallScreen`.
+- RevenueCat webhook at `POST /api/webhooks/revenuecat` syncs subscription state on purchase/expiry events.

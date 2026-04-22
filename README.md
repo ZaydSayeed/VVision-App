@@ -231,6 +231,15 @@ PDFs write to `uploads/visit-prep/` — ephemeral on Render free tier, swap to S
 
 Client hook: `useVoiceSession(patientId)` in `src/hooks/useVoiceSession.ts`.
 
+### Subscription (Plan B)
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/profiles/:patientId/subscription` | Current tier + seat usage |
+| POST | `/api/profiles/:patientId/subscription` | Client-side tier override (dev use) |
+| POST | `/api/webhooks/revenuecat` | RevenueCat server notification sink |
+
+Tiers: **Starter** $14.99/mo (2 seats) · **Unlimited** $24.99/mo (unlimited seats). 7-day free trial on both.
+
 ---
 
 ## License

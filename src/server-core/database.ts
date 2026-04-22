@@ -42,6 +42,7 @@ export async function connectDb(): Promise<void> {
     { patientId: 1, metric: 1, date: -1 },
     { name: "patient_metric_date_desc" }
   );
+  await db.collection("subscriptions").createIndex({ patientId: 1 }, { unique: true });
   console.log("Indexes ensured");
 }
 

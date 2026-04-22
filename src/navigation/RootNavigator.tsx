@@ -36,6 +36,7 @@ import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { HealthOnboardingScreen } from "../screens/patient/HealthOnboardingScreen";
+import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 
@@ -159,6 +160,7 @@ export function RootNavigator() {
           component={HealthOnboardingScreen}
           options={{ headerShown: false }}
         />
+        <PatientStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
       </PatientStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
@@ -416,6 +418,7 @@ function CaregiverView({
           }}
         </CaregiverStack.Screen>
         <CaregiverStack.Screen name="CaregiverHealth" component={CaregiverHealthScreen} options={{ headerShown: true, title: "Health", headerBackTitle: "Back" }} />
+        <CaregiverStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />

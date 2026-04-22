@@ -43,7 +43,16 @@ export default function App() {
         <ErrorBoundary>
           <AuthProvider>
             <PurchasesProvider>
-            <NavigationContainer>
+            <NavigationContainer
+              linking={{
+                prefixes: ["https://velavision.app", "velavision://"],
+                config: {
+                  screens: {
+                    AcceptInvite: "invite/:token",
+                  },
+                },
+              }}
+            >
               <StatusBar style="auto" />
               <RootNavigator />
             </NavigationContainer>

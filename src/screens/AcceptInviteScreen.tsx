@@ -44,7 +44,7 @@ export default function AcceptInviteScreen({ route, navigation }: any) {
       </Text>
       <Text style={styles.message}>{message}</Text>
       <Pressable
-        onPress={() => navigation.replace(status === "done" ? "CaregiverHome" : "SignIn")}
+        onPress={() => navigation.replace("CaregiverHome")}
         style={styles.btn}
       >
         <Text style={styles.btnText}>Continue</Text>

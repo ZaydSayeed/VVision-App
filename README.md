@@ -240,6 +240,14 @@ Client hook: `useVoiceSession(patientId)` in `src/hooks/useVoiceSession.ts`.
 
 Tiers: **Starter** $14.99/mo (2 seats) · **Unlimited** $24.99/mo (unlimited seats). 7-day free trial on both.
 
+### Onboarding (Plan G)
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/profiles/:patientId/onboarding` | Current onboarding progress |
+| PATCH | `/api/profiles/:patientId/onboarding` | Mark step(s) done |
+
+Steps: `profile_basics` → `profile_story` → `siblings` → `smart_home` → `caller_setup` → `paywall`. All optional except profile_basics (name is needed for the rest of the app).
+
 ---
 
 ## License

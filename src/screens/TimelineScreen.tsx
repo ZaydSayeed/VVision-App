@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import PatternsCard from "../components/PatternsCard";
+import OnboardingReminderBanner from "../components/OnboardingReminderBanner";
 import { Ionicons } from "@expo/vector-icons";
 import { spacing, fonts, radius } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
@@ -227,6 +228,7 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
 
   const renderHeader = () => (
     <>
+      <OnboardingReminderBanner navigation={navigation} />
       <View style={styles.screenHeader}>
         <Text style={styles.eyebrow}>Command Center</Text>
         <Text style={styles.screenTitle} accessibilityRole="header">Today at a Glance</Text>

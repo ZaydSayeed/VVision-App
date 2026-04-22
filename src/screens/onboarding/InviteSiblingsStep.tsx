@@ -4,6 +4,7 @@ import { inviteSeat } from "../../api/seats";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
+import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function InviteSiblingsStep({ navigation }: any) {
   const { patientId } = useCurrentProfile();
@@ -48,6 +49,8 @@ export default function InviteSiblingsStep({ navigation }: any) {
   };
 
   return (
+    <View style={{ flex: 1 }}>
+    <OnboardingProgress />
     <View style={styles.container}>
       <Text style={styles.title}>Invite family</Text>
       <Text style={styles.subtitle}>Your siblings see the same profile. The more everyone shares, the better Vela works.</Text>
@@ -69,6 +72,7 @@ export default function InviteSiblingsStep({ navigation }: any) {
       <Pressable onPress={skip}>
         <Text style={styles.skipText}>Skip — do this later</Text>
       </Pressable>
+    </View>
     </View>
   );
 }

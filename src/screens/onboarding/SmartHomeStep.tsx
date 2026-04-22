@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
+import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function SmartHomeStep({ navigation }: any) {
   const { complete } = useOnboarding();
@@ -22,6 +23,8 @@ export default function SmartHomeStep({ navigation }: any) {
   };
 
   return (
+    <View style={{ flex: 1 }}>
+    <OnboardingProgress />
     <View style={styles.container}>
       <Text style={styles.title}>Use the smart home you already have?</Text>
       <Text style={styles.subtitle}>
@@ -33,6 +36,7 @@ export default function SmartHomeStep({ navigation }: any) {
       <Pressable onPress={advance}>
         <Text style={styles.skipText}>Not right now</Text>
       </Pressable>
+    </View>
     </View>
   );
 }

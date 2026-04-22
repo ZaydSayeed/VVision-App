@@ -38,6 +38,8 @@ import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { HealthOnboardingScreen } from "../screens/patient/HealthOnboardingScreen";
+import { useOnboarding } from "../hooks/useOnboarding";
+import OnboardingNavigator from "./OnboardingNavigator";
 import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
@@ -186,6 +188,7 @@ function CaregiverView({
   onCloseDrawer: () => void;
 }) {
   const { colors } = useTheme();
+  const { completed: onboardingCompleted, ready: onboardingReady } = useOnboarding();
   const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert } = useHelpAlert();
   const { prefs } = useSensorPrefs();
 
@@ -401,6 +404,10 @@ function CaregiverView({
     },
     btnRespondingText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
+
+  if (onboardingReady && !onboardingCompleted) {
+    return <OnboardingNavigator />;
+  }
 
   return (
     <View style={styles.root}>

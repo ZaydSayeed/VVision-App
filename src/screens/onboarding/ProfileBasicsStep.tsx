@@ -4,6 +4,7 @@ import { authFetch } from "../../api/authFetch";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
+import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function ProfileBasicsStep({ navigation }: any) {
   const { patientId } = useCurrentProfile();
@@ -42,6 +43,8 @@ export default function ProfileBasicsStep({ navigation }: any) {
   };
 
   return (
+    <View style={{ flex: 1 }}>
+    <OnboardingProgress />
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Tell us about your parent</Text>
       <Text style={styles.subtitle}>These basics let Vela address them correctly and tune its tone.</Text>
@@ -63,5 +66,6 @@ export default function ProfileBasicsStep({ navigation }: any) {
         <Text style={styles.continueBtnText}>{busy ? "Saving…" : "Continue"}</Text>
       </Pressable>
     </ScrollView>
+    </View>
   );
 }

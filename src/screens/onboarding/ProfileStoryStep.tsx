@@ -4,6 +4,7 @@ import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
 import { authFetch } from "../../api/authFetch";
+import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function ProfileStoryStep({ navigation }: any) {
   const { patientId } = useCurrentProfile();
@@ -42,6 +43,8 @@ export default function ProfileStoryStep({ navigation }: any) {
   };
 
   return (
+    <View style={{ flex: 1 }}>
+    <OnboardingProgress />
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Tell Vela their story</Text>
       <Text style={styles.subtitle}>
@@ -62,5 +65,6 @@ export default function ProfileStoryStep({ navigation }: any) {
         <Text style={styles.skipText}>Skip for now</Text>
       </Pressable>
     </ScrollView>
+    </View>
   );
 }

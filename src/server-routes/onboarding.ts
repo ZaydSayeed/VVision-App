@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
@@ -12,6 +13,9 @@ export const onboardingProgressSchema = z.object(
 const router = Router();
 
 router.get("/:patientId/onboarding", authMiddleware, requireSeat, async (req, res) => {
+  if (!ObjectId.isValid(String(req.params.patientId))) {
+    res.status(400).json({ detail: "Invalid patientId" }); return;
+  }
   try {
     const db = getDb();
     const row = await db.collection("onboarding_progress").findOne({ patientId: req.params.patientId as string });
@@ -22,6 +26,9 @@ router.get("/:patientId/onboarding", authMiddleware, requireSeat, async (req, re
 });
 
 router.patch("/:patientId/onboarding", authMiddleware, requireSeat, async (req, res) => {
+  if (!ObjectId.isValid(String(req.params.patientId))) {
+    res.status(400).json({ detail: "Invalid patientId" }); return;
+  }
   const parsed = onboardingProgressSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
@@ -29,12 +36,13 @@ router.patch("/:patientId/onboarding", authMiddleware, requireSeat, async (req, 
     const existing = await db.collection("onboarding_progress").findOne({ patientId: req.params.patientId as string });
     const merged = { ...existing?.progress, ...parsed.data };
     const allDone = STEPS.every((s) => (merged as any)[s]);
+    const completedAt = allDone ? new Date().toISOString() : null;
     await db.collection("onboarding_progress").updateOne(
       { patientId: req.params.patientId as string },
-      { $set: { patientId: req.params.patientId as string, progress: merged, completedAt: allDone ? new Date().toISOString() : null } },
+      { $set: { patientId: req.params.patientId as string, progress: merged, completedAt } },
       { upsert: true }
     );
-    res.json({ progress: merged, completedAt: allDone ? new Date().toISOString() : null });
+    res.json({ progress: merged, completedAt });
   } catch (err) {
     res.status(500).json({ detail: "Internal server error" });
   }

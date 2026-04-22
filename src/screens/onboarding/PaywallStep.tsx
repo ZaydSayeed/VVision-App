@@ -13,9 +13,9 @@ export default function PaywallStep(props: any) {
         {...props}
         navigation={{
           ...props.navigation,
-          replace: async (route: string) => {
+          replace: async (_route: string) => {
             await complete("paywall");
-            props.navigation.replace(route);
+            // completed=true automatically unmounts OnboardingNavigator
           },
         }}
       />

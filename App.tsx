@@ -10,6 +10,7 @@ import {
 } from "@expo-google-fonts/dm-sans";
 
 import { AuthProvider } from "./src/context/AuthContext";
+import { PurchasesProvider } from "./src/providers/PurchasesProvider";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
@@ -41,10 +42,12 @@ export default function App() {
       {fontsLoaded && (
         <ErrorBoundary>
           <AuthProvider>
+            <PurchasesProvider>
             <NavigationContainer>
               <StatusBar style="auto" />
               <RootNavigator />
             </NavigationContainer>
+            </PurchasesProvider>
           </AuthProvider>
         </ErrorBoundary>
       )}

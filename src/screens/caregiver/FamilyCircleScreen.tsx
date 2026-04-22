@@ -38,13 +38,13 @@ export default function FamilyCircleScreen({ navigation }: any) {
         },
         inviteBtnText: { color: "white", fontWeight: "600" },
         trialBanner: {
-          backgroundColor: "#fef3c7",
+          backgroundColor: colors.amberSoft,
           padding: 16,
           borderRadius: 10,
           marginBottom: 16,
         },
-        trialBannerTitle: { fontWeight: "600", color: "#92400e" },
-        trialBannerBody: { color: "#92400e", marginTop: 4 },
+        trialBannerTitle: { fontWeight: "600", color: colors.amber },
+        trialBannerBody: { color: colors.amber, marginTop: 4 },
         card: {
           padding: 16,
           backgroundColor: colors.surface,

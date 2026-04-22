@@ -48,7 +48,16 @@ export default function App() {
                 prefixes: ["https://velavision.app", "velavision://"],
                 config: {
                   screens: {
-                    AcceptInvite: "invite/:token",
+                    CaregiverStack: {
+                      screens: {
+                        AcceptInvite: "invite/:token",
+                      },
+                    },
+                    PatientStack: {
+                      screens: {
+                        AcceptInvite: "invite/:token",
+                      },
+                    },
                   },
                 },
               }}

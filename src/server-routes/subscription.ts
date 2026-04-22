@@ -25,9 +25,9 @@ const router = Router();
 
 router.get("/:patientId/subscription", authMiddleware, requireSeat, async (req, res) => {
   try {
-    const tier = await loadTier(req.params.patientId);
+    const tier = await loadTier(req.params.patientId as string);
     const db = getDb();
-    const seatCount = await db.collection("seats").countDocuments({ patientId: req.params.patientId });
+    const seatCount = await db.collection("seats").countDocuments({ patientId: req.params.patientId as string });
     res.json({
       tier,
       seatCount,
@@ -52,8 +52,8 @@ router.post("/:patientId/subscription", authMiddleware, requireSeat, async (req,
   try {
     const db = getDb();
     await db.collection("subscriptions").updateOne(
-      { patientId: req.params.patientId },
-      { $set: { ...parsed.data, patientId: req.params.patientId, updatedAt: new Date().toISOString() } },
+      { patientId: req.params.patientId as string },
+      { $set: { ...parsed.data, patientId: req.params.patientId as string, updatedAt: new Date().toISOString() } },
       { upsert: true }
     );
     res.json({ ok: true });

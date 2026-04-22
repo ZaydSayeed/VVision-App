@@ -78,6 +78,7 @@ const generalLimiter = rateLimit({
 
 app.use("/api/auth", authLimiter);
 app.use("/api/patients/link", authLimiter);
+app.use("/api/webhooks", revenueCatWebhookRoutes);
 app.use("/api", generalLimiter);
 
 // Routes
@@ -106,7 +107,6 @@ app.use("/api/profiles", reportRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/profiles", healthRoutes);
 app.use("/api/profiles", subscriptionRoutes);
-app.use("/api/webhooks", revenueCatWebhookRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

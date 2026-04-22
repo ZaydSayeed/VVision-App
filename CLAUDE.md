@@ -228,3 +228,10 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 - `useSubscription()` hook returns `{ tier, ready, trialActive }` — use at any screen that gates features.
 - Backend enforcement: `POST /:patientId/seats` rejects with 402 when tier is free or at Starter cap. Client detects 402 and routes to `PaywallScreen`.
 - RevenueCat webhook at `POST /api/webhooks/revenuecat` syncs subscription state on purchase/expiry events.
+
+### Onboarding Wizard (Plan G, 2026-04-22)
+- New caregivers land in `OnboardingNavigator` (6-step wizard) instead of CaregiverHome until all steps complete.
+- Progress persisted in `onboarding_progress` MongoDB collection via `GET/PATCH /api/profiles/:patientId/onboarding`.
+- `useOnboarding()` hook returns `{ progress, completed, complete, ready }`. Call `complete(step)` after each step succeeds.
+- The paywall gate: `OnboardingReminderBanner` renders on CaregiverHome (TimelineScreen) until `progress.paywall` is true.
+- Steps can be skipped — only the `paywall` step controls banner visibility. All 6 being true sets `completedAt`.

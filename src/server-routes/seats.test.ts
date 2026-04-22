@@ -120,3 +120,21 @@ describe("invite acceptance", () => {
     expect(inviteAfter?.status).toBe("pending"); // still pending
   });
 });
+
+describe("seat cap enforcement (data layer)", () => {
+  it("blocks a 3rd seat on starter tier", async () => {
+    const db = globalThis.__TEST_DB__;
+    await db.collection("seats").deleteMany({});
+    await db.collection("subscriptions").deleteMany({});
+    const patientId = "patient-cap";
+    await db.collection("subscriptions").insertOne({
+      patientId, tier: "starter", status: "active", updatedAt: new Date().toISOString()
+    });
+    await db.collection("seats").insertMany([
+      { userId: "u1", patientId, role: "primary_caregiver", createdAt: new Date().toISOString() },
+      { userId: "u2", patientId, role: "sibling", createdAt: new Date().toISOString() },
+    ]);
+    const count = await db.collection("seats").countDocuments({ patientId });
+    expect(count).toBe(2); // at cap
+  });
+});

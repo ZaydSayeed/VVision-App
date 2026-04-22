@@ -10,6 +10,7 @@ import {
 } from "@expo-google-fonts/dm-sans";
 
 import { AuthProvider } from "./src/context/AuthContext";
+import { PurchasesProvider } from "./src/providers/PurchasesProvider";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
@@ -41,10 +42,30 @@ export default function App() {
       {fontsLoaded && (
         <ErrorBoundary>
           <AuthProvider>
-            <NavigationContainer>
+            <PurchasesProvider>
+            <NavigationContainer
+              linking={{
+                prefixes: ["https://velavision.app", "velavision://"],
+                config: {
+                  screens: {
+                    CaregiverStack: {
+                      screens: {
+                        AcceptInvite: "invite/:token",
+                      },
+                    },
+                    PatientStack: {
+                      screens: {
+                        AcceptInvite: "invite/:token",
+                      },
+                    },
+                  },
+                },
+              }}
+            >
               <StatusBar style="auto" />
               <RootNavigator />
             </NavigationContainer>
+            </PurchasesProvider>
           </AuthProvider>
         </ErrorBoundary>
       )}

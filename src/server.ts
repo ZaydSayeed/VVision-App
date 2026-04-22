@@ -31,6 +31,8 @@ import eventRoutes from "./server-routes/events";
 import doctorRoutes from "./server-routes/doctors";
 import reportRoutes from "./server-routes/reports";
 import healthRoutes from "./server-routes/health";
+import subscriptionRoutes from "./server-routes/subscription";
+import revenueCatWebhookRoutes from "./server-routes/revenueCatWebhook";
 
 const app = express();
 
@@ -76,6 +78,7 @@ const generalLimiter = rateLimit({
 
 app.use("/api/auth", authLimiter);
 app.use("/api/patients/link", authLimiter);
+app.use("/api/webhooks", revenueCatWebhookRoutes);
 app.use("/api", generalLimiter);
 
 // Routes
@@ -103,6 +106,7 @@ app.use("/api/profiles", doctorRoutes);
 app.use("/api/profiles", reportRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/profiles", healthRoutes);
+app.use("/api/profiles", subscriptionRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

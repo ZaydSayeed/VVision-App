@@ -25,6 +25,8 @@ import CheckInScreen from "../screens/caregiver/CheckInScreen";
 import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import VisitReportsScreen from "../screens/caregiver/VisitReportsScreen";
 import { CaregiverHealthScreen } from "../screens/caregiver/CaregiverHealthScreen";
+import PaywallScreen from "../screens/caregiver/PaywallScreen";
+import InviteSeatScreen from "../screens/caregiver/InviteSeatScreen";
 import { startHomeKitListeners } from "../lib/homekit";
 import { useSensorPrefs } from "../hooks/useSensorPrefs";
 import { flush } from "../lib/eventBatcher";
@@ -36,6 +38,7 @@ import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { HealthOnboardingScreen } from "../screens/patient/HealthOnboardingScreen";
+import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 
@@ -159,6 +162,7 @@ export function RootNavigator() {
           component={HealthOnboardingScreen}
           options={{ headerShown: false }}
         />
+        <PatientStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
       </PatientStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
@@ -403,7 +407,7 @@ function CaregiverView({
       <Header onOpenDrawer={onOpenDrawer} user={user} notifCount={pendingCount} onOpenNotif={openNotif} />
       <OfflineBanner />
       <CaregiverStack.Navigator screenOptions={{ headerShown: false }}>
-        <CaregiverStack.Screen name="CaregiverTabs">
+        <CaregiverStack.Screen name="CaregiverHome">
           {() => <CaregiverTabNavigator helpPendingCount={pendingCount} />}
         </CaregiverStack.Screen>
         <CaregiverStack.Screen name="HelpHistory" component={HelpHistoryScreen} />
@@ -416,6 +420,9 @@ function CaregiverView({
           }}
         </CaregiverStack.Screen>
         <CaregiverStack.Screen name="CaregiverHealth" component={CaregiverHealthScreen} options={{ headerShown: true, title: "Health", headerBackTitle: "Back" }} />
+        <CaregiverStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
+        <CaregiverStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
+        <CaregiverStack.Screen name="InviteSeat" component={InviteSeatScreen} options={{ headerShown: false }} />
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />

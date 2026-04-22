@@ -7,6 +7,7 @@ import { PeopleScreen } from "../screens/PeopleScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
 import { PatientsTab } from "../screens/caregiver/PatientsTab";
 import { AddCaregiverScreen } from "../screens/caregiver/AddCaregiverScreen";
+import FamilyCircleScreen from "../screens/caregiver/FamilyCircleScreen";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
@@ -19,6 +20,7 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Alerts: "notifications",
   Patients: "pulse",
   "Care Team": "person-add",
+  Family: "people-outline",
 };
 
 interface CaregiverTabNavigatorProps {
@@ -96,6 +98,7 @@ export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigato
       </Tab.Screen>
       <Tab.Screen name="Patients" component={PatientsTab} />
       <Tab.Screen name="Care Team" component={AddCaregiverScreen} />
+      <Tab.Screen name="Family" component={FamilyCircleScreen} />
     </Tab.Navigator>
   );
 }

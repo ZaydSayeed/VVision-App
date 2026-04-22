@@ -17,4 +17,6 @@ export const config = {
   mem0ProjectId: process.env.MEM0_PROJECT_ID || "",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiLiveModel: process.env.GEMINI_LIVE_MODEL || "gemini-live-2.5-flash-native-audio",
+  revenueCatSecretKey: process.env.REVENUECAT_SECRET_KEY || "",
+  revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET || "",
 };

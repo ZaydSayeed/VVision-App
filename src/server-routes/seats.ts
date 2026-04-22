@@ -28,6 +28,20 @@ router.post("/:patientId/seats", authMiddleware, requireSeat, async (req, res) =
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
     const db = getDb();
+    const tier = await (async () => {
+      const sub = await db.collection("subscriptions").findOne({ patientId: req.params.patientId, status: "active" });
+      if (!sub) return "free" as const;
+      if (sub.tier === "unlimited" || sub.tier === "starter") return sub.tier;
+      return "free" as const;
+    })();
+    const seatCount = await db.collection("seats").countDocuments({ patientId: req.params.patientId });
+    const pendingCount = await db.collection("seat_invites").countDocuments({ patientId: req.params.patientId, status: "pending" });
+    const projected = seatCount + pendingCount;
+    if (tier === "free") { res.status(402).json({ detail: "Active subscription required to invite" }); return; }
+    if (tier === "starter" && projected >= 2) {
+      res.status(402).json({ detail: "Starter plan reached (2 seats). Upgrade to Unlimited for more siblings." });
+      return;
+    }
     const token = randomBytes(24).toString("hex");
     await db.collection("seat_invites").insertOne({
       email: parsed.data.email.toLowerCase(),

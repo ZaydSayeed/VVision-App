@@ -25,7 +25,10 @@ interface Props {
 export function LiveStreamScreen({ patientId, roomUrl, token, onEnd }: Props) {
   const { colors } = useTheme();
   const callRef = useRef<DailyCall | null>(null);
+  const mountedRef = useRef(true);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const [micMuted, setMicMuted] = useState(false);
   const [patientAudioMuted, setPatientAudioMuted] = useState(false);
   const [ending, setEnding] = useState(false);
@@ -48,10 +51,16 @@ export function LiveStreamScreen({ patientId, roomUrl, token, onEnd }: Props) {
 
     const onJoined = () => setStatus("live");
     const onLeft = () => setStatus("ended");
-    const onError = () => setStatus("reconnecting");
+    const onError = (evt: any) => {
+      console.error("[LiveStream] Daily error:", evt);
+      setStatus("reconnecting");
+    };
     const onNetworkQuality = (evt: any) => {
-      if (evt?.threshold === "very-low") setStatus("reconnecting");
-      else if (status === "reconnecting") setStatus("live");
+      if (evt?.threshold === "very-low") {
+        setStatus("reconnecting");
+      } else {
+        setStatus((prev) => (prev === "reconnecting" ? "live" : prev));
+      }
     };
 
     call.on("joined-meeting" as DailyEvent, onJoined);
@@ -61,7 +70,9 @@ export function LiveStreamScreen({ patientId, roomUrl, token, onEnd }: Props) {
 
     call
       .join({ url: roomUrl, token, startVideoOff: false, startAudioOff: false })
-      .catch(() => setStatus("ended"));
+      .catch(() => {
+        if (mountedRef.current) setStatus("ended");
+      });
 
     return () => {
       call.off("joined-meeting" as DailyEvent, onJoined);
@@ -115,7 +126,7 @@ export function LiveStreamScreen({ patientId, roomUrl, token, onEnd }: Props) {
       await call.leave().catch(() => {});
       await call.destroy().catch(() => {});
     }
-    onEnd();
+    if (mountedRef.current) onEnd();
   };
 
   const statusLabel: Record<ConnectionStatus, string> = {

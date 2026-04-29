@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -33,10 +33,17 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onStartLiv
   const { alerts, dismissAlert } = useHelpAlert();
   const [liveLoading, setLiveLoading] = useState(false);
   const pollRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
   const routineDone = tasks.filter(isCompletedToday).length;
   const medsDone = meds.filter(isTakenToday).length;
   const pendingHelp = alerts.filter((a) => !a.dismissed);
+
+  const handleBack = () => {
+    if (pollRef.current) clearTimeout(pollRef.current);
+    if (liveLoading) setLiveLoading(false);
+    onBack?.();
+  };
 
   const handleRequestLiveView = async () => {
     if (liveLoading) return;
@@ -53,8 +60,9 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onStartLiv
       const deadline = Date.now() + 120_000;
       const poll = async () => {
         if (Date.now() > deadline) {
+          if (!mountedRef.current) return;
           setLiveLoading(false);
-          Alert.alert("Could not start live view. Try again.");
+          Alert.alert("Live View", "Could not start live view. Try again.");
           return;
         }
         try {
@@ -65,13 +73,15 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onStartLiv
           if (statusRes.ok) {
             const data = await statusRes.json();
             if (data.status === "approved" && data.dailyRoomUrl && data.caregiverToken) {
+              if (!mountedRef.current) return;
               setLiveLoading(false);
               onStartLiveView(data.dailyRoomUrl, data.caregiverToken);
               return;
             }
             if (data.status === "denied") {
+              if (!mountedRef.current) return;
               setLiveLoading(false);
-              Alert.alert("Could not start live view. Try again.");
+              Alert.alert("Live View", "Could not start live view. Try again.");
               return;
             }
           }
@@ -82,14 +92,17 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onStartLiv
       };
       pollRef.current = setTimeout(poll, 3000);
     } catch {
+      if (!mountedRef.current) return;
       setLiveLoading(false);
-      Alert.alert("Could not start live view. Try again.");
+      Alert.alert("Live View", "Could not start live view. Try again.");
     }
   };
 
   // Clean up polling on unmount
   React.useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       if (pollRef.current) clearTimeout(pollRef.current);
     };
   }, []);
@@ -238,7 +251,7 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onStartLiv
   return (
     <View style={styles.container}>
       <View style={styles.backBar}>
-        <TouchableOpacity onPress={onBack} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleBack} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={colors.violet} />
         </TouchableOpacity>
         <Text style={styles.backText}>Patients</Text>

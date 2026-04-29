@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useRef } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
@@ -30,6 +31,13 @@ export function RootNavigator() {
 
     (async () => {
       try {
+        if (Platform.OS === "android") {
+          await Notifications.setNotificationChannelAsync("livestream", {
+            name: "Live View Requests",
+            importance: Notifications.AndroidImportance.MAX,
+          });
+        }
+
         const { status: existing } = await Notifications.getPermissionsAsync();
         let finalStatus = existing;
         if (existing !== "granted") {
@@ -38,7 +46,12 @@ export function RootNavigator() {
         }
         if (finalStatus !== "granted") return;
 
-        const tokenData = await Notifications.getExpoPushTokenAsync();
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+        const tokenData = await Notifications.getExpoPushTokenAsync(
+          projectId ? { projectId } : undefined
+        );
         const expoPushToken = tokenData.data;
 
         await fetch(`${API_BASE_URL}/api/stream/register-push-token`, {

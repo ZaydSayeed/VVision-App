@@ -181,10 +181,20 @@ router.post("/invite", deviceTokenAuth, async (req, res) => {
             title: "Live View Request",
             body: "Your patient is requesting a live view session.",
             data: { patientId, type: "livestream_invite" },
+            android: { channelId: "livestream" },
           }),
         });
         if (!pushRes.ok) {
           console.error("Expo push failed:", await pushRes.text());
+        }
+        const pushBody = await pushRes.json();
+        const ticket = pushBody?.data?.[0];
+        if (ticket?.status === "error") {
+          console.error("[stream/invite] Push delivery error:", ticket.details);
+          if (ticket.details?.error === "DeviceNotRegistered") {
+            // Remove stale token
+            await db.collection("pushTokens").deleteOne({ patientId });
+          }
         }
       }
     } catch (pushErr) {

@@ -17,7 +17,7 @@ function deviceTokenAuth(req: Request, res: Response, next: NextFunction): void 
     res.status(401).json({ detail: "Invalid device token" });
     return;
   }
-  req.patientId = req.body?.patientId ?? req.query.patientId as string;
+  req.patientId = (req.params?.patientId ?? req.query.patientId ?? req.body?.patientId) as string;
   if (!req.patientId) {
     res.status(400).json({ detail: "patientId required" });
     return;
@@ -33,12 +33,7 @@ function eitherAuth(req: Request, res: Response, next: NextFunction): void {
     expectedDevice && authHeader === `Bearer ${expectedDevice}`;
 
   if (isDeviceToken) {
-    req.patientId = (req.query.patientId ?? req.body?.patientId) as string;
-    if (!req.patientId) {
-      res.status(400).json({ detail: "patientId required" });
-      return;
-    }
-    next();
+    deviceTokenAuth(req, res, next);
     return;
   }
   authMiddleware(req, res, () => resolvePatientId(req, res, next));
@@ -86,6 +81,18 @@ async function createDailyToken(roomName: string, isOwner: boolean): Promise<str
 
 async function deleteDailyRoom(roomName: string): Promise<void> {
   await dailyRequest("DELETE", `/rooms/${roomName}`).catch(() => {});
+}
+
+async function setupDailySession(patientId: string): Promise<{
+  roomName: string;
+  roomUrl: string;
+  glassesToken: string;
+  caregiverToken: string;
+}> {
+  const { name: roomName, url: roomUrl } = await createDailyRoom(patientId);
+  const glassesToken = await createDailyToken(roomName, false);
+  const caregiverToken = await createDailyToken(roomName, true);
+  return { roomName, roomUrl, glassesToken, caregiverToken };
 }
 
 // ── Session doc helper ─────────────────────────────────────────────────────
@@ -159,9 +166,7 @@ router.post("/approve", deviceTokenAuth, async (req, res) => {
       return;
     }
 
-    const { name: roomName, url: roomUrl } = await createDailyRoom(req.patientId!);
-    const glassesToken = await createDailyToken(roomName, false);
-    const caregiverToken = await createDailyToken(roomName, true);
+    const { roomName, roomUrl, glassesToken, caregiverToken } = await setupDailySession(req.patientId!);
 
     await db.collection("stream_sessions").updateOne(
       { patientId: req.patientId },
@@ -189,7 +194,7 @@ router.post("/deny", deviceTokenAuth, async (req, res) => {
   try {
     const db = getDb();
     await db.collection("stream_sessions").updateOne(
-      { patientId: req.patientId },
+      { patientId: req.patientId, status: { $in: ["requested", "invited"] } },
       { $set: { status: "denied", endedAt: new Date() } }
     );
     res.json({ status: "denied" });
@@ -203,7 +208,7 @@ router.post("/deny", deviceTokenAuth, async (req, res) => {
 router.get("/status/:patientId", eitherAuth, async (req, res) => {
   try {
     const db = getDb();
-    const patientId = req.params.patientId;
+    const patientId = req.patientId;
     const session = await db
       .collection("stream_sessions")
       .findOne({ patientId }, { projection: { _id: 0 } });
@@ -231,7 +236,11 @@ router.get("/status/:patientId", eitherAuth, async (req, res) => {
 router.post("/end", eitherAuth, async (req, res) => {
   try {
     const db = getDb();
-    const patientId = req.patientId ?? req.body?.patientId;
+    const patientId = req.patientId;
+    if (!patientId) {
+      res.status(400).json({ detail: "patientId could not be resolved" });
+      return;
+    }
     const session = await db
       .collection("stream_sessions")
       .findOne({ patientId });
@@ -264,9 +273,7 @@ router.post("/accept", authMiddleware, resolvePatientId, async (req, res) => {
       return;
     }
 
-    const { name: roomName, url: roomUrl } = await createDailyRoom(req.patientId!);
-    const glassesToken = await createDailyToken(roomName, false);
-    const caregiverToken = await createDailyToken(roomName, true);
+    const { roomName, roomUrl, glassesToken, caregiverToken } = await setupDailySession(req.patientId!);
 
     await db.collection("stream_sessions").updateOne(
       { patientId: req.patientId },

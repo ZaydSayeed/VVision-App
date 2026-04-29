@@ -268,6 +268,30 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
         <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>Check In</Text>
       </TouchableOpacity>
 
+      {/* Glasses Dashboard shortcut */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate("GlassesHub")}
+        style={{
+          marginHorizontal: 20, marginBottom: 16,
+          backgroundColor: colors.surface,
+          borderRadius: 14,
+          padding: 16,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+        activeOpacity={0.82}
+      >
+        <Ionicons name="glasses" size={20} color={colors.violet} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 15, color: colors.text, ...fonts.medium }}>Glasses Dashboard</Text>
+          <Text style={{ fontSize: 12, color: colors.muted, ...fonts.regular, marginTop: 2 }}>Alerts, digest, nutrition, patterns</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+      </TouchableOpacity>
+
       <View style={{ marginHorizontal: 20 }}>
         <PatternsCard />
       </View>

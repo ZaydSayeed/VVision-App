@@ -25,6 +25,12 @@ import CheckInScreen from "../screens/caregiver/CheckInScreen";
 import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import VisitReportsScreen from "../screens/caregiver/VisitReportsScreen";
 import { CaregiverHealthScreen } from "../screens/caregiver/CaregiverHealthScreen";
+import GlassesHubScreen from "../screens/caregiver/GlassesHubScreen";
+import GlassesAlertFeedScreen from "../screens/caregiver/GlassesAlertFeedScreen";
+import DailyDigestScreen from "../screens/caregiver/DailyDigestScreen";
+import NutritionTimelineScreen from "../screens/caregiver/NutritionTimelineScreen";
+import RepetitionPatternScreen from "../screens/caregiver/RepetitionPatternScreen";
+import PatientProfileConfigScreen from "../screens/caregiver/PatientProfileConfigScreen";
 import PaywallScreen from "../screens/caregiver/PaywallScreen";
 import InviteSeatScreen from "../screens/caregiver/InviteSeatScreen";
 import { startHomeKitListeners } from "../lib/homekit";
@@ -430,6 +436,38 @@ function CaregiverView({
         <CaregiverStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
         <CaregiverStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
         <CaregiverStack.Screen name="InviteSeat" component={InviteSeatScreen} options={{ headerShown: false }} />
+        <CaregiverStack.Screen name="GlassesHub" options={{ headerShown: false }}>
+          {({ navigation }: any) => (
+            <GlassesHubScreen
+              onBack={() => navigation.goBack()}
+              onNavigate={(screen) => {
+                const map: Record<string, string> = {
+                  alerts: "GlassesAlerts",
+                  digest: "GlassesDigest",
+                  config: "GlassesConfig",
+                  nutrition: "GlassesNutrition",
+                  repetitions: "GlassesRepetitions",
+                };
+                navigation.navigate(map[screen]);
+              }}
+            />
+          )}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="GlassesAlerts" options={{ headerShown: false }}>
+          {({ navigation }: any) => <GlassesAlertFeedScreen onBack={() => navigation.goBack()} />}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="GlassesDigest" options={{ headerShown: false }}>
+          {({ navigation }: any) => <DailyDigestScreen onBack={() => navigation.goBack()} />}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="GlassesNutrition" options={{ headerShown: false }}>
+          {({ navigation }: any) => <NutritionTimelineScreen onBack={() => navigation.goBack()} />}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="GlassesRepetitions" options={{ headerShown: false }}>
+          {({ navigation }: any) => <RepetitionPatternScreen onBack={() => navigation.goBack()} />}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="GlassesConfig" options={{ headerShown: false }}>
+          {({ navigation }: any) => <PatientProfileConfigScreen onBack={() => navigation.goBack()} />}
+        </CaregiverStack.Screen>
       </CaregiverStack.Navigator>
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />

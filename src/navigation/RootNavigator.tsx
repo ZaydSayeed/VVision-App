@@ -1,9 +1,11 @@
-import React, { useMemo, useEffect } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useMemo, useEffect, useRef } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import * as Notifications from "expo-notifications";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
-import { setOnNetworkChange } from "../api/client";
+import { setOnNetworkChange, authHeaders } from "../api/client";
+import { API_BASE_URL } from "../config/api";
 import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
@@ -14,11 +16,41 @@ export function RootNavigator() {
   const { user, loading, logout } = useAuth();
   const { colors } = useTheme();
   const { setOffline } = useNetwork();
+  const pushRegisteredRef = useRef(false);
 
   // Bridge API client network status to React context
   useEffect(() => {
     setOnNetworkChange(setOffline);
   }, [setOffline]);
+
+  // Register Expo push token once when a caregiver logs in
+  useEffect(() => {
+    if (!user || user.role !== "caregiver" || pushRegisteredRef.current) return;
+    pushRegisteredRef.current = true;
+
+    (async () => {
+      try {
+        const { status: existing } = await Notifications.getPermissionsAsync();
+        let finalStatus = existing;
+        if (existing !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== "granted") return;
+
+        const tokenData = await Notifications.getExpoPushTokenAsync();
+        const expoPushToken = tokenData.data;
+
+        await fetch(`${API_BASE_URL}/api/stream/register-push-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ expoPushToken }),
+        });
+      } catch (err) {
+        console.error("Push token registration failed (non-fatal):", err);
+      }
+    })();
+  }, [user]);
 
   const styles = useMemo(() => StyleSheet.create({
     root: {

@@ -135,18 +135,62 @@ router.post("/request", authMiddleware, resolvePatientId, async (req, res) => {
   }
 });
 
+// POST /api/stream/register-push-token — caregiver registers their Expo push token
+router.post("/register-push-token", authMiddleware, resolvePatientId, async (req, res) => {
+  try {
+    const { expoPushToken } = req.body;
+    if (!expoPushToken) {
+      res.status(400).json({ detail: "expoPushToken required" });
+      return;
+    }
+    const db = getDb();
+    await db.collection("pushTokens").updateOne(
+      { patientId: req.patientId },
+      { $set: { patientId: req.patientId, expoPushToken, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("stream/register-push-token error:", err);
+    res.status(500).json({ detail: "Server error" });
+  }
+});
+
 // POST /api/stream/invite — patient wants caregiver to join (glasses calls this)
 router.post("/invite", deviceTokenAuth, async (req, res) => {
   try {
     const db = getDb();
     const { caregiverId } = req.body;
-    const doc = sessionDoc(req.patientId!, caregiverId ?? null, "invited", "patient");
+    const patientId = req.patientId!;
+    const doc = sessionDoc(patientId, caregiverId ?? null, "invited", "patient");
     await db.collection("stream_sessions").replaceOne(
-      { patientId: req.patientId },
+      { patientId },
       doc,
       { upsert: true }
     );
-    // Push notification sent in Task 7
+
+    // Send push notification to caregiver
+    try {
+      const tokenDoc = await db.collection("pushTokens").findOne({ patientId });
+      if (tokenDoc?.expoPushToken) {
+        const pushRes = await fetch("https://exp.host/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: tokenDoc.expoPushToken,
+            title: "Live View Request",
+            body: "Your patient is requesting a live view session.",
+            data: { patientId, type: "livestream_invite" },
+          }),
+        });
+        if (!pushRes.ok) {
+          console.error("Expo push failed:", await pushRes.text());
+        }
+      }
+    } catch (pushErr) {
+      console.error("Push notification error (non-fatal):", pushErr);
+    }
+
     res.json({ status: "invited" });
   } catch (err) {
     console.error("stream/invite error:", err);

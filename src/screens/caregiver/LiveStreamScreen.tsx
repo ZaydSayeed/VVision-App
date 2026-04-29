@@ -105,7 +105,7 @@ export function LiveStreamScreen({ patientId, roomUrl, token, onEnd }: Props) {
           "Content-Type": "application/json",
           ...authHeaders(),
         },
-        body: JSON.stringify({ patient_id: patientId }),
+        body: JSON.stringify({ patientId }),
       });
     } catch {
       // Best-effort — proceed regardless

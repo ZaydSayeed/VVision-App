@@ -184,10 +184,10 @@ router.post("/invite", deviceTokenAuth, async (req, res) => {
             android: { channelId: "livestream" },
           }),
         });
-        if (!pushRes.ok) {
-          console.error("Expo push failed:", await pushRes.text());
-        }
         const pushBody = await pushRes.json();
+        if (!pushRes.ok) {
+          console.error("Expo push failed:", pushBody);
+        }
         const ticket = pushBody?.data?.[0];
         if (ticket?.status === "error") {
           console.error("[stream/invite] Push delivery error:", ticket.details);

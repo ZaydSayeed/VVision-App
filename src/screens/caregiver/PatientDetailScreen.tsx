@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoutine } from "../../hooks/useRoutine";
@@ -15,22 +16,83 @@ import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
 import { fonts, spacing, radius } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
+import { API_BASE_URL } from "../../config/api";
+import { authHeaders } from "../../api/client";
 
 interface Props {
   patientId: string;
   patientName: string;
   onBack: () => void;
+  onStartLiveView: (roomUrl: string, token: string) => void;
 }
 
-export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
+export function PatientDetailScreen({ patientId, patientName, onBack, onStartLiveView }: Props) {
   const { colors } = useTheme();
   const { tasks, isCompletedToday } = useRoutine(patientId);
   const { meds, isTakenToday } = useMeds(patientId);
   const { alerts, dismissAlert } = useHelpAlert();
+  const [liveLoading, setLiveLoading] = useState(false);
+  const pollRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const routineDone = tasks.filter(isCompletedToday).length;
   const medsDone = meds.filter(isTakenToday).length;
   const pendingHelp = alerts.filter((a) => !a.dismissed);
+
+  const handleRequestLiveView = async () => {
+    if (liveLoading) return;
+    setLiveLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/stream/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ patientId }),
+      });
+      if (!res.ok) throw new Error("request failed");
+
+      // Poll /status until approved (or timeout after 2 min)
+      const deadline = Date.now() + 120_000;
+      const poll = async () => {
+        if (Date.now() > deadline) {
+          setLiveLoading(false);
+          Alert.alert("Could not start live view. Try again.");
+          return;
+        }
+        try {
+          const statusRes = await fetch(
+            `${API_BASE_URL}/api/stream/status/${patientId}`,
+            { headers: { ...authHeaders() } }
+          );
+          if (statusRes.ok) {
+            const data = await statusRes.json();
+            if (data.status === "approved" && data.dailyRoomUrl && data.caregiverToken) {
+              setLiveLoading(false);
+              onStartLiveView(data.dailyRoomUrl, data.caregiverToken);
+              return;
+            }
+            if (data.status === "denied") {
+              setLiveLoading(false);
+              Alert.alert("Could not start live view. Try again.");
+              return;
+            }
+          }
+        } catch {
+          // network hiccup — keep polling
+        }
+        pollRef.current = setTimeout(poll, 3000);
+      };
+      pollRef.current = setTimeout(poll, 3000);
+    } catch {
+      setLiveLoading(false);
+      Alert.alert("Could not start live view. Try again.");
+    }
+  };
+
+  // Clean up polling on unmount
+  React.useEffect(() => {
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, []);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -156,6 +218,21 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       ...fonts.regular,
       marginTop: 2,
     },
+    liveBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: spacing.sm,
+      backgroundColor: colors.violet,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md + 2,
+      marginBottom: spacing.xxl,
+    },
+    liveBtnText: {
+      fontSize: 15,
+      color: "#fff",
+      ...fonts.medium,
+    },
   }), [colors]);
 
   return (
@@ -169,6 +246,18 @@ export function PatientDetailScreen({ patientId, patientName, onBack }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        <TouchableOpacity
+          style={styles.liveBtn}
+          onPress={handleRequestLiveView}
+          activeOpacity={0.8}
+          disabled={liveLoading}
+        >
+          <Ionicons name={liveLoading ? "hourglass-outline" : "videocam-outline"} size={18} color="#fff" />
+          <Text style={styles.liveBtnText}>
+            {liveLoading ? "Waiting for patient…" : "Request Live View"}
+          </Text>
+        </TouchableOpacity>
+
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{routineDone}/{tasks.length}</Text>

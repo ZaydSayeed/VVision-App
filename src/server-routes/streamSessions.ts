@@ -146,7 +146,7 @@ router.post("/register-push-token", authMiddleware, resolvePatientId, async (req
     const db = getDb();
     await db.collection("pushTokens").updateOne(
       { patientId: req.patientId },
-      { $set: { patientId: req.patientId, expoPushToken, updatedAt: new Date() } },
+      { $set: { patientId: req.patientId, expoPushToken, caregiverId: req.auth?.userId ?? null, updatedAt: new Date() } },
       { upsert: true }
     );
     res.json({ success: true });

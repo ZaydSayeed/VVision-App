@@ -7,6 +7,7 @@ import { LinkPatientScreen } from "./LinkPatientScreen";
 import { LiveStreamScreen } from "./LiveStreamScreen";
 import { API_BASE_URL } from "../../config/api";
 import { authHeaders } from "../../api/client";
+import { usePatients } from "../../hooks/usePatients";
 
 interface LiveStreamParams {
   roomUrl: string;
@@ -17,6 +18,7 @@ export function PatientsTab() {
   const [view, setView] = useState<"dashboard" | "detail" | "link" | "livestream">("dashboard");
   const [selected, setSelected] = useState<PatientSummary | null>(null);
   const [liveParams, setLiveParams] = useState<LiveStreamParams | null>(null);
+  const { patients } = usePatients();
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
@@ -33,7 +35,8 @@ export function PatientsTab() {
         if (!res.ok) return;
         const session = await res.json();
         if (session.status === "requested" || session.status === "invited") {
-          setSelected({ id: patientId, name: "", tasksTotal: 0, tasksDone: 0, medsTotal: 0, medsDone: 0 });
+          const match = patients.find((p) => p.id === patientId);
+          setSelected(match ?? { id: patientId, name: "Patient", tasksTotal: 0, tasksDone: 0, medsTotal: 0, medsDone: 0 });
           setView("detail");
         }
       } catch {
@@ -42,7 +45,7 @@ export function PatientsTab() {
     });
 
     return () => subscription.remove();
-  }, []);
+  }, [patients]);
 
   if (view === "link") {
     return (

@@ -12,6 +12,7 @@ import medicationRoutes from "./server-routes/medications";
 import helpAlertRoutes from "./server-routes/helpAlerts";
 import caregiverProfileRoutes from "./server-routes/caregiverProfiles";
 import streamRoutes from "./server-routes/stream";
+import streamSessionRoutes from "./server-routes/streamSessions";
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/medications", medicationRoutes);
 app.use("/api/help-alerts", helpAlertRoutes);
 app.use("/api/caregiver-profiles", caregiverProfileRoutes);
 app.use("/stream", streamRoutes);
+app.use("/api/stream", streamSessionRoutes);
 
 // Health check
 app.get("/health", (_req, res) => {

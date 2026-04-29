@@ -31,7 +31,7 @@ export function setOnNetworkChange(cb: (offline: boolean) => void) {
   onNetworkChange = cb;
 }
 
-function authHeaders(): Record<string, string> {
+export function authHeaders(): Record<string, string> {
   return authToken ? { Authorization: `Bearer ${authToken}` } : {};
 }
 

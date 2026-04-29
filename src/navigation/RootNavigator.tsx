@@ -8,15 +8,19 @@ import {
   Animated,
   ScrollView,
   Dimensions,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
-import { setOnNetworkChange } from "../api/client";
+import { setOnNetworkChange, authHeaders } from "../api/client";
+import { API_BASE_URL } from "../config/api";
 import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
@@ -64,6 +68,7 @@ export function RootNavigator() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
   const contentOpacity = useRef(new Animated.Value(0)).current;
+  const pushRegisteredRef = useRef(false);
 
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
@@ -94,6 +99,43 @@ export function RootNavigator() {
       }).start();
     }
   }, [loading]);
+
+  // Register Expo push token once when a caregiver logs in (for livestream invites)
+  useEffect(() => {
+    if (!user || user.role !== "caregiver" || pushRegisteredRef.current) return;
+    pushRegisteredRef.current = true;
+
+    (async () => {
+      try {
+        if (Platform.OS === "android") {
+          await Notifications.setNotificationChannelAsync("livestream", {
+            name: "Live View Requests",
+            importance: Notifications.AndroidImportance.MAX,
+          });
+        }
+        const { status: existing } = await Notifications.getPermissionsAsync();
+        let finalStatus = existing;
+        if (existing !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== "granted") return;
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+        const tokenData = await Notifications.getExpoPushTokenAsync(
+          projectId ? { projectId } : undefined
+        );
+        await fetch(`${API_BASE_URL}/api/stream/register-push-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ expoPushToken: tokenData.data }),
+        });
+      } catch (err) {
+        console.error("Push token registration failed (non-fatal):", err);
+      }
+    })();
+  }, [user]);
 
   const styles = useMemo(() => StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg },

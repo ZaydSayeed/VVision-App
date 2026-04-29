@@ -34,6 +34,7 @@ import healthRoutes from "./server-routes/health";
 import subscriptionRoutes from "./server-routes/subscription";
 import revenueCatWebhookRoutes from "./server-routes/revenueCatWebhook";
 import onboardingRoutes from "./server-routes/onboarding";
+import streamSessionRoutes from "./server-routes/streamSessions";
 
 const app = express();
 
@@ -109,6 +110,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/profiles", healthRoutes);
 app.use("/api/profiles", subscriptionRoutes);
 app.use("/api/profiles", onboardingRoutes);
+app.use("/api/stream", streamSessionRoutes);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

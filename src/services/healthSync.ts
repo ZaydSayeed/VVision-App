@@ -4,7 +4,6 @@ import { getReadingsSince, enableBackgroundDelivery, isAvailable, Reading } from
 import { syncReadings } from "../api/health";
 
 const LAST_SYNC_KEY = "@vela/health/lastSyncedAt";
-const DEFAULT_LOOKBACK_DAYS = 1;
 const INITIAL_LOOKBACK_DAYS = 30;
 
 async function getLastSync(): Promise<Date> {

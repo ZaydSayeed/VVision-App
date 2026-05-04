@@ -18,8 +18,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable, PanGestureHandler, State } from "react-native-gesture-handler";
-import { updateRoutine } from "../../api/client";
+import { updateRoutine, authHeaders } from "../../api/client";
 import { RoutineTask } from "../../types";
+import { API_BASE_URL } from "../../config/api";
+import { TaskDetailSheet } from "../../components/patient/TaskDetailSheet";
 import { useRoutine } from "../../hooks/useRoutine";
 import { useMeds } from "../../hooks/useMeds";
 import { useReminders } from "../../hooks/useReminders";
@@ -145,6 +147,17 @@ export function TodayScreen() {
       setTaskError("Could not save. Check your connection.");
     }
   }
+
+  const [detailTask, setDetailTask] = useState<RoutineTask | null>(null);
+
+  const updateTaskNotes = async (taskId: string, notes: string) => {
+    await fetch(`${API_BASE_URL}/api/routines/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ notes }),
+    });
+    reloadRoutine();
+  };
 
   // ── Edit Task modal ──────────────────────────────────────
   const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
@@ -801,14 +814,14 @@ export function TodayScreen() {
             {tasks.length === 0 && reminders.length === 0 ? (
               <Text style={{ color: colors.muted, fontSize: 12, ...fonts.regular }}>No tasks yet.</Text>
             ) : (
-              [...tasks.map((t) => ({ id: t.id, label: t.label, time: t.time, done: isCompletedToday(t), type: "task" as const })),
-               ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const }))]
+              [...tasks.map((t) => ({ id: t.id, label: t.label, time: t.time, done: isCompletedToday(t), type: "task" as const, task: t })),
+               ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const, task: null as RoutineTask | null }))]
                 .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
                 .map((item) => (
                   <TouchableOpacity
                     key={item.id}
                     style={styles.splitItem}
-                    onPress={() => item.type === "task" ? toggleComplete(item.id) : undefined}
+                    onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
                     activeOpacity={0.75}
                   >
                     <View style={[styles.splitCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
@@ -1003,6 +1016,25 @@ export function TodayScreen() {
         visible={notesModalVisible}
         notes={caregiverNotes}
         onClose={() => setNotesModalVisible(false)}
+      />
+
+      <TaskDetailSheet
+        task={detailTask}
+        onClose={() => setDetailTask(null)}
+        onComplete={(taskId) => {
+          toggleComplete(taskId);
+          setDetailTask(null);
+        }}
+        onDelete={(taskId) => {
+          deleteTask(taskId);
+          setDetailTask(null);
+        }}
+        onSaveNotes={updateTaskNotes}
+        onEdit={(task) => {
+          setDetailTask(null);
+          setEditingTask(task);
+        }}
+        isCompletedToday={isCompletedToday}
       />
 
       {/* ── Add Med modal ──────────────────────────────────────── */}

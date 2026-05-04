@@ -34,7 +34,7 @@ export async function getSummary(patientId: string): Promise<Summary> {
 }
 
 export type TrendPoint = { date: string; value: number };
-export type Trend = { metric: string; range: string; points: TrendPoint[] };
+export type Trend = { metric: Reading["metric"]; range: "1d" | "7d" | "30d" | "90d"; points: TrendPoint[] };
 
 export async function getTrend(
   patientId: string,

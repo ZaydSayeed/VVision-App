@@ -59,6 +59,7 @@ router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
     const doc = {
       label: parsed.data.label,
       time: parsed.data.time,
+      notes: parsed.data.notes ?? null,
       completed_date: null,
       patient_id: req.patientId!,
       created_at: new Date().toISOString(),

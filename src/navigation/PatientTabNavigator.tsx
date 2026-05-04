@@ -84,16 +84,19 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         tabBarActiveTintColor: colors.violet,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabel: ({ color }) => (
-          <Text style={[styles.tabLabel, { color }]}>
-            {route.name}
-          </Text>
+          route.name === "_blank" ? null : (
+            <Text style={[styles.tabLabel, { color }]}>{route.name}</Text>
+          )
         ),
         tabBarIcon: ({ color }) => (
-          <Ionicons name={iconNames[route.name]} size={28} color={color} />
+          route.name === "_blank" ? null : (
+            <Ionicons name={iconNames[route.name]} size={28} color={color} />
+          )
         ),
       })}
     >
       <Tab.Screen name="Home" component={TodayScreen} />
+      <Tab.Screen name="Faces" component={FacesScreen} />
       <Tab.Screen
         name="Help"
         options={{
@@ -118,8 +121,12 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       >
         {() => <HelpScreen patientName={patientName} />}
       </Tab.Screen>
-      <Tab.Screen name="Faces" component={FacesScreen} />
       <Tab.Screen name="Health" component={HealthScreen} />
+      <Tab.Screen
+        name="_blank"
+        component={TodayScreen}
+        options={{ tabBarButton: () => null }}
+      />
     </Tab.Navigator>
   );
 }

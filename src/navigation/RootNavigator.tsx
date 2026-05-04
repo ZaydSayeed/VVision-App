@@ -453,7 +453,7 @@ function CaregiverView({
     btnRespondingText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
-  if (onboardingReady && !onboardingCompleted) {
+  if (onboardingReady && !onboardingCompleted && !user.patient_id) {
     return <OnboardingNavigator />;
   }
 

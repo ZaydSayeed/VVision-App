@@ -71,7 +71,7 @@ export function ExpandableMetricCard({
       </View>
 
       <View style={styles.valueRow}>
-        <Text style={styles.value}>{value === "—" || value === null ? "—" : String(value)}</Text>
+        <Text style={styles.value}>{value === "—" ? "—" : String(value)}</Text>
         {unit ? <Text style={styles.unit}>{unit}</Text> : null}
       </View>
 

@@ -5,22 +5,41 @@ import { useTheme } from "../../context/ThemeContext";
 import { fonts } from "../../config/theme";
 import { useAuth } from "../../context/AuthContext";
 import { useHealthSummary } from "../../hooks/useHealthSummary";
-import { useHealthTrends } from "../../hooks/useHealthTrends";
-import { MetricCard } from "../../components/health/MetricCard";
-import { RangeToggle, Range } from "../../components/health/RangeToggle";
+import { ExpandableMetricCard } from "../../components/health/ExpandableMetricCard";
 import { isHealthOnboarded } from "./HealthOnboardingScreen";
 import { syncNow } from "../../services/healthSync";
 
-const EMPTY_HINT = "No data yet — connect a wearable in the iPhone Health app.";
+type Metric = "steps" | "heart_rate" | "active_minutes" | "sleep";
+
+const METRIC_CONFIG: Array<{
+  metric: Metric;
+  title: string;
+  iconName: any;
+  accentColor: string;
+  summaryKey: "steps" | "heartRate" | "activeMinutes" | "sleep";
+}> = [
+  { metric: "steps", title: "Steps", iconName: "footsteps-outline", accentColor: "#F97316", summaryKey: "steps" },
+  { metric: "heart_rate", title: "Heart Rate", iconName: "heart-outline", accentColor: "#EF4444", summaryKey: "heartRate" },
+  { metric: "active_minutes", title: "Active Minutes", iconName: "flash-outline", accentColor: "#22C55E", summaryKey: "activeMinutes" },
+  { metric: "sleep", title: "Sleep", iconName: "moon-outline", accentColor: "#6366F1", summaryKey: "sleep" },
+];
+
+function getSummaryValues(data: any) {
+  return {
+    steps: { value: data?.steps?.value ?? "—", unit: data?.steps ? "steps today" : undefined },
+    heartRate: { value: data?.heartRate?.value ?? "—", unit: data?.heartRate?.unit },
+    activeMinutes: { value: data?.activeMinutes?.value ?? "—", unit: data?.activeMinutes ? "min today" : undefined },
+    sleep: { value: data?.sleep?.value ?? "—", unit: data?.sleep?.unit },
+  };
+}
 
 export function HealthScreen() {
   const { colors } = useTheme();
   const nav = useNavigation<any>();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? null;
-  const [range, setRange] = useState<Range>("7d");
   const summary = useHealthSummary(patientId);
-  const trends = useHealthTrends(patientId, range);
+  const [expandedMetric, setExpandedMetric] = useState<Metric | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -30,14 +49,16 @@ export function HealthScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     if (patientId) await syncNow(patientId).catch(() => {});
-    await Promise.all([summary.refresh(), trends.refresh()]);
+    await summary.refresh();
     setRefreshing(false);
   };
+
+  const vals = getSummaryValues(summary.data);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, paddingBottom: 40 },
-    header: { ...fonts.regular, fontSize: 28, color: colors.text, marginBottom: 4 },
+    header: { ...fonts.medium, fontSize: 28, color: colors.text, marginBottom: 4 },
     sub: { ...fonts.regular, fontSize: 14, color: colors.muted, marginBottom: 18 },
   }), [colors]);
 
@@ -48,36 +69,25 @@ export function HealthScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />}
     >
       <Text style={styles.header}>Health</Text>
-      <Text style={styles.sub}>Your trends over time</Text>
-      <RangeToggle value={range} onChange={setRange} />
-      <MetricCard
-        title="Steps"
-        value={summary.data?.steps?.value ?? "—"}
-        unit={summary.data?.steps ? "today" : undefined}
-        trend={trends.trends.steps?.points ?? []}
-        emptyHint="No data yet — keep your iPhone with you to count steps."
-      />
-      <MetricCard
-        title="Heart Rate"
-        value={summary.data?.heartRate?.value ?? "—"}
-        unit={summary.data?.heartRate?.unit}
-        trend={trends.trends.heart_rate?.points ?? []}
-        emptyHint={EMPTY_HINT}
-      />
-      <MetricCard
-        title="Active Minutes"
-        value={summary.data?.activeMinutes?.value ?? "—"}
-        unit={summary.data?.activeMinutes ? "today" : undefined}
-        trend={trends.trends.active_minutes?.points ?? []}
-        emptyHint={EMPTY_HINT}
-      />
-      <MetricCard
-        title="Sleep"
-        value={summary.data?.sleep?.value ?? "—"}
-        unit={summary.data?.sleep?.unit}
-        trend={trends.trends.sleep?.points ?? []}
-        emptyHint={EMPTY_HINT}
-      />
+      <Text style={styles.sub}>Tap a card to see your trends</Text>
+
+      {METRIC_CONFIG.map(({ metric, title, iconName, accentColor, summaryKey }) => {
+        const { value, unit } = vals[summaryKey];
+        return (
+          <ExpandableMetricCard
+            key={metric}
+            title={title}
+            iconName={iconName}
+            accentColor={accentColor}
+            value={value}
+            unit={unit}
+            metric={metric}
+            patientId={patientId}
+            isExpanded={expandedMetric === metric}
+            onToggle={() => setExpandedMetric(expandedMetric === metric ? null : metric)}
+          />
+        );
+      })}
     </ScrollView>
   );
 }

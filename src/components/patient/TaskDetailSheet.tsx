@@ -11,7 +11,7 @@ import { RoutineTask } from "../../types";
 interface Props {
   task: RoutineTask | null;
   onClose: () => void;
-  onComplete: (taskId: string, date: string | null) => void;
+  onComplete: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onSaveNotes: (taskId: string, notes: string) => Promise<void>;
   onEdit: (task: RoutineTask) => void;
@@ -113,7 +113,6 @@ export function TaskDetailSheet({ task, onClose, onComplete, onDelete, onSaveNot
   }), [colors]);
 
   const completed = task ? isCompletedToday(task) : false;
-  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <Modal visible={!!task} transparent animationType="none" onRequestClose={onClose}>
@@ -141,7 +140,7 @@ export function TaskDetailSheet({ task, onClose, onComplete, onDelete, onSaveNot
 
                 <TouchableOpacity
                   style={styles.doneToggle}
-                  onPress={() => task && onComplete(task.id, completed ? null : today)}
+                  onPress={() => task && onComplete(task.id)}
                   activeOpacity={0.8}
                 >
                   <Ionicons

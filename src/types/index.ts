@@ -87,6 +87,7 @@ export interface RoutineTask {
   label: string;
   time: string;
   completed_date: string | null;
+  notes: string | null;
   patient_id?: string;
 }
 

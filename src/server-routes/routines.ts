@@ -10,12 +10,14 @@ const router = Router();
 const createSchema = z.object({
   label: z.string().min(1, "Label required").max(300).trim(),
   time: z.string().min(1, "Time required").max(50).trim(),
+  notes: z.string().max(1000).trim().optional(),
 });
 
 const updateSchema = z.object({
   label: z.string().min(1).max(300).trim().optional(),
   time: z.string().min(1).max(50).trim().optional(),
   completed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  notes: z.string().max(1000).trim().nullable().optional(),
 });
 
 function routineOut(doc: any) {
@@ -24,6 +26,7 @@ function routineOut(doc: any) {
     label: doc.label,
     time: doc.time,
     completed_date: doc.completed_date ?? null,
+    notes: doc.notes ?? null,
     patient_id: String(doc.patient_id),
   };
 }
@@ -82,10 +85,11 @@ router.patch("/:routineId", authMiddleware, resolvePatientId, async (req, res) =
   try {
     const db = getDb();
     const updates: any = {};
-    const { label, time, completed_date } = parsed.data;
+    const { label, time, completed_date, notes } = parsed.data;
     if (label !== undefined) updates.label = label;
     if (time !== undefined) updates.time = time;
     if (completed_date !== undefined) updates.completed_date = completed_date;
+    if (notes !== undefined) updates.notes = notes;
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ detail: "No fields to update" });

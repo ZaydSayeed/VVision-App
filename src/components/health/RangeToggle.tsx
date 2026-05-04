@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { fonts } from "../../config/theme";
 
-export type Range = "7d" | "30d" | "90d";
+export type Range = "1d" | "7d" | "30d" | "90d";
 
 interface Props {
   value: Range;
@@ -12,7 +12,7 @@ interface Props {
 
 export function RangeToggle({ value, onChange }: Props) {
   const { colors } = useTheme();
-  const ranges: Range[] = ["7d", "30d", "90d"];
+  const ranges: Range[] = ["1d", "7d", "30d", "90d"];
 
   const styles = useMemo(() => StyleSheet.create({
     row: { flexDirection: "row", backgroundColor: colors.warm, borderRadius: 12, padding: 4, alignSelf: "center", marginBottom: 14 },

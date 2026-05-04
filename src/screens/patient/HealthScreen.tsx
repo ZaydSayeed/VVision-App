@@ -18,7 +18,7 @@ export function HealthScreen() {
   const nav = useNavigation<any>();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? null;
-  const [range, setRange] = useState<Range>("30d");
+  const [range, setRange] = useState<Range>("7d");
   const summary = useHealthSummary(patientId);
   const trends = useHealthTrends(patientId, range);
   const [refreshing, setRefreshing] = useState(false);

@@ -78,7 +78,7 @@ router.get("/:patientId/health/summary", authMiddleware, requirePatientAccess, a
 
 export const trendsQuerySchema = z.object({
   metric: z.enum(METRICS),
-  range: z.enum(["7d", "30d", "90d"]).default("30d"),
+  range: z.enum(["1d", "7d", "30d", "90d"]).default("7d"),
 });
 
 router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
@@ -94,7 +94,8 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
     const db = getDb();
     const col = db.collection("patient_health_readings");
     const patientId = String(req.params.patientId);
-    const days = parsed.data.range === "7d" ? 7 : parsed.data.range === "30d" ? 30 : 90;
+    const daysMap: Record<string, number> = { "1d": 1, "7d": 7, "30d": 30, "90d": 90 };
+    const days = daysMap[parsed.data.range];
     const since = new Date();
     since.setDate(since.getDate() - days + 1);
     const sinceIso = since.toISOString().slice(0, 10);

@@ -39,7 +39,7 @@ export type Trend = { metric: string; range: string; points: TrendPoint[] };
 export async function getTrend(
   patientId: string,
   metric: Reading["metric"],
-  range: "7d" | "30d" | "90d"
+  range: "1d" | "7d" | "30d" | "90d"
 ): Promise<Trend> {
   const r = await authFetch(
     `/api/profiles/${patientId}/health/trends?metric=${metric}&range=${range}`

@@ -74,8 +74,9 @@ export function PatientStatusScreen() {
       setDeviceLink(result);
       setLinkModalVisible(false);
       setDeviceCodeInput("");
-    } catch (e: any) {
-      setLinkError(e.message ?? "Could not link device. Check the code and try again.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : undefined;
+      setLinkError(msg ?? "Could not link device. Check the code and try again.");
     } finally {
       setLinking(false);
     }
@@ -112,8 +113,14 @@ export function PatientStatusScreen() {
 
   useEffect(() => {
     if (!patientId) return;
-    getDeviceLink(patientId).then(setDeviceLink).catch(() => setDeviceLink(null));
-    getLatestStageObservation(patientId).then(setStageObs).catch(() => setStageObs(null));
+    let mounted = true;
+    getDeviceLink(patientId)
+      .then((v) => { if (mounted) setDeviceLink(v); })
+      .catch(() => { if (mounted) setDeviceLink(null); });
+    getLatestStageObservation(patientId)
+      .then((v) => { if (mounted) setStageObs(v); })
+      .catch(() => { if (mounted) setStageObs(null); });
+    return () => { mounted = false; };
   }, [patientId]);
 
   useEffect(() => {
@@ -610,8 +617,6 @@ export function PatientStatusScreen() {
     modalConfirmText: { ...fonts.medium, fontSize: 14, color: "#FFFFFF" },
   }), [colors]);
 
-  const totalPending = pendingTasks.length + pendingMeds.length;
-
   return (
     <View style={styles.container}>
 
@@ -637,8 +642,8 @@ export function PatientStatusScreen() {
                 <View>
                   <Text style={styles.panelTitle}>Reminders</Text>
                   <Text style={styles.panelSubtitle}>
-                    {totalPending > 0
-                      ? `${totalPending} item${totalPending === 1 ? "" : "s"} pending today`
+                    {totalNotifs > 0
+                      ? `${totalNotifs} item${totalNotifs === 1 ? "" : "s"} pending today`
                       : "Nothing pending"}
                   </Text>
                 </View>
@@ -650,7 +655,7 @@ export function PatientStatusScreen() {
 
             {/* Panel content */}
             <ScrollView style={styles.panelBody} showsVerticalScrollIndicator={false}>
-              {totalPending === 0 ? (
+              {totalNotifs === 0 ? (
                 <View style={styles.emptyNotif}>
                   <View style={styles.emptyIconRing}>
                     <Ionicons name="checkmark" size={36} color={colors.violet} />
@@ -781,34 +786,6 @@ export function PatientStatusScreen() {
           </View>
         )}
 
-        {/* Link Glasses modal */}
-        <Modal visible={linkModalVisible} transparent animationType="fade" onRequestClose={() => setLinkModalVisible(false)}>
-          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLinkModalVisible(false)}>
-            <TouchableOpacity style={styles.modalCard} activeOpacity={1} onPress={() => {}}>
-              <Text style={styles.modalTitle}>Link Glasses</Text>
-              <Text style={styles.modalHint}>Enter the device code shown on the glasses dashboard.</Text>
-              <TextInput
-                style={styles.modalInput}
-                value={deviceCodeInput}
-                onChangeText={(t) => { setDeviceCodeInput(t.toUpperCase()); setLinkError(""); }}
-                placeholder="e.g. VELA1234"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="characters"
-                autoCorrect={false}
-              />
-              {linkError ? <Text style={styles.modalError}>{linkError}</Text> : null}
-              <View style={styles.modalRow}>
-                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setLinkModalVisible(false)}>
-                  <Text style={styles.modalCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalConfirmBtn} onPress={handleLinkDevice} disabled={linking} activeOpacity={0.8}>
-                  <Text style={styles.modalConfirmText}>{linking ? "Linking…" : "Link"}</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Modal>
-
         {/* Featured gradient card — pending help alerts */}
         {pendingHelp.length > 0 && (
           <LinearGradient
@@ -929,6 +906,36 @@ export function PatientStatusScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Link Glasses modal */}
+      <Modal visible={linkModalVisible} transparent animationType="fade" onRequestClose={() => setLinkModalVisible(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLinkModalVisible(false)}>
+          <TouchableOpacity style={styles.modalCard} activeOpacity={1} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Link Glasses</Text>
+            <Text style={styles.modalHint}>Enter the device code shown on the glasses dashboard.</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={deviceCodeInput}
+              onChangeText={(t) => { setDeviceCodeInput(t.toUpperCase()); setLinkError(""); }}
+              placeholder="e.g. VELA1234"
+              placeholderTextColor={colors.muted}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={12}
+              onSubmitEditing={handleLinkDevice}
+            />
+            {linkError ? <Text style={styles.modalError}>{linkError}</Text> : null}
+            <View style={styles.modalRow}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setLinkModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalConfirmBtn} onPress={handleLinkDevice} disabled={linking} activeOpacity={0.8}>
+                <Text style={styles.modalConfirmText}>{linking ? "Linking…" : "Link"}</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       <NotesHistoryModal
         visible={notesModalVisible}

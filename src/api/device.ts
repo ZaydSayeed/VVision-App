@@ -34,8 +34,8 @@ export async function linkDevice(patientId: string, deviceCode: string): Promise
     body: JSON.stringify({ device_code: deviceCode }),
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as any).detail ?? "Failed to link device");
+    const body = await res.json().catch(() => ({} as { detail?: string }));
+    throw new Error(body.detail ?? "Failed to link device");
   }
   return res.json();
 }

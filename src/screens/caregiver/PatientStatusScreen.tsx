@@ -9,6 +9,8 @@ import {
   Animated,
   Pressable,
   Dimensions,
+  Alert,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,6 +26,8 @@ import { AddNoteSheet } from "../../components/AddNoteSheet";
 import { createNote } from "../../api/client";
 import { fonts, spacing, radius, gradients } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getDeviceLink, linkDevice, unlinkDevice, getLatestStageObservation, DeviceLink, StageObservation } from "../../api/device";
 
 const SCREEN_W = Dimensions.get("window").width;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
@@ -38,11 +42,70 @@ export function PatientStatusScreen() {
   const { pinnedNote, notes: caregiverNotes, reload: reloadNotes } = useNotes(patientId);
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const [addNoteVisible, setAddNoteVisible] = useState(false);
+  const [deviceLink, setDeviceLink] = useState<DeviceLink | null | undefined>(undefined);
+  const [stageObs, setStageObs] = useState<StageObservation | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [deviceCodeInput, setDeviceCodeInput] = useState("");
+  const [linkError, setLinkError] = useState("");
+  const [linking, setLinking] = useState(false);
 
   async function handleSaveNote(text: string, pinned: boolean) {
     if (!patientId) return;
     await createNote(patientId, text, pinned);
     await reloadNotes();
+  }
+
+  function stageLevel(s: string | null | undefined): number {
+    if (!s) return 0;
+    if (s === "mild" || s === "early") return 1;
+    if (s === "moderate" || s === "mid") return 2;
+    if (s === "severe" || s === "late") return 3;
+    return 0;
+  }
+
+  function stageName(s: string): string {
+    if (s === "early") return "mild";
+    if (s === "mid") return "moderate";
+    if (s === "late") return "severe";
+    return s;
+  }
+
+  async function handleLinkDevice() {
+    if (!patientId) return;
+    const code = deviceCodeInput.trim().toUpperCase();
+    if (code.length < 4) { setLinkError("Enter the code shown on the glasses dashboard."); return; }
+    setLinking(true);
+    setLinkError("");
+    try {
+      const result = await linkDevice(patientId, code);
+      setDeviceLink(result);
+      setLinkModalVisible(false);
+      setDeviceCodeInput("");
+    } catch (e: any) {
+      setLinkError(e.message ?? "Could not link device. Check the code and try again.");
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function handleUnlinkDevice() {
+    if (!patientId) return;
+    Alert.alert("Unlink Glasses", "Remove the glasses link for this patient?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Unlink", style: "destructive", onPress: async () => {
+          await unlinkDevice(patientId).catch(() => {});
+          setDeviceLink(null);
+        },
+      },
+    ]);
+  }
+
+  async function dismissStageBanner() {
+    if (!patientId || !stageObs) return;
+    await AsyncStorage.setItem(`@vela/stage-banner-dismissed:${patientId}:${stageObs.observed_at}`, "1");
+    setBannerDismissed(true);
   }
 
   const [clock, setClock] = useState(new Date());
@@ -54,6 +117,19 @@ export function PatientStatusScreen() {
     const interval = setInterval(() => setClock(new Date()), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!patientId) return;
+    getDeviceLink(patientId).then(setDeviceLink).catch(() => setDeviceLink(null));
+    getLatestStageObservation(patientId).then(setStageObs).catch(() => setStageObs(null));
+  }, [patientId]);
+
+  useEffect(() => {
+    if (!patientId || !stageObs) return;
+    AsyncStorage.getItem(`@vela/stage-banner-dismissed:${patientId}:${stageObs.observed_at}`)
+      .then((v) => setBannerDismissed(v === "1"))
+      .catch(() => {});
+  }, [patientId, stageObs]);
 
   const dayStr = clock.toLocaleDateString([], { weekday: "long" });
   const dateStr = clock.toLocaleDateString([], { month: "long", day: "numeric" });
@@ -473,6 +549,73 @@ export function PatientStatusScreen() {
       ...fonts.regular,
       marginTop: 2,
     },
+    glassesCard: {
+      backgroundColor: colors.bg,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      marginBottom: spacing.lg,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      shadowColor: "#7B5CE7",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    glassesInfo: { gap: 2 },
+    glassesLinked: { ...fonts.medium, fontSize: 14, color: colors.text },
+    glassesCode: { ...fonts.regular, fontSize: 12, color: colors.muted, letterSpacing: 3 },
+    linkBtn: {
+      backgroundColor: colors.violet,
+      borderRadius: radius.pill,
+      paddingVertical: 8,
+      paddingHorizontal: spacing.lg,
+    },
+    linkBtnText: { ...fonts.medium, fontSize: 13, color: "#FFFFFF" },
+    unlinkBtn: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.pill,
+      paddingVertical: 8,
+      paddingHorizontal: spacing.lg,
+    },
+    unlinkBtnText: { ...fonts.medium, fontSize: 13, color: colors.muted },
+    stageBanner: {
+      backgroundColor: colors.amber + "18",
+      borderRadius: radius.md,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.amber,
+    },
+    stageBannerText: { ...fonts.regular, fontSize: 13, color: colors.text, flex: 1, lineHeight: 19 },
+    stageBannerBold: { ...fonts.medium },
+    stageBannerDismiss: { ...fonts.medium, fontSize: 12, color: colors.amber, marginTop: 4 },
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" },
+    modalCard: { backgroundColor: colors.bg, borderRadius: radius.lg, padding: spacing.xl, width: "82%", gap: spacing.md },
+    modalTitle: { ...fonts.medium, fontSize: 17, color: colors.text },
+    modalHint: { ...fonts.regular, fontSize: 12, color: colors.muted, marginTop: -4 },
+    modalInput: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      ...fonts.regular,
+      fontSize: 16,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+      letterSpacing: 3,
+    },
+    modalError: { ...fonts.regular, fontSize: 12, color: colors.coral },
+    modalRow: { flexDirection: "row", gap: spacing.md, justifyContent: "flex-end" },
+    modalCancelBtn: { paddingVertical: 9, paddingHorizontal: spacing.lg },
+    modalCancelText: { ...fonts.medium, fontSize: 14, color: colors.muted },
+    modalConfirmBtn: { backgroundColor: colors.violet, borderRadius: radius.pill, paddingVertical: 9, paddingHorizontal: spacing.xl },
+    modalConfirmText: { ...fonts.medium, fontSize: 14, color: "#FFFFFF" },
   }), [colors]);
 
   const totalPending = pendingTasks.length + pendingMeds.length;
@@ -608,6 +751,71 @@ export function PatientStatusScreen() {
 
       {/* ── Main scroll content ──────────────────────────────── */}
       <ScrollView contentContainerStyle={styles.content}>
+
+        {/* Stage observation banner */}
+        {stageObs && !bannerDismissed && stageLevel(stageObs.observed_stage) > stageLevel((user as any)?.stage) && (
+          <TouchableOpacity style={styles.stageBanner} onPress={dismissStageBanner} activeOpacity={0.85}>
+            <Ionicons name="warning-outline" size={18} color={colors.amber} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stageBannerText}>
+                Vision's glasses observed signs consistent with{" "}
+                <Text style={styles.stageBannerBold}>{stageName(stageObs.observed_stage)}</Text>{" "}
+                dementia. Tap to dismiss.
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Glasses card */}
+        {deviceLink !== undefined && (
+          <View style={styles.glassesCard}>
+            <View style={styles.glassesInfo}>
+              <Text style={styles.glassesLinked}>
+                {deviceLink ? "Glasses linked" : "No glasses linked"}
+              </Text>
+              {deviceLink && (
+                <Text style={styles.glassesCode}>{deviceLink.device_code}</Text>
+              )}
+            </View>
+            {deviceLink ? (
+              <TouchableOpacity style={styles.unlinkBtn} onPress={handleUnlinkDevice} activeOpacity={0.8}>
+                <Text style={styles.unlinkBtnText}>Unlink</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.linkBtn} onPress={() => setLinkModalVisible(true)} activeOpacity={0.8}>
+                <Text style={styles.linkBtnText}>Link Glasses</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Link Glasses modal */}
+        <Modal visible={linkModalVisible} transparent animationType="fade" onRequestClose={() => setLinkModalVisible(false)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLinkModalVisible(false)}>
+            <TouchableOpacity style={styles.modalCard} activeOpacity={1} onPress={() => {}}>
+              <Text style={styles.modalTitle}>Link Glasses</Text>
+              <Text style={styles.modalHint}>Enter the device code shown on the glasses dashboard.</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={deviceCodeInput}
+                onChangeText={(t) => { setDeviceCodeInput(t.toUpperCase()); setLinkError(""); }}
+                placeholder="e.g. VELA1234"
+                placeholderTextColor={colors.muted}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+              {linkError ? <Text style={styles.modalError}>{linkError}</Text> : null}
+              <View style={styles.modalRow}>
+                <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setLinkModalVisible(false)}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalConfirmBtn} onPress={handleLinkDevice} disabled={linking} activeOpacity={0.8}>
+                  <Text style={styles.modalConfirmText}>{linking ? "Linking…" : "Link"}</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Featured gradient card — pending help alerts */}
         {pendingHelp.length > 0 && (

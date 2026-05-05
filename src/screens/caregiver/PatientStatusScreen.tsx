@@ -56,14 +56,6 @@ export function PatientStatusScreen() {
     await reloadNotes();
   }
 
-  function stageLevel(s: string | null | undefined): number {
-    if (!s) return 0;
-    if (s === "mild" || s === "early") return 1;
-    if (s === "moderate" || s === "mid") return 2;
-    if (s === "severe" || s === "late") return 3;
-    return 0;
-  }
-
   function stageName(s: string): string {
     if (s === "early") return "mild";
     if (s === "mid") return "moderate";
@@ -753,7 +745,7 @@ export function PatientStatusScreen() {
       <ScrollView contentContainerStyle={styles.content}>
 
         {/* Stage observation banner */}
-        {stageObs && !bannerDismissed && stageLevel(stageObs.observed_stage) > stageLevel((user as any)?.stage) && (
+        {stageObs && !bannerDismissed && (
           <TouchableOpacity style={styles.stageBanner} onPress={dismissStageBanner} activeOpacity={0.85}>
             <Ionicons name="warning-outline" size={18} color={colors.amber} />
             <View style={{ flex: 1 }}>

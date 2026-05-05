@@ -1,13 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { z } from "zod";
-
-const deviceCodeSchema = z.object({
-  device_code: z
-    .string()
-    .min(4)
-    .max(12)
-    .regex(/^[A-Z0-9-]+$/, "device_code must be uppercase alphanumeric with optional dashes"),
-});
+import { deviceCodeSchema } from "./device";
 
 describe("deviceCodeSchema", () => {
   it("accepts valid code", () => {
@@ -32,5 +24,13 @@ describe("deviceCodeSchema", () => {
 
   it("rejects special chars", () => {
     expect(deviceCodeSchema.safeParse({ device_code: "VELA@123" }).success).toBe(false);
+  });
+
+  it("accepts exactly 4 chars", () => {
+    expect(deviceCodeSchema.safeParse({ device_code: "ABCD" }).success).toBe(true);
+  });
+
+  it("accepts exactly 12 chars", () => {
+    expect(deviceCodeSchema.safeParse({ device_code: "ABCDEFGHIJKL" }).success).toBe(true);
   });
 });

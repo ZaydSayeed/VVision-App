@@ -5,7 +5,7 @@ import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { requirePatientAccess } from "../server-core/seatResolver";
 
-const deviceCodeSchema = z.object({
+export const deviceCodeSchema = z.object({
   device_code: z
     .string()
     .min(4)
@@ -27,7 +27,8 @@ router.get("/:patientId/device-link", authMiddleware, requirePatientAccess, asyn
       { projection: { device_code: 1, linked_at: 1, _id: 0 } }
     );
     res.json(link ?? null);
-  } catch {
+  } catch (err) {
+    console.error("device get-link error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });
@@ -46,12 +47,13 @@ router.post("/:patientId/device-link", authMiddleware, requirePatientAccess, asy
     const db = getDb();
     const now = new Date().toISOString();
     await db.collection("device_links").updateOne(
-      { device_code: parsed.data.device_code },
+      { patient_id: req.params.patientId },
       { $set: { device_code: parsed.data.device_code, patient_id: req.params.patientId, linked_at: now } },
       { upsert: true }
     );
     res.json({ device_code: parsed.data.device_code, linked_at: now });
-  } catch {
+  } catch (err) {
+    console.error("device link error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });
@@ -65,7 +67,8 @@ router.delete("/:patientId/device-link", authMiddleware, requirePatientAccess, a
     const db = getDb();
     await db.collection("device_links").deleteOne({ patient_id: req.params.patientId });
     res.status(204).end();
-  } catch {
+  } catch (err) {
+    console.error("device unlink error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });
@@ -84,7 +87,8 @@ router.get("/:patientId/stage-observations/latest", authMiddleware, requirePatie
       .limit(1)
       .toArray();
     res.json(obs[0] ? { ...obs[0], _id: String(obs[0]._id) } : null);
-  } catch {
+  } catch (err) {
+    console.error("device stage-obs error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });

@@ -26,6 +26,15 @@ import { useTheme } from "../../context/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts, spacing, radius } from "../../config/theme";
 
+function slideModalIn(anim: Animated.Value, baseRef: { current: number }) {
+  baseRef.current = 0;
+  anim.setValue(600);
+  Animated.spring(anim, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
+}
+function slideModalOut(anim: Animated.Value, baseRef: { current: number }, onDone: () => void) {
+  Animated.timing(anim, { toValue: 600, duration: 220, useNativeDriver: true }).start(onDone);
+}
+
 export function RoutineScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -33,7 +42,7 @@ export function RoutineScreen() {
   const patientId = user?.patient_id ?? undefined;
 
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
-  const { meds, addMed, editMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
+  const { meds, addMed, toggleTaken, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -48,15 +57,6 @@ export function RoutineScreen() {
   const medModalBaseY = useRef(0);
   const editModalY = useRef(new Animated.Value(0)).current;
   const editModalBaseY = useRef(0);
-
-  function slideModalIn(anim: Animated.Value, baseRef: { current: number }) {
-    baseRef.current = 0;
-    anim.setValue(600);
-    Animated.spring(anim, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
-  }
-  function slideModalOut(anim: Animated.Value, baseRef: { current: number }, onDone: () => void) {
-    Animated.timing(anim, { toValue: 600, duration: 220, useNativeDriver: true }).start(onDone);
-  }
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   useEffect(() => { if (showTaskModal) slideModalIn(taskModalY, taskModalBaseY); }, [showTaskModal]);

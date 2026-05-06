@@ -161,7 +161,13 @@ export function TodayScreen() {
 
   // ── Edit Task modal ──────────────────────────────────────
   const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
-  useEffect(() => { if (editingTask) slideModalIn(editModalY, editModalBaseY); }, [editingTask]);
+  useEffect(() => {
+    if (editingTask) {
+      setEditLabel(editingTask.label);
+      setEditTime(editingTask.time ?? "");
+      slideModalIn(editModalY, editModalBaseY);
+    }
+  }, [editingTask]);
   const [editLabel, setEditLabel] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editError, setEditError] = useState("");
@@ -185,7 +191,14 @@ export function TodayScreen() {
 
   // ── Edit Med modal ───────────────────────────────────────────
   const [editingMed, setEditingMed] = useState<import("../../types").Medication | null>(null);
-  useEffect(() => { if (editingMed) slideModalIn(editMedModalY, editMedModalBaseY); }, [editingMed]);
+  useEffect(() => {
+    if (editingMed) {
+      setEditMedName(editingMed.name);
+      setEditMedDosage(editingMed.dosage ?? "");
+      setEditMedTime(editingMed.time ?? "");
+      slideModalIn(editMedModalY, editMedModalBaseY);
+    }
+  }, [editingMed]);
   const [editMedName, setEditMedName] = useState("");
   const [editMedDosage, setEditMedDosage] = useState("");
   const [editMedTime, setEditMedTime] = useState("");
@@ -770,19 +783,16 @@ export function TodayScreen() {
               meds.map((med) => {
                 const taken = isTakenToday(med);
                 return (
-                  <TouchableOpacity
-                    key={med.id}
-                    style={styles.splitItem}
-                    onPress={() => toggleTaken(med.id)}
-                    activeOpacity={0.75}
-                  >
-                    <View style={[styles.splitCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
-                      {taken && <Ionicons name="checkmark" size={12} color="#fff" />}
-                    </View>
+                  <View key={med.id} style={styles.splitItem}>
+                    <TouchableOpacity onPress={() => toggleTaken(med.id)} activeOpacity={0.75} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                      <View style={[styles.splitCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
+                        {taken && <Ionicons name="checkmark" size={12} color="#fff" />}
+                      </View>
+                    </TouchableOpacity>
                     <Text style={[styles.splitItemText, taken && styles.splitItemDone]} numberOfLines={2}>
                       {med.name}
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 );
               })
             )}
@@ -818,19 +828,28 @@ export function TodayScreen() {
                ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const, task: null as RoutineTask | null }))]
                 .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
                 .map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.splitItem}
-                    onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
-                    activeOpacity={0.75}
-                  >
-                    <View style={[styles.splitCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
-                      {item.done && <Ionicons name="checkmark" size={12} color="#fff" />}
-                    </View>
-                    <Text style={[styles.splitItemText, item.done && styles.splitItemDone]} numberOfLines={2}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
+                  <View key={item.id} style={styles.splitItem}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (item.type === "task") toggleComplete(item.id);
+                      }}
+                      activeOpacity={0.75}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <View style={[styles.splitCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
+                        {item.done && <Ionicons name="checkmark" size={12} color="#fff" />}
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{ flex: 1 }}
+                      onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
+                      activeOpacity={item.type === "task" ? 0.6 : 1}
+                    >
+                      <Text style={[styles.splitItemText, item.done && styles.splitItemDone]} numberOfLines={2}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 ))
             )}
 

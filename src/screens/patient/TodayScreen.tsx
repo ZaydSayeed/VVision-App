@@ -372,65 +372,79 @@ export function TodayScreen() {
     notePlaceholder: { fontSize: 14, color: colors.muted, ...fonts.regular, fontStyle: "italic" },
     noteTimestamp: { fontSize: 11, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
 
-    // ── Split columns ──────────────────────────────────────────
-    splitRow: {
-      flexDirection: "row",
+    // ── Full-width stacked cards ───────────────────────────────
+    fullCard: {
       marginHorizontal: spacing.xl,
-      gap: spacing.md,
-      marginBottom: spacing.xl,
-    },
-    splitCard: {
-      flex: 1,
+      marginBottom: spacing.lg,
       backgroundColor: colors.bg,
       borderRadius: radius.xl,
       padding: spacing.lg,
+      paddingLeft: spacing.lg + 4,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.05,
       shadowRadius: 8,
       elevation: 2,
-      minHeight: 200,
     },
-    splitCardHeader: {
-      fontSize: 10, ...fonts.medium,
-      letterSpacing: 1.2, textTransform: "uppercase",
+    fullCardAccent: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 4,
+      borderTopLeftRadius: radius.xl,
+      borderBottomLeftRadius: radius.xl,
+    },
+    fullCardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
       marginBottom: spacing.sm,
     },
-    splitItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-      paddingVertical: 5,
+    fullCardTitle: {
+      fontSize: 10,
+      ...fonts.medium,
+      letterSpacing: 1.2,
+      textTransform: "uppercase",
+      marginRight: "auto" as const,
     },
-    splitCheckbox: {
-      width: 18, height: 18, borderRadius: 4,
-      alignItems: "center", justifyContent: "center",
+    fullCardPill: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+      borderRadius: radius.pill,
     },
-    splitItemText: { fontSize: 13, color: colors.text, ...fonts.regular, flex: 1 },
-    splitItemDone: { color: colors.muted, textDecorationLine: "line-through" },
-    splitFooter: {
-      marginTop: "auto" as const,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-      paddingTop: spacing.sm,
-    },
-    splitProgress: {
-      flex: 1,
-    },
-    splitProgressTrack: {
-      height: 5, borderRadius: 3,
-      backgroundColor: colors.surface,
-    },
-    splitProgressFill: {
-      height: 5, borderRadius: 3,
-    },
-    splitProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
-    splitPlusBtn: {
+    fullCardPillText: { fontSize: 11, ...fonts.medium },
+    fullCardPlusBtn: {
       width: 28, height: 28, borderRadius: 14,
       alignItems: "center", justifyContent: "center",
     },
-    splitPlusBtnText: { color: "#fff", fontSize: 18, lineHeight: 22, fontWeight: "400" as const },
+    fullCardPlusBtnText: { color: "#fff", fontSize: 18, lineHeight: 22, fontWeight: "400" as const },
+    fullCardItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.sm,
+      paddingVertical: 4,
+    },
+    fullCardCheckboxBtn: {
+      width: 44,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fullCardCheckbox: {
+      width: 22, height: 22, borderRadius: 5,
+      alignItems: "center", justifyContent: "center",
+    },
+    fullCardItemText: { fontSize: 14, color: colors.text, ...fonts.regular, flex: 1 },
+    fullCardItemDone: { color: colors.muted, textDecorationLine: "line-through" },
+    fullCardProgressTrack: {
+      height: 5, borderRadius: 3,
+      backgroundColor: colors.surface,
+      marginTop: spacing.sm,
+    },
+    fullCardProgressFill: { height: 5, borderRadius: 3 },
+    fullCardProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
+    fullCardEmpty: { fontSize: 13, color: colors.muted, ...fonts.regular },
 
     allDoneBanner: {
       borderRadius: radius.xl,
@@ -770,115 +784,123 @@ export function TodayScreen() {
           )}
         </View>
 
-        {/* ── Split Columns ─────────────────────────────────── */}
-        <View style={styles.splitRow}>
+        {/* ── Medications card ──────────────────────────────── */}
+        <View style={styles.fullCard}>
+          <View style={[styles.fullCardAccent, { backgroundColor: colors.amber }]} />
+          <View style={styles.fullCardHeader}>
+            <Text style={[styles.fullCardTitle, { color: colors.amber }]}>Medications</Text>
+            <View style={[styles.fullCardPill, { backgroundColor: colors.amberSoft }]}>
+              <Text style={[styles.fullCardPillText, { color: colors.amber }]}>{medsDone} of {meds.length} taken</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.fullCardPlusBtn, { backgroundColor: colors.amber }]}
+              onPress={() => setShowMedModal(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.fullCardPlusBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Medications */}
-          <View style={styles.splitCard}>
-            <Text style={[styles.splitCardHeader, { color: colors.amber }]}>Medications</Text>
-
-            {meds.length === 0 ? (
-              <Text style={{ color: colors.muted, fontSize: 12, ...fonts.regular }}>No meds added yet.</Text>
-            ) : (
-              meds.map((med) => {
+          {meds.length === 0 ? (
+            <Text style={styles.fullCardEmpty}>No meds added yet.</Text>
+          ) : (
+            meds
+              .slice()
+              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+              .map((med) => {
                 const taken = isTakenToday(med);
                 return (
-                  <View key={med.id} style={styles.splitItem}>
-                    <TouchableOpacity onPress={() => toggleTaken(med.id)} activeOpacity={0.75} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
-                      <View style={[styles.splitCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
-                        {taken && <Ionicons name="checkmark" size={12} color="#fff" />}
+                  <View key={med.id} style={styles.fullCardItem}>
+                    <TouchableOpacity style={styles.fullCardCheckboxBtn} onPress={() => toggleTaken(med.id)} activeOpacity={0.75}>
+                      <View style={[styles.fullCardCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
+                        {taken && <Ionicons name="checkmark" size={13} color="#fff" />}
                       </View>
                     </TouchableOpacity>
-                    <Text style={[styles.splitItemText, taken && styles.splitItemDone]} numberOfLines={2}>
+                    <Text style={[styles.fullCardItemText, taken && styles.fullCardItemDone]} numberOfLines={2}>
                       {med.name}
                     </Text>
                   </View>
                 );
               })
-            )}
+          )}
 
-            <View style={styles.splitFooter}>
-              <View style={styles.splitProgress}>
-                <View style={styles.splitProgressTrack}>
-                  <View style={[styles.splitProgressFill, {
-                    backgroundColor: colors.amber,
-                    width: meds.length > 0 ? `${Math.round((medsDone / meds.length) * 100)}%` as any : "0%",
+          <View style={styles.fullCardProgressTrack}>
+            <View style={[styles.fullCardProgressFill, {
+              backgroundColor: colors.amber,
+              width: meds.length > 0 ? `${Math.round((medsDone / meds.length) * 100)}%` as any : "0%",
+            }]} />
+          </View>
+          <Text style={styles.fullCardProgressText}>{medsDone} of {meds.length} taken</Text>
+        </View>
+
+        {/* ── Tasks card ────────────────────────────────────── */}
+        <View style={styles.fullCard}>
+          <View style={[styles.fullCardAccent, { backgroundColor: colors.sage }]} />
+          {(() => {
+            const allItems = tasks.length + reminders.length;
+            const doneItems = tasks.filter(isCompletedToday).length + reminders.filter((r) => !!r.completed_date).length;
+            return (
+              <View style={styles.fullCardHeader}>
+                <Text style={[styles.fullCardTitle, { color: colors.sage }]}>Tasks</Text>
+                <View style={[styles.fullCardPill, { backgroundColor: colors.sageSoft }]}>
+                  <Text style={[styles.fullCardPillText, { color: colors.sage }]}>{doneItems} of {allItems} done</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.fullCardPlusBtn, { backgroundColor: colors.sage }]}
+                  onPress={() => setShowTaskModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.fullCardPlusBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
+
+          {tasks.length === 0 && reminders.length === 0 ? (
+            <Text style={styles.fullCardEmpty}>No tasks yet.</Text>
+          ) : (
+            [...tasks.map((t) => ({ id: t.id, label: t.label, time: t.time, done: isCompletedToday(t), type: "task" as const, task: t })),
+             ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const, task: null as RoutineTask | null }))]
+              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+              .map((item) => (
+                <View key={item.id} style={styles.fullCardItem}>
+                  <TouchableOpacity
+                    style={styles.fullCardCheckboxBtn}
+                    onPress={() => { if (item.type === "task") toggleComplete(item.id); }}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.fullCardCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
+                      {item.done && <Ionicons name="checkmark" size={13} color="#fff" />}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
+                    activeOpacity={item.type === "task" ? 0.6 : 1}
+                  >
+                    <Text style={[styles.fullCardItemText, item.done && styles.fullCardItemDone]} numberOfLines={2}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+          )}
+
+          {(() => {
+            const allItems = tasks.length + reminders.length;
+            const doneItems = tasks.filter(isCompletedToday).length + reminders.filter((r) => !!r.completed_date).length;
+            return (
+              <>
+                <View style={styles.fullCardProgressTrack}>
+                  <View style={[styles.fullCardProgressFill, {
+                    backgroundColor: colors.sage,
+                    width: allItems > 0 ? `${Math.round((doneItems / allItems) * 100)}%` as any : "0%",
                   }]} />
                 </View>
-                <Text style={styles.splitProgressText}>{medsDone} of {meds.length} taken</Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.splitPlusBtn, { backgroundColor: colors.amber }]}
-                onPress={() => setShowMedModal(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.splitPlusBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Tasks (includes reminders) */}
-          <View style={styles.splitCard}>
-            <Text style={[styles.splitCardHeader, { color: colors.sage }]}>Tasks</Text>
-
-            {tasks.length === 0 && reminders.length === 0 ? (
-              <Text style={{ color: colors.muted, fontSize: 12, ...fonts.regular }}>No tasks yet.</Text>
-            ) : (
-              [...tasks.map((t) => ({ id: t.id, label: t.label, time: t.time, done: isCompletedToday(t), type: "task" as const, task: t })),
-               ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const, task: null as RoutineTask | null }))]
-                .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-                .map((item) => (
-                  <View key={item.id} style={styles.splitItem}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        if (item.type === "task") toggleComplete(item.id);
-                      }}
-                      activeOpacity={0.75}
-                      style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
-                    >
-                      <View style={[styles.splitCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
-                        {item.done && <Ionicons name="checkmark" size={12} color="#fff" />}
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={{ flex: 1 }}
-                      onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
-                      activeOpacity={item.type === "task" ? 0.6 : 1}
-                    >
-                      <Text style={[styles.splitItemText, item.done && styles.splitItemDone]} numberOfLines={2}>
-                        {item.label}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ))
-            )}
-
-            <View style={styles.splitFooter}>
-              {(() => {
-                const allItems = tasks.length + reminders.length;
-                const doneItems = tasks.filter(isCompletedToday).length + reminders.filter((r) => !!r.completed_date).length;
-                return (
-                  <View style={styles.splitProgress}>
-                    <View style={styles.splitProgressTrack}>
-                      <View style={[styles.splitProgressFill, {
-                        backgroundColor: colors.sage,
-                        width: allItems > 0 ? `${Math.round((doneItems / allItems) * 100)}%` as any : "0%",
-                      }]} />
-                    </View>
-                    <Text style={styles.splitProgressText}>{doneItems} of {allItems} done</Text>
-                  </View>
-                );
-              })()}
-              <TouchableOpacity
-                style={[styles.splitPlusBtn, { backgroundColor: colors.sage }]}
-                onPress={() => setShowTaskModal(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.splitPlusBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
+                <Text style={styles.fullCardProgressText}>{doneItems} of {allItems} done</Text>
+              </>
+            );
+          })()}
         </View>
       </ScrollView>
 

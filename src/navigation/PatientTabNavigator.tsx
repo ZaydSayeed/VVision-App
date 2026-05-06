@@ -7,6 +7,7 @@ import { TodayScreen } from "../screens/patient/TodayScreen";
 import { FacesScreen } from "../screens/patient/FacesScreen";
 import { HelpScreen } from "../screens/patient/HelpScreen";
 import { HealthScreen } from "../screens/patient/HealthScreen";
+import { RoutineScreen } from "../screens/patient/RoutineScreen";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 
@@ -20,6 +21,7 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Home: "home",
   Faces: "people",
   Help: "hand-left",
+  Routine: "list-outline",
   Health: "pulse",
 };
 
@@ -84,14 +86,10 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         tabBarActiveTintColor: colors.violet,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabel: ({ color }) => (
-          route.name === "_blank" ? null : (
-            <Text style={[styles.tabLabel, { color }]}>{route.name}</Text>
-          )
+          <Text style={[styles.tabLabel, { color }]}>{route.name}</Text>
         ),
         tabBarIcon: ({ color }) => (
-          route.name === "_blank" ? null : (
-            <Ionicons name={iconNames[route.name]} size={28} color={color} />
-          )
+          <Ionicons name={iconNames[route.name]} size={28} color={color} />
         ),
       })}
     >
@@ -121,12 +119,8 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       >
         {() => <HelpScreen patientName={patientName} />}
       </Tab.Screen>
+      <Tab.Screen name="Routine" component={RoutineScreen} />
       <Tab.Screen name="Health" component={HealthScreen} />
-      <Tab.Screen
-        name="_blank"
-        component={TodayScreen}
-        options={{ tabBarButton: () => null }}
-      />
     </Tab.Navigator>
   );
 }

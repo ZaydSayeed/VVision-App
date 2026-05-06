@@ -5,6 +5,7 @@ export type Reading = {
   date: string;
   value: number;
   unit: string;
+  recordedAt?: string;
 };
 
 export async function syncReadings(

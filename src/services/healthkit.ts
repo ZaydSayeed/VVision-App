@@ -15,10 +15,11 @@ export type Reading = {
   date: string; // YYYY-MM-DD
   value: number;
   unit: string;
+  recordedAt?: string;
 };
 
 export function isAvailable(): boolean {
-  return Platform.OS === "ios";
+  return Platform.OS === "ios" && typeof (AppleHealthKit as any).initHealthKit === "function";
 }
 
 export function requestPermissions(): Promise<void> {
@@ -59,19 +60,18 @@ export async function getReadingsSince(since: Date): Promise<Reading[]> {
     });
   });
 
-  // Heart rate — average of samples per day
+  // Heart rate — individual samples with recordedAt timestamp
   await new Promise<void>((resolve) => {
     AppleHealthKit.getHeartRateSamples({ startDate, endDate, limit: 5000 } as HealthInputOptions, (err, results) => {
       if (!err && results && results.length) {
-        const byDay = new Map<string, number[]>();
         for (const s of results) {
-          const d = isoDate(new Date(s.startDate));
-          if (!byDay.has(d)) byDay.set(d, []);
-          byDay.get(d)!.push(s.value);
-        }
-        for (const [date, vals] of byDay.entries()) {
-          const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-          out.push({ metric: "heart_rate", date, value: avg, unit: "bpm" });
+          out.push({
+            metric: "heart_rate",
+            date: isoDate(new Date(s.startDate)),
+            value: Math.round(s.value),
+            unit: "bpm",
+            recordedAt: s.startDate,
+          });
         }
       }
       resolve();
@@ -118,6 +118,7 @@ export function enableBackgroundDelivery(): void {
   if (!isAvailable()) return;
   // Observers fire when new HealthKit data is written. Register one per metric type.
   // The actual event listener is wired in healthSync.ts via NativeEventEmitter.
+  if (typeof (AppleHealthKit as any).setObserver !== "function") return;
   const OBS = AppleHealthKit.Constants.Observers as any;
   const types = [OBS.StepCount, OBS.HeartRate, OBS.AppleExerciseTime, OBS.SleepAnalysis];
   for (const t of types) {

@@ -784,7 +784,7 @@ export function TodayScreen() {
                 const taken = isTakenToday(med);
                 return (
                   <View key={med.id} style={styles.splitItem}>
-                    <TouchableOpacity onPress={() => toggleTaken(med.id)} activeOpacity={0.75} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                    <TouchableOpacity onPress={() => toggleTaken(med.id)} activeOpacity={0.75} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>
                       <View style={[styles.splitCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
                         {taken && <Ionicons name="checkmark" size={12} color="#fff" />}
                       </View>
@@ -834,7 +834,7 @@ export function TodayScreen() {
                         if (item.type === "task") toggleComplete(item.id);
                       }}
                       activeOpacity={0.75}
-                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
                     >
                       <View style={[styles.splitCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
                         {item.done && <Ionicons name="checkmark" size={12} color="#fff" />}

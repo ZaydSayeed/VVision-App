@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "rea
 import { LineChart } from "react-native-gifted-charts";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
-import { fonts } from "../../config/theme";
+import { fonts, spacing, radius } from "../../config/theme";
 import { RangeToggle, Range } from "./RangeToggle";
 import { useMetricTrend } from "../../hooks/useMetricTrend";
 
@@ -21,17 +21,52 @@ interface Props {
   onToggle: () => void;
 }
 
+const CUMULATIVE_METRICS: Metric[] = ["steps", "active_minutes", "sleep"];
+
+function formatXLabel(date: string, range: Range): string {
+  if (range === "1d") {
+    const hour = parseInt(date.slice(0, 2), 10);
+    if (hour === 0) return "12AM";
+    if (hour === 6) return "6AM";
+    if (hour === 12) return "12PM";
+    if (hour === 18) return "6PM";
+    return "";
+  }
+  if (range === "7d") {
+    const d = new Date(date + "T12:00:00Z");
+    return d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+  }
+  if (range === "30d") return date.slice(8);
+  if (range === "90d") return date.slice(5);
+  return date.slice(5);
+}
+
+function shouldShowLabel(index: number, total: number, range: Range): boolean {
+  if (range === "7d") return true;
+  if (range === "30d") return index % 5 === 0 || index === total - 1;
+  if (range === "90d") return index % 14 === 0 || index === total - 1;
+  return true;
+}
+
 export function ExpandableMetricCard({
   title, iconName, accentColor, value, unit, metric, patientId, isExpanded, onToggle,
 }: Props) {
   const { colors } = useTheme();
-  const [range, setRange] = useState<Range>("1d");
+  const [range, setRange] = useState<Range>("7d");
   const { points, loading } = useMetricTrend(patientId, metric, range, isExpanded);
 
-  const chartData = useMemo(
-    () => points.map((p) => ({ value: p.value, label: p.date.slice(5) })),
-    [points]
-  );
+  const chartData = useMemo(() => {
+    return points.map((p, i) => ({
+      value: p.value,
+      label: shouldShowLabel(i, points.length, range) ? formatXLabel(p.date, range) : "",
+      dataPointText: "",
+    }));
+  }, [points, range]);
+
+  const maxVal = chartData.length > 0 ? Math.max(...chartData.map((d) => d.value)) : 0;
+  const minVal = chartData.length > 0 ? Math.min(...chartData.map((d) => d.value)) : 0;
+
+  const is1dCumulative = range === "1d" && CUMULATIVE_METRICS.includes(metric);
 
   const styles = useMemo(() => StyleSheet.create({
     card: {
@@ -56,6 +91,24 @@ export function ExpandableMetricCard({
     unit: { ...fonts.regular, fontSize: 14, color: colors.muted },
     chartWrap: { marginTop: 14 },
     noData: { ...fonts.regular, fontSize: 13, color: colors.muted, marginTop: 14, textAlign: "center", paddingVertical: 20 },
+    todayTotal: {
+      alignItems: "center",
+      paddingVertical: 24,
+    },
+    todayLabel: { ...fonts.regular, fontSize: 12, color: colors.muted, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.8 },
+    todayValue: { ...fonts.medium, fontSize: 48, color: colors.text },
+    todayUnit: { ...fonts.regular, fontSize: 16, color: colors.muted, marginTop: 2 },
+    tooltipBox: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: "center",
+    },
+    tooltipValue: { ...fonts.medium, fontSize: 14, color: colors.text },
+    tooltipLabel: { ...fonts.regular, fontSize: 11, color: colors.muted },
   }), [colors]);
 
   return (
@@ -80,6 +133,16 @@ export function ExpandableMetricCard({
           <RangeToggle value={range} onChange={setRange} />
           {loading ? (
             <ActivityIndicator color={accentColor} style={{ marginVertical: 20 }} />
+          ) : is1dCumulative ? (
+            chartData.length === 0 ? (
+              <Text style={styles.noData}>No data yet today</Text>
+            ) : (
+              <View style={styles.todayTotal}>
+                <Text style={styles.todayLabel}>Today's total</Text>
+                <Text style={styles.todayValue}>{chartData[0].value.toLocaleString()}</Text>
+                {unit ? <Text style={styles.todayUnit}>{unit}</Text> : null}
+              </View>
+            )
           ) : chartData.length === 0 ? (
             <Text style={styles.noData}>No data for this period</Text>
           ) : (
@@ -96,13 +159,34 @@ export function ExpandableMetricCard({
               dataPointsColor={accentColor}
               dataPointsRadius={3}
               hideRules
-              hideYAxisText
+              yAxisTextStyle={{ color: colors.muted, fontSize: 10 }}
+              yAxisLabelWidth={36}
               xAxisLabelTextStyle={{ color: colors.muted, fontSize: 9 }}
               initialSpacing={0}
               endSpacing={0}
               spacing={Math.max(24, Math.floor(300 / Math.max(chartData.length, 1)))}
               height={130}
               curved
+              maxValue={maxVal > 0 ? maxVal * 1.1 : 10}
+              mostNegativeValue={minVal}
+              noOfSections={2}
+              pointerConfig={{
+                pointerStripHeight: 130,
+                pointerStripColor: colors.muted + "44",
+                pointerStripWidth: 1.5,
+                pointerColor: accentColor,
+                radius: 5,
+                pointerLabelWidth: 90,
+                pointerLabelHeight: 44,
+                activatePointersOnLongPress: false,
+                autoAdjustPointerLabelPosition: true,
+                pointerLabelComponent: (items: Array<{ value: number; label: string }>) => (
+                  <View style={styles.tooltipBox}>
+                    <Text style={styles.tooltipValue}>{items[0]?.value?.toLocaleString()}</Text>
+                    <Text style={styles.tooltipLabel}>{items[0]?.label}</Text>
+                  </View>
+                ),
+              }}
             />
           )}
         </View>

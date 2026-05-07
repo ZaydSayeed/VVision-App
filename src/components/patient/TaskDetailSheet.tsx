@@ -116,77 +116,76 @@ export function TaskDetailSheet({ task, onClose, onComplete, onDelete, onSaveNot
 
   return (
     <Modal visible={!!task} transparent animationType="none" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <View style={styles.backdrop}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ width: "100%" }}>
           <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
-            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-              <View style={styles.handle} />
-              <View style={styles.header}>
-                <Text style={styles.headerTitle}>Task Detail</Text>
-                <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                  <Ionicons name="close" size={20} color={colors.muted} />
+            <View style={styles.handle} />
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Task Detail</Text>
+              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                <Ionicons name="close" size={20} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+              <Text style={styles.label}>{task?.label}</Text>
+
+              {task?.time ? (
+                <View style={styles.metaRow}>
+                  <Ionicons name="time-outline" size={16} color={colors.muted} />
+                  <Text style={styles.metaText}>{task.time}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={styles.doneToggle}
+                onPress={() => task && onComplete(task.id)}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={completed ? "checkmark-circle" : "ellipse-outline"}
+                  size={24}
+                  color={completed ? "#22C55E" : colors.muted}
+                />
+                <Text style={styles.doneToggleText}>{completed ? "Completed today" : "Mark as complete"}</Text>
+              </TouchableOpacity>
+
+              <View>
+                <Text style={styles.sectionLabel}>Notes</Text>
+                <TextInput
+                  style={styles.notesInput}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Add a note..."
+                  placeholderTextColor={colors.muted}
+                  multiline
+                  numberOfLines={3}
+                />
+                <TouchableOpacity
+                  style={[styles.saveBtn, { marginTop: 8 }]}
+                  onPress={handleSaveNotes}
+                  disabled={saving}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save Notes"}</Text>
                 </TouchableOpacity>
               </View>
 
-              <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-                <Text style={styles.label}>{task?.label}</Text>
-
-                {task?.time ? (
-                  <View style={styles.metaRow}>
-                    <Ionicons name="time-outline" size={16} color={colors.muted} />
-                    <Text style={styles.metaText}>{task.time}</Text>
-                  </View>
-                ) : null}
-
-                <TouchableOpacity
-                  style={styles.doneToggle}
-                  onPress={() => task && onComplete(task.id)}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name={completed ? "checkmark-circle" : "ellipse-outline"}
-                    size={24}
-                    color={completed ? "#22C55E" : colors.muted}
-                  />
-                  <Text style={styles.doneToggleText}>{completed ? "Completed today" : "Mark as complete"}</Text>
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.editBtn} onPress={() => task && onEdit(task)} activeOpacity={0.8}>
+                  <Ionicons name="pencil-outline" size={16} color={colors.text} />
+                  <Text style={styles.editBtnText}>Edit</Text>
                 </TouchableOpacity>
-
-                <View>
-                  <Text style={styles.sectionLabel}>Notes</Text>
-                  <TextInput
-                    style={styles.notesInput}
-                    value={notes}
-                    onChangeText={setNotes}
-                    placeholder="Add a note..."
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    numberOfLines={3}
-                  />
-                  <TouchableOpacity
-                    style={[styles.saveBtn, { marginTop: 8 }]}
-                    onPress={handleSaveNotes}
-                    disabled={saving}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save Notes"}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.actionRow}>
-                  <TouchableOpacity style={styles.editBtn} onPress={() => task && onEdit(task)} activeOpacity={0.8}>
-                    <Ionicons name="pencil-outline" size={16} color={colors.text} />
-                    <Text style={styles.editBtnText}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.8}>
-                    <Ionicons name="trash-outline" size={16} color={colors.coral} />
-                    <Text style={styles.deleteBtnText}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.8}>
+                  <Ionicons name="trash-outline" size={16} color={colors.coral} />
+                  <Text style={styles.deleteBtnText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </Animated.View>
         </KeyboardAvoidingView>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 }

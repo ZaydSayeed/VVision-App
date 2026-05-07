@@ -22,7 +22,11 @@
       "mcp__claude_ai_Notion__notion-fetch",
       "Bash(open:*)",
       "Bash(cp /Users/haadisiddiqui/projects/VVision-App/docs/pivot-deck.html \"/Users/haadisiddiqui/Downloads/Vela-Pivot-Deck.html\")",
-      "Read(//Users/haadisiddiqui/Downloads/**)"
+      "Read(//Users/haadisiddiqui/Downloads/**)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:hub.evenrealities.com)",
+      "WebFetch(domain:www.evenrealities.com)"
     ]
   }
 }

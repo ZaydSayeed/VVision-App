@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import Slider from "@react-native-community/slider";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { fonts, spacing } from "../../config/theme";
 
@@ -45,10 +44,17 @@ export function TimeSlider({ value, onChange }: TimeSliderProps) {
 
   const { display } = stepToTime(step);
 
+  const adjust = (delta: number) => {
+    const next = Math.min(95, Math.max(0, step + delta));
+    setStep(next);
+    onChange(stepToTime(next).value);
+  };
+
   const styles = useMemo(() => StyleSheet.create({
     container: {
       marginTop: spacing.sm,
       marginBottom: spacing.sm,
+      alignItems: "center",
     },
     timeDisplay: {
       fontSize: 38,
@@ -58,13 +64,32 @@ export function TimeSlider({ value, onChange }: TimeSliderProps) {
       marginBottom: spacing.md,
       letterSpacing: 1,
     },
-    sliderLabel: {
-      fontSize: 11,
-      color: colors.muted,
+    controls: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.lg,
+    },
+    btn: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    btnText: {
+      fontSize: 24,
+      color: colors.violet,
       ...fonts.medium,
-      letterSpacing: 1,
-      textTransform: "uppercase",
-      marginBottom: 4,
+      lineHeight: 28,
+    },
+    stepLabel: {
+      fontSize: 12,
+      color: colors.muted,
+      ...fonts.regular,
+      minWidth: 80,
       textAlign: "center",
     },
   }), [colors]);
@@ -72,19 +97,15 @@ export function TimeSlider({ value, onChange }: TimeSliderProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.timeDisplay}>{display}</Text>
-      <Slider
-        minimumValue={0}
-        maximumValue={95}
-        step={1}
-        value={step}
-        onValueChange={(v) => {
-          setStep(v);
-          onChange(stepToTime(v).value);
-        }}
-        minimumTrackTintColor={colors.violet}
-        maximumTrackTintColor={colors.border}
-        thumbTintColor={colors.violet}
-      />
+      <View style={styles.controls}>
+        <TouchableOpacity style={styles.btn} onPress={() => adjust(-1)} activeOpacity={0.7}>
+          <Text style={styles.btnText}>−</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepLabel}>15 min steps</Text>
+        <TouchableOpacity style={styles.btn} onPress={() => adjust(1)} activeOpacity={0.7}>
+          <Text style={styles.btnText}>+</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

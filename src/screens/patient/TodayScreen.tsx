@@ -842,7 +842,7 @@ export function TodayScreen() {
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, justifyContent: "center" }}
                     onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
                     activeOpacity={item.type === "task" ? 0.6 : 1}
                   >
@@ -850,6 +850,18 @@ export function TodayScreen() {
                       {item.label}
                     </Text>
                   </TouchableOpacity>
+                  {item.type === "reminder" && (
+                    <TouchableOpacity
+                      style={styles.fullCardCheckboxBtn}
+                      onPress={() => Alert.alert("Remove reminder?", `"${item.label}" will be removed.`, [
+                        { text: "Cancel", style: "cancel" },
+                        { text: "Remove", style: "destructive", onPress: () => deleteReminder(item.id) },
+                      ])}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))
           )}

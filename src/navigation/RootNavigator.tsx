@@ -53,6 +53,7 @@ import OnboardingNavigator from "./OnboardingNavigator";
 import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
+import { registerOnboardingReset } from "../utils/reminderEvents";
 
 const CaregiverStack = createNativeStackNavigator();
 const PatientStack = createNativeStackNavigator();
@@ -85,6 +86,14 @@ export function RootNavigator() {
   const completeOnboarding = useCallback(() => {
     setOnboardingDone(true);
   }, []);
+
+  useEffect(() => {
+    registerOnboardingReset(async () => {
+      if (!user) return;
+      await AsyncStorage.removeItem(`@vela/onboarding_complete:${user.id}`);
+      setOnboardingDone(false);
+    });
+  }, [user]);
 
   useEffect(() => {
     setOnNetworkChange(setOffline);

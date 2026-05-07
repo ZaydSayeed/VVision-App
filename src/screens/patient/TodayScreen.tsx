@@ -35,7 +35,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CheckRow } from "../../components/shared/CheckRow";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { TimeSlider } from "../../components/shared/TimeSlider";
-import { fonts, spacing, radius, gradients } from "../../config/theme";
+import { fonts, spacing, radius, gradients, shadow } from "../../config/theme";
 import { registerReminderReload, registerTaskReload, registerMedReload } from "../../utils/reminderEvents";
 
 const SCREEN_W = Dimensions.get("window").width;
@@ -348,11 +348,7 @@ export function TodayScreen() {
       padding: spacing.lg,
       borderLeftWidth: 4,
       borderLeftColor: colors.violet,
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 2,
+      ...shadow.sm,
     },
     noteCardTop: {
       flexDirection: "row",
@@ -380,11 +376,7 @@ export function TodayScreen() {
       borderRadius: radius.xl,
       padding: spacing.lg,
       paddingLeft: spacing.lg + 4,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
+      ...shadow.md,
     },
     fullCardAccent: {
       position: "absolute",
@@ -432,17 +424,17 @@ export function TodayScreen() {
       justifyContent: "center",
     },
     fullCardCheckbox: {
-      width: 22, height: 22, borderRadius: 5,
+      width: 22, height: 22, borderRadius: radius.sm,
       alignItems: "center", justifyContent: "center",
     },
     fullCardItemText: { fontSize: 14, color: colors.text, ...fonts.regular, flex: 1 },
     fullCardItemDone: { color: colors.muted, textDecorationLine: "line-through" },
     fullCardProgressTrack: {
-      height: 5, borderRadius: 3,
+      height: 5, borderRadius: radius.pill,
       backgroundColor: colors.surface,
       marginTop: spacing.sm,
     },
-    fullCardProgressFill: { height: 5, borderRadius: 3 },
+    fullCardProgressFill: { height: 5, borderRadius: radius.pill },
     fullCardProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
     fullCardEmpty: { fontSize: 13, color: colors.muted, ...fonts.regular },
 
@@ -535,11 +527,9 @@ export function TodayScreen() {
     },
     notifRow: {
       flexDirection: "row", alignItems: "center", backgroundColor: colors.bg,
-      borderRadius: 16, paddingVertical: 14, paddingHorizontal: 14,
+      borderRadius: radius.lg, paddingVertical: 14, paddingHorizontal: 14,
       marginBottom: 8, gap: 14,
-      borderWidth: 1, borderColor: "rgba(123,92,231,0.08)",
-      shadowColor: "#7B5CE7", shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.07, shadowRadius: 10, elevation: 2,
+      ...shadow.sm,
     },
     notifIconCircle: {
       width: 44, height: 44, borderRadius: 22,
@@ -560,11 +550,11 @@ export function TodayScreen() {
     // ── Chooser sheet ──────────────────────────────────────────
     chooserOverlay: { flex: 1, backgroundColor: "rgba(30,27,58,0.45)", justifyContent: "flex-end" },
     chooserSheet: {
-      backgroundColor: colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28,
+      backgroundColor: colors.bg, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl,
       padding: spacing.xxl, gap: spacing.md,
     },
     chooserHandle: {
-      width: 40, height: 4, borderRadius: 2,
+      width: 40, height: 4, borderRadius: radius.pill,
       backgroundColor: colors.border, alignSelf: "center", marginBottom: spacing.lg,
     },
     chooserTitle: { fontSize: 20, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
@@ -583,12 +573,12 @@ export function TodayScreen() {
     // ── Add modals ─────────────────────────────────────────────
     modalOverlay: { flex: 1, backgroundColor: "rgba(30,27,58,0.45)", justifyContent: "flex-end" },
     modalSheet: {
-      backgroundColor: colors.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28,
+      backgroundColor: colors.bg, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl,
       padding: spacing.xxl, gap: spacing.sm,
       maxHeight: SCREEN_H * 0.80,
     },
     modalHandle: {
-      width: 40, height: 4, borderRadius: 2,
+      width: 40, height: 4, borderRadius: radius.pill,
       backgroundColor: colors.border, alignSelf: "center", marginBottom: spacing.lg,
     },
     modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },

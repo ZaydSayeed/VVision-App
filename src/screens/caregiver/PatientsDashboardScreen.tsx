@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { usePatients } from "../../hooks/usePatients";
 import { PatientSummary } from "../../types";
-import { fonts, spacing, radius } from "../../config/theme";
+import { fonts, spacing, radius, shadow } from "../../config/theme";
 import { useTheme } from "../../context/ThemeContext";
 import { PatientHealthStrip } from "../../components/health/PatientHealthStrip";
 
@@ -35,11 +35,11 @@ function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
   }, [ratio]);
 
   return (
-    <View style={{ height: 6, backgroundColor: "rgba(0,0,0,0.06)", borderRadius: 999, overflow: "hidden" }}>
+    <View style={{ height: 6, backgroundColor: "rgba(0,0,0,0.06)", borderRadius: radius.pill, overflow: "hidden" }}>
       <Animated.View
         style={{
           height: 6,
-          borderRadius: 999,
+          borderRadius: radius.pill,
           backgroundColor: color,
           width: widthAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
         }}
@@ -85,11 +85,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       paddingHorizontal: spacing.lg,
       paddingVertical: 10,
       gap: spacing.xs,
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 10,
-      elevation: 5,
+      ...shadow.fab,
     },
     addBtnText: {
       fontSize: 14,
@@ -102,11 +98,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       backgroundColor: colors.bg,
       borderRadius: radius.xl,
       marginBottom: spacing.md,
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.07,
-      shadowRadius: 14,
-      elevation: 3,
+      ...shadow.md,
       overflow: "hidden",
       flexDirection: "row",
     },
@@ -223,11 +215,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       backgroundColor: colors.violet,
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.35,
-      shadowRadius: 16,
-      elevation: 8,
+      ...shadow.fab,
       marginBottom: spacing.sm,
     },
   }), [colors]);

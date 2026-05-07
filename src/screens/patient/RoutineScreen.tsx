@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,10 +10,9 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Animated,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { RoutineTask } from "../../types";
 import { updateRoutine, authHeaders } from "../../api/client";
 import { API_BASE_URL } from "../../config/api";
@@ -25,15 +24,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fonts, spacing, radius } from "../../config/theme";
-
-function slideModalIn(anim: Animated.Value, baseRef: { current: number }) {
-  baseRef.current = 0;
-  anim.setValue(600);
-  Animated.spring(anim, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
-}
-function slideModalOut(anim: Animated.Value, baseRef: { current: number }, onDone: () => void) {
-  Animated.timing(anim, { toValue: 600, duration: 220, useNativeDriver: true }).start(onDone);
-}
 
 export function RoutineScreen() {
   const { colors } = useTheme();
@@ -51,15 +41,7 @@ export function RoutineScreen() {
     setRefreshing(false);
   }, [reloadRoutine, reloadMeds]);
 
-  const taskModalY = useRef(new Animated.Value(0)).current;
-  const taskModalBaseY = useRef(0);
-  const medModalY = useRef(new Animated.Value(0)).current;
-  const medModalBaseY = useRef(0);
-  const editModalY = useRef(new Animated.Value(0)).current;
-  const editModalBaseY = useRef(0);
-
   const [showTaskModal, setShowTaskModal] = useState(false);
-  useEffect(() => { if (showTaskModal) slideModalIn(taskModalY, taskModalBaseY); }, [showTaskModal]);
   const [taskLabel, setTaskLabel] = useState("");
   const [taskTime, setTaskTime] = useState("");
   const [taskError, setTaskError] = useState("");
@@ -95,7 +77,6 @@ export function RoutineScreen() {
     if (editingTask) {
       setEditLabel(editingTask.label);
       setEditTime(editingTask.time ?? "");
-      slideModalIn(editModalY, editModalBaseY);
     }
   }, [editingTask]);
 
@@ -112,7 +93,6 @@ export function RoutineScreen() {
   }
 
   const [showMedModal, setShowMedModal] = useState(false);
-  useEffect(() => { if (showMedModal) slideModalIn(medModalY, medModalBaseY); }, [showMedModal]);
   const [medName, setMedName] = useState("");
   const [medDosage, setMedDosage] = useState("");
   const [medTime, setMedTime] = useState("");
@@ -373,18 +353,10 @@ export function RoutineScreen() {
       />
 
       {/* Add Task modal */}
-      <Modal visible={showTaskModal} transparent animationType="none">
+      <Modal visible={showTaskModal} transparent animationType="slide">
         <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <PanGestureHandler
-            onGestureEvent={({ nativeEvent }) => { taskModalY.setValue(Math.max(0, taskModalBaseY.current + nativeEvent.translationY)); }}
-            onHandlerStateChange={({ nativeEvent }) => {
-              if (nativeEvent.state !== State.END) return;
-              nativeEvent.translationY > 80
-                ? slideModalOut(taskModalY, taskModalBaseY, () => { setShowTaskModal(false); setTaskError(""); })
-                : Animated.spring(taskModalY, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
-            }}
-          >
-            <Animated.View style={[styles.modalSheet, { transform: [{ translateY: taskModalY }] }]}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setShowTaskModal(false); setTaskError(""); }} />
+            <View style={styles.modalSheet}>
               <View style={styles.modalHandle} />
               <Text style={styles.modalTitle}>Add a Task</Text>
               <Text style={styles.fieldLabel}>WHAT DO I NEED TO DO?</Text>
@@ -400,57 +372,39 @@ export function RoutineScreen() {
                   <Text style={styles.btnPrimaryText}>Add</Text>
                 </TouchableOpacity>
               </View>
-            </Animated.View>
-          </PanGestureHandler>
+            </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Task modal */}
-      <Modal visible={editingTask !== null} transparent animationType="none">
+      <Modal visible={editingTask !== null} transparent animationType="slide">
         <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <PanGestureHandler
-            onGestureEvent={({ nativeEvent }) => { editModalY.setValue(Math.max(0, editModalBaseY.current + nativeEvent.translationY)); }}
-            onHandlerStateChange={({ nativeEvent }) => {
-              if (nativeEvent.state !== State.END) return;
-              nativeEvent.translationY > 80
-                ? slideModalOut(editModalY, editModalBaseY, () => { setEditingTask(null); setEditError(""); })
-                : Animated.spring(editModalY, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
-            }}
-          >
-            <Animated.View style={[styles.modalSheet, { transform: [{ translateY: editModalY }] }]}>
-              <View style={styles.modalHandle} />
-              <Text style={styles.modalTitle}>Edit Task</Text>
-              <Text style={styles.fieldLabel}>WHAT DO I NEED TO DO?</Text>
-              <TextInput style={styles.input} value={editLabel} onChangeText={setEditLabel} placeholder="e.g. Morning walk" placeholderTextColor={colors.muted} autoFocus />
-              <Text style={styles.fieldLabel}>TIME</Text>
-              <TimeSlider value={editTime} onChange={setEditTime} />
-              {editError ? <Text style={styles.error}>{editError}</Text> : null}
-              <View style={styles.modalBtns}>
-                <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingTask(null); setEditError(""); }}>
-                  <Text style={styles.btnOutlineText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.btnPrimary} onPress={handleEditTask}>
-                  <Text style={styles.btnPrimaryText}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          </PanGestureHandler>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingTask(null); setEditError(""); }} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Edit Task</Text>
+            <Text style={styles.fieldLabel}>WHAT DO I NEED TO DO?</Text>
+            <TextInput style={styles.input} value={editLabel} onChangeText={setEditLabel} placeholder="e.g. Morning walk" placeholderTextColor={colors.muted} autoFocus />
+            <Text style={styles.fieldLabel}>TIME</Text>
+            <TimeSlider value={editTime} onChange={setEditTime} />
+            {editError ? <Text style={styles.error}>{editError}</Text> : null}
+            <View style={styles.modalBtns}>
+              <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingTask(null); setEditError(""); }}>
+                <Text style={styles.btnOutlineText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnPrimary} onPress={handleEditTask}>
+                <Text style={styles.btnPrimaryText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Add Med modal */}
-      <Modal visible={showMedModal} transparent animationType="none">
+      <Modal visible={showMedModal} transparent animationType="slide">
         <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <PanGestureHandler
-            onGestureEvent={({ nativeEvent }) => { medModalY.setValue(Math.max(0, medModalBaseY.current + nativeEvent.translationY)); }}
-            onHandlerStateChange={({ nativeEvent }) => {
-              if (nativeEvent.state !== State.END) return;
-              nativeEvent.translationY > 80
-                ? slideModalOut(medModalY, medModalBaseY, () => { setShowMedModal(false); setMedError(""); })
-                : Animated.spring(medModalY, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
-            }}
-          >
-            <Animated.View style={[styles.modalSheet, { transform: [{ translateY: medModalY }] }]}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setShowMedModal(false); setMedError(""); }} />
+          <View style={styles.modalSheet}>
               <View style={styles.modalHandle} />
               <Text style={styles.modalTitle}>Add a Medication</Text>
               <View style={{ flexDirection: "row", gap: spacing.sm }}>
@@ -474,8 +428,7 @@ export function RoutineScreen() {
                   <Text style={styles.btnPrimaryText}>Add</Text>
                 </TouchableOpacity>
               </View>
-            </Animated.View>
-          </PanGestureHandler>
+            </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>

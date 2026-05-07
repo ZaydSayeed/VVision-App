@@ -21,8 +21,7 @@
         "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
         "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning.",
         "UIBackgroundModes": [
-          "fetch",
-          "processing"
+          "fetch"
         ],
         "NSHealthShareUsageDescription": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing.",
         "NSHealthUpdateUsageDescription": "Vela does not write to your health data.",

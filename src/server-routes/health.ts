@@ -76,7 +76,11 @@ router.get("/:patientId/health/summary", authMiddleware, requirePatientAccess, a
     const db = getDb();
     const col = db.collection("patient_health_readings");
     const patientId = String(req.params.patientId);
-    const today = todayIso();
+    // Prefer client-supplied local date to avoid UTC day-boundary mismatch
+    const dateParam = typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+      ? req.query.date
+      : todayIso();
+    const today = dateParam;
     const [nonHrRows, hrRows] = await Promise.all([
       col.find({ patientId, metric: { $ne: "heart_rate" }, date: today }).toArray(),
       col.find({ patientId, metric: "heart_rate", date: today }).toArray(),
@@ -105,10 +109,15 @@ export const trendsQuerySchema = z.object({
   range: z.enum(["1d", "7d", "30d", "90d"]).default("7d"),
 });
 
+const trendsWithDateSchema = trendsQuerySchema.extend({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
 router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
-  const parsed = trendsQuerySchema.safeParse({
+  const parsed = trendsWithDateSchema.safeParse({
     metric: req.query.metric,
     range: req.query.range,
+    date: req.query.date,
   });
   if (!parsed.success) {
     res.status(400).json({ detail: parsed.error.issues[0].message });
@@ -119,14 +128,16 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
     const col = db.collection("patient_health_readings");
     const patientId = String(req.params.patientId);
     const { metric, range } = parsed.data;
+    // Use client-supplied local date as anchor to avoid UTC day-boundary mismatch
+    const anchorDate = parsed.data.date ?? todayIso();
     const daysMap: Record<string, number> = { "1d": 1, "7d": 7, "30d": 30, "90d": 90 };
     const days = daysMap[range];
-    const since = new Date();
-    since.setDate(since.getDate() - days + 1);
-    const sinceIso = since.toISOString().slice(0, 10);
+    const anchor = new Date(anchorDate + "T12:00:00Z");
+    anchor.setUTCDate(anchor.getUTCDate() - days + 1);
+    const sinceIso = anchor.toISOString().slice(0, 10);
 
     if (metric === "heart_rate" && range === "1d") {
-      const todayIsoStr = todayIso();
+      const todayIsoStr = anchorDate;
       const rows = await col
         .find({ patientId, metric: "heart_rate", date: todayIsoStr })
         .sort({ recordedAt: 1 })

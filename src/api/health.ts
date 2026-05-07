@@ -28,8 +28,17 @@ export type Summary = {
   sleep: { value: number; unit: string } | null;
 };
 
+function localIsoDate(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export async function getSummary(patientId: string): Promise<Summary> {
-  const r = await authFetch(`/api/profiles/${patientId}/health/summary`);
+  const date = localIsoDate();
+  const r = await authFetch(`/api/profiles/${patientId}/health/summary?date=${date}`);
   if (!r.ok) throw new Error("summary load failed");
   return r.json();
 }
@@ -42,8 +51,9 @@ export async function getTrend(
   metric: Reading["metric"],
   range: "1d" | "7d" | "30d" | "90d"
 ): Promise<Trend> {
+  const date = localIsoDate();
   const r = await authFetch(
-    `/api/profiles/${patientId}/health/trends?metric=${metric}&range=${range}`
+    `/api/profiles/${patientId}/health/trends?metric=${metric}&range=${range}&date=${date}`
   );
   if (!r.ok) throw new Error("trend load failed");
   return r.json();

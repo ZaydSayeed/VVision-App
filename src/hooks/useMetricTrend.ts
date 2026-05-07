@@ -16,6 +16,7 @@ export function useMetricTrend(
   const load = useCallback(async () => {
     if (!patientId || !enabled) return;
     setLoading(true);
+    setPoints([]); // clear stale data so chart doesn't show old range while loading
     try {
       const result = await getTrend(patientId, metric, range);
       setPoints(result.points);

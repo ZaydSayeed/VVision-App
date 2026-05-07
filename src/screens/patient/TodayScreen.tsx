@@ -405,7 +405,7 @@ export function TodayScreen() {
       width: 22, height: 22, borderRadius: radius.sm,
       alignItems: "center", justifyContent: "center",
     },
-    fullCardItemText: { fontSize: 14, color: colors.text, ...fonts.regular, flex: 1 },
+    fullCardItemText: { fontSize: 14, color: colors.text, ...fonts.regular },
     fullCardItemDone: { color: colors.muted, textDecorationLine: "line-through" },
     fullCardProgressTrack: {
       height: 5, borderRadius: radius.pill,

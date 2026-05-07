@@ -11,7 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import PatternsCard from "../components/PatternsCard";
 import OnboardingReminderBanner from "../components/OnboardingReminderBanner";
 import { Ionicons } from "@expo/vector-icons";
-import { spacing, fonts, radius } from "../config/theme";
+import { spacing, fonts, radius, shadow } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 import { DashboardStats, TimelineEvent } from "../types";
 import { formatTimeShort } from "../hooks/useDashboardData";
@@ -167,11 +167,7 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
       gap: spacing.md,
       alignItems: "flex-start",
       borderLeftWidth: 4,
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
+      ...shadow.sm,
     },
     eventIconCircle: {
       width: 40,
@@ -261,7 +257,7 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
 
       <TouchableOpacity
         onPress={() => navigation.navigate("CheckIn")}
-        style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: "#6366f1", padding: 16, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}
+        style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: "#6366f1", padding: 16, borderRadius: radius.lg, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}
         activeOpacity={0.85}
       >
         <Ionicons name="mic" size={18} color="#FFFFFF" />
@@ -274,7 +270,7 @@ export function TimelineScreen({ stats, timeline, loading, onRefresh }: Timeline
         style={{
           marginHorizontal: 20, marginBottom: 16,
           backgroundColor: colors.surface,
-          borderRadius: 14,
+          borderRadius: radius.lg,
           padding: 16,
           flexDirection: "row",
           alignItems: "center",

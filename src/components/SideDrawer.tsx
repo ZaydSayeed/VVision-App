@@ -20,6 +20,7 @@ import { useTheme } from "../context/ThemeContext";
 import { usePatients } from "../hooks/usePatients";
 import { getMyLinkCode } from "../api/client";
 import { fonts, spacing, radius, colors } from "../config/theme";
+import { triggerOnboardingReset } from "../utils/reminderEvents";
 
 const DRAWER_WIDTH = Dimensions.get("window").width * 0.78;
 
@@ -160,12 +161,31 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </View>
             )}
 
+            {/* Replay tour */}
+            <View style={[styles.section, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.row}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Show app tour again"
+                onPress={() => { onClose(); triggerOnboardingReset(); }}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="play-circle-outline" size={20} color={colors.violet} />
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Show tour again</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
             {/* Sign out */}
             <View style={styles.section}>
               <TouchableOpacity
                 style={[styles.signOutBtn, { backgroundColor: "rgba(123,92,231,0.08)" }]}
                 onPress={() => { onClose(); logout(); }}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Sign out"
               >
                 <Ionicons name="log-out-outline" size={18} color={colors.violet} />
                 <Text style={[styles.signOutText, { color: colors.violet }]}>Sign out</Text>

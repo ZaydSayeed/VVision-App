@@ -3,6 +3,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Text, TextInput } from "react-native";
 import {
   useFonts,
   DMSans_400Regular,
@@ -16,6 +17,13 @@ import { NetworkProvider } from "./src/context/NetworkContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { SplashScreen } from "./src/components/SplashScreen";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
+
+// Respect OS "larger text" setting, cap at 1.4x so layouts stay usable.
+// Critical for elderly patients who often run system text at +50%/+100%.
+const TextAny = Text as unknown as { defaultProps?: Record<string, unknown> };
+const TextInputAny = TextInput as unknown as { defaultProps?: Record<string, unknown> };
+TextAny.defaultProps = { ...(TextAny.defaultProps || {}), allowFontScaling: true, maxFontSizeMultiplier: 1.4 };
+TextInputAny.defaultProps = { ...(TextInputAny.defaultProps || {}), allowFontScaling: true, maxFontSizeMultiplier: 1.4 };
 
 const MIN_SPLASH_MS = 2000;
 

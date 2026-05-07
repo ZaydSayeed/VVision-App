@@ -81,10 +81,11 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 28,
+  xxl: 32,
   pill: 999,
 };
 
@@ -117,41 +118,41 @@ export const shadow = {
   // Subtle — list items, inline cards
   sm: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 14,
     elevation: 2,
   },
   // Standard — main content cards
   md: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
     elevation: 3,
   },
   // Prominent — floating elements, modals
   lg: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.10,
+    shadowRadius: 28,
     elevation: 6,
   },
-  // FAB / primary action buttons
+  // FAB / primary action buttons — keep contrasty
   fab: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 18,
     elevation: 8,
   },
   // Legacy alias
   card: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
     elevation: 3,
   },
 };

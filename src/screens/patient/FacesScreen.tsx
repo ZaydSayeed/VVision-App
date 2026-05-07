@@ -227,7 +227,7 @@ export function FacesScreen() {
     faceCard: {
       width: CARD_WIDTH,
       backgroundColor: colors.surface,
-      borderRadius: 20,
+      borderRadius: radius.xl,
       padding: spacing.lg,
       alignItems: "center",
       gap: spacing.xs,
@@ -280,7 +280,7 @@ export function FacesScreen() {
     skeletonCard: {
       width: CARD_WIDTH,
       backgroundColor: colors.surface,
-      borderRadius: 20,
+      borderRadius: radius.xl,
       padding: spacing.lg,
       alignItems: "center",
       gap: spacing.sm,
@@ -296,7 +296,7 @@ export function FacesScreen() {
     },
     skeletonLine: {
       height: 14,
-      borderRadius: 7,
+      borderRadius: radius.pill,
       backgroundColor: colors.violet100,
     },
 
@@ -371,15 +371,15 @@ export function FacesScreen() {
     },
     modalSheet: {
       backgroundColor: colors.bg,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
+      borderTopLeftRadius: radius.xxl,
+      borderTopRightRadius: radius.xxl,
       padding: spacing.xxl,
       gap: spacing.sm,
       borderTopWidth: 1,
       borderColor: colors.border,
     },
     modalHandle: {
-      width: 40, height: 4, borderRadius: 2,
+      width: 40, height: 4, borderRadius: radius.pill,
       backgroundColor: colors.border, alignSelf: "center", marginBottom: spacing.lg,
     },
     modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },

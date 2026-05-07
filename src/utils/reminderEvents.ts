@@ -30,3 +30,15 @@ export function registerMedReload(fn: () => void) {
 export function triggerMedReload() {
   _medReloadCb?.();
 }
+
+// ── Onboarding reset (replay tour) ───────────────────────
+let _onboardingResetCb: (() => void) | null = null;
+
+export function registerOnboardingReset(fn: () => void) {
+  _onboardingResetCb = fn;
+}
+
+export function triggerOnboardingReset() {
+  _onboardingResetCb?.();
+}
+

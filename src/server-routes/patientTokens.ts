@@ -34,4 +34,62 @@ router.post("/register-patient-token", authMiddleware, resolvePatientId, async (
   }
 });
 
+// POST /api/notifications/zone-exit — patient app signals zone departure
+router.post("/zone-exit", authMiddleware, resolvePatientId, async (req, res) => {
+  try {
+    const db = getDb();
+    const patientId = (req as any).patientId!;
+
+    // Rate-limit: only send once per hour per patient
+    const lastAlert = await db.collection("geofences").findOne({ patientId, lastZoneAlert: { $exists: true } });
+    if (lastAlert?.lastZoneAlert) {
+      const elapsed = Date.now() - new Date(lastAlert.lastZoneAlert).getTime();
+      if (elapsed < 60 * 60 * 1000) {
+        res.json({ sent: false, reason: "rate_limited" });
+        return;
+      }
+    }
+
+    // Get patient name
+    const user = await db.collection("users").findOne({ patient_id: patientId });
+    const patientName = user?.name ?? "Your patient";
+
+    // Get caregiver push token
+    const tokenDoc = await db.collection("pushTokens").findOne({ patientId });
+    if (!tokenDoc?.expoPushToken) {
+      res.json({ sent: false, reason: "no_caregiver_token" });
+      return;
+    }
+
+    // Send push
+    const pushRes = await fetch("https://exp.host/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: tokenDoc.expoPushToken,
+        title: "Zone Alert",
+        body: `${patientName} has left their safe zone.`,
+        data: { patientId, type: "zone_exit" },
+        priority: "high",
+      }),
+    });
+    const pushJson = await pushRes.json();
+    const ticket = pushJson?.data?.[0];
+    if (ticket?.status === "error") {
+      console.error("[zone-exit] push error:", ticket.details);
+    }
+
+    // Record last alert time
+    await db.collection("geofences").updateOne(
+      { patientId },
+      { $set: { lastZoneAlert: new Date() } }
+    );
+
+    res.json({ sent: true });
+  } catch (err) {
+    console.error("zone-exit error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 export default router;

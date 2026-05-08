@@ -48,6 +48,7 @@ export async function connectDb(): Promise<void> {
   await db.collection("patientPushTokens").createIndex({ patientId: 1 });
   await db.collection("mood_checkins").createIndex({ patient_id: 1, date: -1 });
   await db.collection("mood_checkins").createIndex({ patient_id: 1, date: 1 }, { unique: true });
+  await db.collection("geofences").createIndex({ patientId: 1 }, { unique: true });
 }
 
 export async function closeDb(): Promise<void> {

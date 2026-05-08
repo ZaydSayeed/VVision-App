@@ -19,6 +19,7 @@ export function useHelpAlert() {
   const [sending, setSending] = useState(false);
   const [sentAt, setSentAt] = useState<Date | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const sendingRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -45,6 +46,8 @@ export function useHelpAlert() {
   }, [isActive, load]);
 
   const sendHelp = useCallback(async () => {
+    if (sendingRef.current) return; // prevent double-send
+    sendingRef.current = true;
     setSending(true);
     setSendError(null);
     setSentAt(null);
@@ -56,6 +59,7 @@ export function useHelpAlert() {
         setAlerts((prev) => [alert, ...prev]);
         setSentAt(new Date());
         setSending(false);
+        sendingRef.current = false;
         return;
       } catch (e: any) {
         lastError = e;
@@ -64,6 +68,7 @@ export function useHelpAlert() {
     }
 
     setSending(false);
+    sendingRef.current = false;
     setSendError(lastError?.message ?? "Unable to send help request. Please check your connection.");
   }, []);
 

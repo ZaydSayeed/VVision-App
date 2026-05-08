@@ -52,6 +52,8 @@ export function VisionSheet({ visible, onClose }: Props) {
   const translateY = useRef(new Animated.Value(HALF_Y)).current;
   const baseY = useRef(HALF_Y);
   const isFullRef = useRef(false);
+  const snapToRef = useRef(snapTo);
+  useEffect(() => { snapToRef.current = snapTo; }, [snapTo]);
 
   // Track keyboard height manually (KeyboardAvoidingView doesn't work with absolute sheets)
   useEffect(() => {
@@ -60,7 +62,7 @@ export function VisionSheet({ visible, onClose }: Props) {
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardHeight(e.endCoordinates.height);
       // Auto-snap to full screen when keyboard opens
-      if (!isFullRef.current) snapTo(FULL_Y);
+      if (!isFullRef.current) snapToRef.current(FULL_Y);
       // Keep latest messages visible
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     });
@@ -107,7 +109,7 @@ export function VisionSheet({ visible, onClose }: Props) {
     setInputText("");
     setSending(true);
     const userMsg: ConversationTurn = {
-      id: String(Date.now()),
+      id: Math.random().toString(36).slice(2) + Date.now().toString(36),
       role: "user",
       content: text,
       created_at: new Date().toISOString(),
@@ -119,7 +121,7 @@ export function VisionSheet({ visible, onClose }: Props) {
       if (taskCreated) triggerTaskReload();
       if (medicationCreated) triggerMedReload();
       const assistantMsg: ConversationTurn = {
-        id: String(Date.now() + 1),
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
         role: "assistant",
         content: reply,
         created_at: new Date().toISOString(),
@@ -131,7 +133,7 @@ export function VisionSheet({ visible, onClose }: Props) {
       ]);
     } catch {
       setMessages((prev) => [...prev, {
-        id: String(Date.now() + 1),
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
         role: "assistant",
         content: "Sorry, I couldn't connect right now. Please try again.",
         created_at: new Date().toISOString(),

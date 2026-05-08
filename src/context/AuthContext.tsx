@@ -172,7 +172,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const sync = await syncProfile(name, role);
         if (sync?.patient_id && appUser) appUser.patient_id = sync.patient_id;
-      } catch {}
+      } catch (e) {
+        console.error("[auth] syncProfile failed:", e);
+        Alert.alert(
+          "Sign in error",
+          "We couldn't set up your account. Please sign in again.",
+          [{ text: "OK", onPress: () => supabase.auth.signOut() }]
+        );
+        setLoading(false);
+        return;
+      }
 
       setUser(appUser);
       resetInactivityTimer();
@@ -194,7 +203,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const sync = await syncProfile(appUser?.name ?? "", (appUser?.role as UserRole) ?? "caregiver");
       if (sync?.patient_id && appUser) appUser.patient_id = sync.patient_id;
-    } catch {}
+    } catch (e) {
+      console.error("[auth] syncProfile failed:", e);
+      Alert.alert(
+        "Sign in error",
+        "We couldn't set up your account. Please sign in again.",
+        [{ text: "OK", onPress: () => supabase.auth.signOut() }]
+      );
+      setLoading(false);
+      return;
+    }
 
     setUser(appUser);
     resetInactivityTimer();

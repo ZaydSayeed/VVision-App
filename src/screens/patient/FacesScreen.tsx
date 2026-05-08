@@ -68,6 +68,7 @@ export function FacesScreen() {
     return () => shimmer.stop();
   }, [loading, shimmerAnim]);
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [cacheAge, setCacheAge] = useState<string | null>(null);
 
@@ -141,6 +142,7 @@ export function FacesScreen() {
   }
 
   function handleDelete(person: Person) {
+    const id = person.id ?? person._id;
     Alert.alert(
       "Remove person?",
       `"${person.name}" will be removed and the glasses will no longer recognize them.`,
@@ -150,11 +152,14 @@ export function FacesScreen() {
           text: "Remove",
           style: "destructive",
           onPress: async () => {
+            setDeletingId(id);
             try {
-              await deletePerson(person.id ?? person._id);
+              await deletePerson(id);
               await load();
             } catch {
-              Alert.alert("Error", "Could not remove. Check your connection.");
+              Alert.alert("Couldn't delete", "Check your connection and try again.");
+            } finally {
+              setDeletingId(null);
             }
           },
         },
@@ -510,6 +515,7 @@ export function FacesScreen() {
                   style={styles.faceCard}
                   onLongPress={() => handleDelete(person)}
                   activeOpacity={0.85}
+                  pointerEvents={deletingId ? "none" : "auto"}
                 >
                   <LinearGradient
                     colors={[g1, g2]}

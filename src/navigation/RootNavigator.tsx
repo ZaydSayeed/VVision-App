@@ -9,6 +9,7 @@ import {
   ScrollView,
   Dimensions,
   Platform,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -54,6 +55,8 @@ import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 import { registerOnboardingReset } from "../utils/reminderEvents";
+
+const NOTIF_ALERT_SHOWN_KEY = "@vela/notif_alert_shown";
 
 const CaregiverStack = createNativeStackNavigator();
 const PatientStack = createNativeStackNavigator();
@@ -130,7 +133,18 @@ export function RootNavigator() {
           const { status } = await Notifications.requestPermissionsAsync();
           finalStatus = status;
         }
-        if (finalStatus !== "granted") return;
+        if (finalStatus !== "granted") {
+          const alreadyShown = await AsyncStorage.getItem(NOTIF_ALERT_SHOWN_KEY);
+          if (!alreadyShown) {
+            await AsyncStorage.setItem(NOTIF_ALERT_SHOWN_KEY, "1");
+            Alert.alert(
+              "Notifications off",
+              "To get help alerts, go to Settings → Notifications → Vela Vision and turn on notifications.",
+              [{ text: "OK" }]
+            );
+          }
+          return;
+        }
         const projectId =
           Constants.expoConfig?.extra?.eas?.projectId ??
           Constants.easConfig?.projectId;

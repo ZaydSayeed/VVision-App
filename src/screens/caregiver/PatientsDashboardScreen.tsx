@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
   StyleSheet,
   Animated,
 } from "react-native";
@@ -51,6 +50,19 @@ function AnimatedBar({ ratio, color }: { ratio: number; color: string }) {
 export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props) {
   const { colors } = useTheme();
   const { patients, loading, refresh } = usePatients();
+
+  const pulseAnim = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.9, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.4, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    if (loading) loop.start();
+    else loop.stop();
+    return () => loop.stop();
+  }, [loading, pulseAnim]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -244,7 +256,22 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
         }
       >
         {loading ? (
-          <ActivityIndicator color={colors.violet} style={{ marginTop: 40 }} />
+          <>
+            {[0, 1, 2].map((i) => (
+              <Animated.View
+                key={i}
+                style={{
+                  opacity: pulseAnim,
+                  backgroundColor: colors.surface,
+                  borderRadius: 20,
+                  height: 110,
+                  marginBottom: 14,
+                  borderLeftWidth: 5,
+                  borderLeftColor: colors.border,
+                }}
+              />
+            ))}
+          </>
         ) : patients.length === 0 ? (
           <View style={styles.emptyWrap}>
             <TouchableOpacity style={styles.bigAddBtn} onPress={onAddPatient} activeOpacity={0.85}>

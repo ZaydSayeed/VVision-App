@@ -23,6 +23,25 @@ import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { API_BASE_URL } from "../../config/api";
 import { authHeaders } from "../../api/client";
 
+const MOOD_EMOJI: Record<string, string> = {
+  happy: "😊",
+  tired: "😴",
+  confused: "😕",
+  sad: "😢",
+};
+
+function buildLast7Days(history: Array<{ date: string; mood: string }>) {
+  const days: Array<{ date: string; emoji: string | null }> = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const date = d.toISOString().slice(0, 10);
+    const entry = history.find((h) => h.date === date);
+    days.push({ date, emoji: entry ? (MOOD_EMOJI[entry.mood] ?? null) : null });
+  }
+  return days;
+}
+
 interface Props {
   patientId: string;
   patientName: string;
@@ -52,6 +71,18 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
   const { meds, isTakenToday } = useMeds(patientId);
   const { alerts, dismissAlert } = useHelpAlert();
   const [liveLoading, setLiveLoading] = useState(false);
+  const [moodHistory, setMoodHistory] = useState<Array<{ date: string; mood: string }>>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/mood`, {
+      headers: { ...authHeaders() },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setMoodHistory(data);
+      })
+      .catch(() => {});
+  }, [patientId]);
   const pollRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
@@ -296,6 +327,35 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       justifyContent: "center", gap: spacing.xs,
     },
     reportBtnAltText: { fontSize: 13, color: colors.violet, ...fonts.medium },
+    moodStrip: {
+      marginTop: spacing.md,
+      gap: spacing.xs,
+    },
+    moodStripLabel: {
+      fontSize: 11,
+      letterSpacing: 1.2,
+      ...fonts.medium,
+      color: colors.muted,
+      textTransform: "uppercase",
+    },
+    moodDots: {
+      flexDirection: "row",
+      gap: spacing.xs,
+    },
+    moodDot: {
+      flex: 1,
+      alignItems: "center",
+    },
+    moodDotEmoji: {
+      fontSize: 20,
+    },
+    moodDotEmpty: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
+      marginVertical: 6,
+    },
   }), [colors]);
 
   return (
@@ -348,6 +408,22 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
             </View>
             <AnimatedBar ratio={medRatio} color={colors.amber} />
           </View>
+          {moodHistory.length > 0 && (
+            <View style={styles.moodStrip}>
+              <Text style={styles.moodStripLabel}>MOOD — LAST 7 DAYS</Text>
+              <View style={styles.moodDots}>
+                {buildLast7Days(moodHistory).map(({ date, emoji }) => (
+                  <View key={date} style={styles.moodDot}>
+                    {emoji ? (
+                      <Text style={styles.moodDotEmoji}>{emoji}</Text>
+                    ) : (
+                      <View style={styles.moodDotEmpty} />
+                    )}
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Check-In Logs */}

@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { colors, fonts, spacing } from "../config/theme";
 
 interface Props {
   children: React.ReactNode;
@@ -41,34 +40,34 @@ export class ErrorBoundary extends React.Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: "#0F0D18",
     alignItems: "center",
     justifyContent: "center",
-    padding: spacing.xxl,
+    padding: 24,
   },
-  emoji: { fontSize: 48, marginBottom: spacing.lg },
+  emoji: { fontSize: 48, marginBottom: 16 },
   title: {
     fontSize: 22,
-    color: colors.text,
-    ...fonts.medium,
-    marginBottom: spacing.sm,
+    color: "#FFFFFF",
+    fontFamily: "DMSans_500Medium",
+    marginBottom: 8,
   },
   message: {
     fontSize: 14,
-    color: colors.muted,
-    ...fonts.regular,
+    color: "rgba(255,255,255,0.55)",
+    fontFamily: "DMSans_400Regular",
     textAlign: "center",
-    marginBottom: spacing.xxl,
+    marginBottom: 32,
   },
   btn: {
-    backgroundColor: colors.violet,
+    backgroundColor: "#7B5CE7",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   btnText: {
-    color: "#FAF8F4",
+    color: "#FFFFFF",
     fontSize: 16,
-    ...fonts.medium,
+    fontFamily: "DMSans_500Medium",
   },
 });

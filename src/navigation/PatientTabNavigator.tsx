@@ -89,7 +89,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
           <Text style={[styles.tabLabel, { color }]}>{route.name}</Text>
         ),
         tabBarIcon: ({ color }) => (
-          <Ionicons name={iconNames[route.name]} size={28} color={color} />
+          <Ionicons name={iconNames[route.name]} size={28} color={color} accessibilityLabel={route.name} />
         ),
       })}
     >

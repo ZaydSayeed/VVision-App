@@ -18,7 +18,7 @@ export function useMeds(patientId?: string) {
       setMeds(data);
       setLoadError(null);
     } catch (e: any) {
-      setLoadError(e?.message ?? "Failed to load medications");
+      setLoadError(e?.message ?? "Couldn't load medications. Check your connection and try again.");
     }
   }, [patientId]);
 

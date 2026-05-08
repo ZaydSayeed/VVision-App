@@ -18,7 +18,7 @@ export function useRoutine(patientId?: string) {
       setTasks(data);
       setLoadError(null);
     } catch (e: any) {
-      setLoadError(e?.message ?? "Failed to load routine");
+      setLoadError(e?.message ?? "Couldn't load tasks. Check your connection and try again.");
     }
   }, [patientId]);
 

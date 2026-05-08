@@ -53,7 +53,7 @@ export function RoutineScreen() {
       await addTask(taskLabel.trim(), taskTime.trim());
       setTaskLabel(""); setTaskTime(""); setShowTaskModal(false);
     } catch {
-      setTaskError("Could not save. Check your connection.");
+      setTaskError("Couldn't save. Check your connection and try again.");
     }
   }
 
@@ -88,7 +88,7 @@ export function RoutineScreen() {
       setEditingTask(null);
       reloadRoutine();
     } catch {
-      setEditError("Could not save. Check your connection.");
+      setEditError("Couldn't save. Check your connection and try again.");
     }
   }
 
@@ -105,7 +105,7 @@ export function RoutineScreen() {
       await addMed(medName.trim(), medDosage.trim(), medTime.trim());
       setMedName(""); setMedDosage(""); setMedTime(""); setShowMedModal(false);
     } catch {
-      setMedError("Could not save. Check your connection.");
+      setMedError("Couldn't save. Check your connection and try again.");
     }
   }
 
@@ -275,7 +275,7 @@ export function RoutineScreen() {
           </View>
 
           {routineError ? (
-            <Text style={styles.errorText}>Could not load tasks.</Text>
+            <Text style={styles.errorText}>Couldn't load tasks. Check your connection and try again.</Text>
           ) : tasks.length === 0 ? (
             <Text style={styles.emptyText}>No tasks yet.</Text>
           ) : (
@@ -297,7 +297,7 @@ export function RoutineScreen() {
           )}
 
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { backgroundColor: colors.sage, width: tasks.length > 0 ? `${Math.round((tasksDone / tasks.length) * 100)}%` as any : "0%" }]} />
+            <View style={[styles.progressFill, { backgroundColor: colors.sage, width: `${tasks.length > 0 ? Math.round((tasksDone / tasks.length) * 100) : 0}%` }]} />
           </View>
           <Text style={styles.progressText}>{tasksDone} of {tasks.length} done</Text>
         </View>
@@ -316,7 +316,7 @@ export function RoutineScreen() {
           </View>
 
           {medsError ? (
-            <Text style={styles.errorText}>Could not load medications.</Text>
+            <Text style={styles.errorText}>Couldn't load medications. Check your connection and try again.</Text>
           ) : meds.length === 0 ? (
             <Text style={styles.emptyText}>No medications yet.</Text>
           ) : (
@@ -336,7 +336,7 @@ export function RoutineScreen() {
           )}
 
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { backgroundColor: colors.amber, width: meds.length > 0 ? `${Math.round((medsDone / meds.length) * 100)}%` as any : "0%" }]} />
+            <View style={[styles.progressFill, { backgroundColor: colors.amber, width: `${meds.length > 0 ? Math.round((medsDone / meds.length) * 100) : 0}%` }]} />
           </View>
           <Text style={styles.progressText}>{medsDone} of {meds.length} taken</Text>
         </View>

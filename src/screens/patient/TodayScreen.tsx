@@ -125,7 +125,7 @@ export function TodayScreen() {
       await addTask(taskLabel.trim(), taskTime.trim());
       setTaskLabel(""); setTaskTime(""); setShowTaskModal(false); setTaskError("");
     } catch {
-      setTaskError("Could not save. Check your connection.");
+      setTaskError("Couldn't save. Check your connection and try again.");
     }
   }
 
@@ -161,7 +161,7 @@ export function TodayScreen() {
       setEditingTask(null); setEditError("");
       reloadRoutine();
     } catch {
-      setEditError("Could not save. Check your connection.");
+      setEditError("Couldn't save. Check your connection and try again.");
     }
   }
 
@@ -190,7 +190,7 @@ export function TodayScreen() {
       await editMed(editingMed!.id, editMedName.trim(), editMedDosage.trim(), editMedTime.trim());
       setEditingMed(null); setEditMedError("");
     } catch {
-      setEditMedError("Could not save. Check your connection.");
+      setEditMedError("Couldn't save. Check your connection and try again.");
     }
   }
   const [medName, setMedName] = useState("");
@@ -205,7 +205,7 @@ export function TodayScreen() {
       await addMed(medName.trim(), medDosage.trim(), medTime.trim());
       setMedName(""); setMedDosage(""); setMedTime(""); setShowMedModal(false); setMedError("");
     } catch {
-      setMedError("Could not save. Check your connection.");
+      setMedError("Couldn't save. Check your connection and try again.");
     }
   }
 
@@ -779,7 +779,7 @@ export function TodayScreen() {
                 const taken = isTakenToday(med);
                 return (
                   <View key={med.id} style={styles.fullCardItem}>
-                    <TouchableOpacity style={styles.fullCardCheckboxBtn} onPress={() => toggleTaken(med.id)} activeOpacity={0.75}>
+                    <TouchableOpacity style={styles.fullCardCheckboxBtn} onPress={() => toggleTaken(med.id)} activeOpacity={0.75} accessibilityLabel={`Mark ${med.name} as ${taken ? "not taken" : "taken"}`} accessibilityRole="checkbox" accessibilityState={{ checked: taken }}>
                       <View style={[styles.fullCardCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
                         {taken && <Ionicons name="checkmark" size={13} color="#fff" />}
                       </View>
@@ -795,7 +795,7 @@ export function TodayScreen() {
           <View style={styles.fullCardProgressTrack}>
             <View style={[styles.fullCardProgressFill, {
               backgroundColor: colors.amber,
-              width: meds.length > 0 ? `${Math.round((medsDone / meds.length) * 100)}%` as any : "0%",
+              width: `${meds.length > 0 ? Math.round((medsDone / meds.length) * 100) : 0}%`,
             }]} />
           </View>
           <Text style={styles.fullCardProgressText}>{medsDone} of {meds.length} taken</Text>
@@ -836,6 +836,9 @@ export function TodayScreen() {
                     style={styles.fullCardCheckboxBtn}
                     onPress={() => { if (item.type === "task") toggleComplete(item.id); }}
                     activeOpacity={0.75}
+                    accessibilityLabel={`Mark ${item.label} as ${item.done ? "incomplete" : "complete"}`}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: item.done }}
                   >
                     <View style={[styles.fullCardCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
                       {item.done && <Ionicons name="checkmark" size={13} color="#fff" />}
@@ -874,7 +877,7 @@ export function TodayScreen() {
                 <View style={styles.fullCardProgressTrack}>
                   <View style={[styles.fullCardProgressFill, {
                     backgroundColor: colors.sage,
-                    width: allItems > 0 ? `${Math.round((doneItems / allItems) * 100)}%` as any : "0%",
+                    width: `${allItems > 0 ? Math.round((doneItems / allItems) * 100) : 0}%`,
                   }]} />
                 </View>
                 <Text style={styles.fullCardProgressText}>{doneItems} of {allItems} done</Text>

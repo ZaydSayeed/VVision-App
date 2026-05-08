@@ -27,8 +27,8 @@ export async function resolveSeatForRequest(
 }
 
 // Like requireSeat but also accepts caregivers linked via the legacy caregiver_ids system
-export function requirePatientAccess(req: Request, res: Response, next: NextFunction) {
-  (async () => {
+export function requirePatientAccess(req: Request, res: Response, next: NextFunction): void {
+  const run = async () => {
     const userId = (req as any).auth?.userId;
     const patientId = String(req.params.patientId);
     if (!userId || !patientId) { res.status(401).json({ detail: "Unauthorized" }); return; }
@@ -49,11 +49,12 @@ export function requirePatientAccess(req: Request, res: Response, next: NextFunc
     if (user && String(user.patient_id) === patientId) { req.seat = { userId, patientId, role: "primary_caregiver" }; next(); return; }
 
     res.status(403).json({ detail: "No seat on this profile" });
-  })();
+  };
+  run().catch(next);
 }
 
-export function requireSeat(req: Request, res: Response, next: NextFunction) {
-  (async () => {
+export function requireSeat(req: Request, res: Response, next: NextFunction): void {
+  const run = async () => {
     const userId = (req as any).auth?.userId;
     const patientId = req.params.patientId;
     if (!userId || !patientId) { res.status(401).json({ detail: "Unauthorized" }); return; }
@@ -61,5 +62,6 @@ export function requireSeat(req: Request, res: Response, next: NextFunction) {
     if (!seat) { res.status(403).json({ detail: "No seat on this profile" }); return; }
     req.seat = seat;
     next();
-  })();
+  };
+  run().catch(next);
 }

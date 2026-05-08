@@ -35,13 +35,16 @@ router.post("/:patientId/health/sync", authMiddleware, requirePatientAccess, asy
     const now = new Date();
     const ops = parsed.data.readings.map((r) => {
       if (r.metric === "heart_rate") {
-        const recordedAt = r.recordedAt ?? `${r.date}T00:00:00.000Z`;
+        if (!r.recordedAt) {
+          console.warn(`[health/sync] skipping heart_rate reading without recordedAt for patient ${patientId}`);
+          return null;
+        }
         return {
           updateOne: {
-            filter: { patientId, metric: "heart_rate", recordedAt },
+            filter: { patientId, metric: "heart_rate", recordedAt: r.recordedAt },
             update: {
               $set: { value: r.value, unit: r.unit, source: "healthkit", syncedAt: now, date: r.date },
-              $setOnInsert: { patientId, metric: "heart_rate", recordedAt },
+              $setOnInsert: { patientId, metric: "heart_rate", recordedAt: r.recordedAt },
             },
             upsert: true,
           },
@@ -58,7 +61,10 @@ router.post("/:patientId/health/sync", authMiddleware, requirePatientAccess, asy
           upsert: true,
         },
       };
-    });
+    }).filter((op): op is NonNullable<typeof op> => op !== null);
+
+    if (ops.length === 0) { res.json({ written: 0 }); return; }
+
     const result = await col.bulkWrite(ops, { ordered: false });
     res.json({ written: result.upsertedCount + result.modifiedCount });
   } catch (err) {

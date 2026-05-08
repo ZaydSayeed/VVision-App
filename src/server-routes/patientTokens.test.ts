@@ -54,4 +54,11 @@ describe("POST /api/notifications/register-patient-token", () => {
       .send({});
     expect(res.status).toBe(400);
   });
+
+  it("returns 400 for non-Expo token format", async () => {
+    const res = await request(app)
+      .post("/api/notifications/register-patient-token")
+      .send({ expoPushToken: "not-a-valid-expo-token" });
+    expect(res.status).toBe(400);
+  });
 });

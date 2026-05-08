@@ -9,13 +9,13 @@ const router = Router();
 // Called by patient app on login to store their Expo push token
 router.post("/register-patient-token", authMiddleware, resolvePatientId, async (req, res) => {
   const { expoPushToken } = req.body;
-  if (!expoPushToken || typeof expoPushToken !== "string") {
+  if (!expoPushToken || typeof expoPushToken !== "string" || !expoPushToken.startsWith("ExponentPushToken[")) {
     res.status(400).json({ detail: "expoPushToken required" });
     return;
   }
   try {
     const db = getDb();
-    await db.collection("patient_push_tokens").updateOne(
+    await db.collection("patientPushTokens").updateOne(
       { userId: req.auth!.userId },
       {
         $set: {

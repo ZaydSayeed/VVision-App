@@ -62,7 +62,7 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
     if (loading) loop.start();
     else loop.stop();
     return () => loop.stop();
-  }, [loading, pulseAnim]);
+  }, [loading]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },

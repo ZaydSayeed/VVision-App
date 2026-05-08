@@ -101,16 +101,12 @@ function buildTimeline(people: Person[], alerts: Alert[]): TimelineEvent[] {
 
 export function formatRelativeTime(iso: string): string {
   if (!iso) return "Never";
-  try {
-    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-    if (isNaN(diff)) return "recently";
-    if (diff < 60) return "Just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  } catch {
-    return "recently";
-  }
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (isNaN(diff)) return "recently";
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 export function formatTimeShort(iso: string): string {

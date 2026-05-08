@@ -497,8 +497,10 @@ export function FacesScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.grid}>
+          <View style={styles.grid} pointerEvents={deletingId ? "none" : "auto"}>
             {people.map((person, idx) => {
+              const id = person.id ?? person._id;
+              const isDeleting = id === deletingId;
               const initials = person.name
                 .split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
               const gradientSets: [string, string][] = [
@@ -511,11 +513,10 @@ export function FacesScreen() {
               const [g1, g2] = gradientSets[idx % gradientSets.length];
               return (
                 <TouchableOpacity
-                  key={person.id ?? person._id}
-                  style={styles.faceCard}
+                  key={id}
+                  style={[styles.faceCard, isDeleting && { opacity: 0.4 }]}
                   onLongPress={() => handleDelete(person)}
                   activeOpacity={0.85}
-                  pointerEvents={deletingId ? "none" : "auto"}
                 >
                   <LinearGradient
                     colors={[g1, g2]}
@@ -527,7 +528,10 @@ export function FacesScreen() {
                       <Text style={styles.initialsText}>{initials}</Text>
                     </View>
                   </LinearGradient>
-                  <Text style={styles.faceName} numberOfLines={1}>{person.name}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={styles.faceName} numberOfLines={1}>{person.name}</Text>
+                    {isDeleting && <ActivityIndicator size="small" color={colors.coral} />}
+                  </View>
                   <Text style={styles.faceRelation} numberOfLines={1}>{person.relation}</Text>
                   <Text style={styles.faceHint}>Hold to remove</Text>
                 </TouchableOpacity>

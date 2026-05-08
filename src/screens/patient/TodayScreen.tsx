@@ -15,6 +15,7 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Swipeable } from "react-native-gesture-handler";
@@ -208,6 +209,39 @@ export function TodayScreen() {
       setMedError("Couldn't save. Check your connection and try again.");
     }
   }
+
+  // ── Mood check-in ────────────────────────────────────────────
+  const [moodSubmitted, setMoodSubmitted] = useState(false);
+  const [moodSubmitting, setMoodSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    AsyncStorage.getItem(`@vela/mood_submitted:${user.id}:${today}`).then((val) => {
+      if (val) setMoodSubmitted(true);
+    });
+  }, [user]);
+
+  const handleMoodSelect = useCallback(async (mood: string) => {
+    if (moodSubmitting || moodSubmitted) return;
+    setMoodSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/mood`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ mood }),
+      });
+      if (res.ok || res.status === 409) {
+        const today = new Date().toISOString().slice(0, 10);
+        await AsyncStorage.setItem(`@vela/mood_submitted:${user!.id}:${today}`, "1");
+        setMoodSubmitted(true);
+      }
+    } catch (err) {
+      console.error("mood submit error:", err);
+    } finally {
+      setMoodSubmitting(false);
+    }
+  }, [moodSubmitting, moodSubmitted, user]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.warm },
@@ -582,6 +616,38 @@ export function TodayScreen() {
       borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
     },
     btnPrimaryText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
+
+    // ── Mood check-in card ─────────────────────────────────────
+    moodCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      marginHorizontal: spacing.lg,
+      marginBottom: spacing.md,
+      gap: spacing.sm,
+    },
+    moodQuestion: {
+      fontSize: 15,
+      ...fonts.medium,
+      color: colors.text,
+    },
+    moodRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    moodBtn: {
+      alignItems: "center",
+      gap: 4,
+      flex: 1,
+    },
+    moodEmoji: {
+      fontSize: 28,
+    },
+    moodLabel: {
+      fontSize: 11,
+      ...fonts.regular,
+      color: colors.muted,
+    },
   }), [colors]);
 
   const allTasksDone = tasks.length > 0 && tasks.every(isCompletedToday);
@@ -728,6 +794,32 @@ export function TodayScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />
         }
       >
+        {/* ── Mood check-in card ────────────────────────────── */}
+        {!moodSubmitted && (
+          <View style={styles.moodCard}>
+            <Text style={styles.moodQuestion}>How are you feeling today?</Text>
+            <View style={styles.moodRow}>
+              {([
+                { mood: "happy", emoji: "😊", label: "Happy" },
+                { mood: "tired", emoji: "😴", label: "Tired" },
+                { mood: "confused", emoji: "😕", label: "Confused" },
+                { mood: "sad", emoji: "😢", label: "Sad" },
+              ] as const).map(({ mood, emoji, label }) => (
+                <TouchableOpacity
+                  key={mood}
+                  style={styles.moodBtn}
+                  onPress={() => handleMoodSelect(mood)}
+                  disabled={moodSubmitting}
+                  accessibilityLabel={label}
+                >
+                  <Text style={styles.moodEmoji}>{emoji}</Text>
+                  <Text style={styles.moodLabel}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* ── Caregiver Note Card ────────────────────────────── */}
         <View style={styles.noteCard}>
           <View style={styles.noteCardTop}>

@@ -11,9 +11,6 @@ export async function connectDb(): Promise<void> {
 
   // Verify connection
   await client.db("admin").command({ ping: 1 });
-  const collections = await db.listCollections().toArray();
-  console.log(`Database: ${config.mongodbDbName}`);
-  console.log(`Collections: ${collections.map((c) => c.name).join(", ")}`);
 
   // Ensure indexes
   await db.collection("users").createIndex({ supabase_uid: 1 }, { unique: true });
@@ -47,7 +44,6 @@ export async function connectDb(): Promise<void> {
   await db.collection("device_links").createIndex({ device_code: 1 }, { unique: true });
   await db.collection("device_links").createIndex({ patient_id: 1 }, { unique: true });
   await db.collection("stage_observations").createIndex({ patient_id: 1, observed_at: -1 });
-  console.log("Indexes ensured");
 }
 
 export async function closeDb(): Promise<void> {

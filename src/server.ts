@@ -37,6 +37,7 @@ import onboardingRoutes from "./server-routes/onboarding";
 import streamSessionRoutes from "./server-routes/streamSessions";
 import deviceRoutes from "./server-routes/device";
 import patientTokensRouter from "./server-routes/patientTokens";
+import moodRouter from "./server-routes/mood";
 
 const app = express();
 
@@ -115,6 +116,7 @@ app.use("/api/profiles", onboardingRoutes);
 app.use("/api/profiles", deviceRoutes);
 app.use("/api/stream", streamSessionRoutes);
 app.use("/api/notifications", patientTokensRouter);
+app.use("/api/mood", moodRouter);
 
 // Health check — always returns 200 (process is alive)
 app.get("/health", (_req, res) => {

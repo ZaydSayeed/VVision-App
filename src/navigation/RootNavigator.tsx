@@ -78,9 +78,11 @@ export function RootNavigator() {
       setOnboardingDone(null);
       return;
     }
-    AsyncStorage.getItem(`@vela/onboarding_complete:${user.id}`).then(
-      (val) => setOnboardingDone(val === "true")
-    );
+    const timeout = new Promise<string | null>((resolve) => setTimeout(() => resolve(null), 3000));
+    Promise.race([
+      AsyncStorage.getItem(`@vela/onboarding_complete:${user.id}`),
+      timeout,
+    ]).then((val) => setOnboardingDone(val === "true"));
   }, [user]);
 
   const completeOnboarding = useCallback(() => {

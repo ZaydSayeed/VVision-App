@@ -123,7 +123,7 @@ export function TodayScreen() {
     setTaskError("");
     try {
       await addTask(taskLabel.trim(), taskTime.trim());
-      setTaskLabel(""); setTaskTime(""); setShowTaskModal(false);
+      setTaskLabel(""); setTaskTime(""); setShowTaskModal(false); setTaskError("");
     } catch {
       setTaskError("Could not save. Check your connection.");
     }
@@ -158,7 +158,7 @@ export function TodayScreen() {
     setEditError("");
     try {
       await updateRoutine(editingTask!.id, { label: editLabel.trim(), time: editTime.trim() });
-      setEditingTask(null);
+      setEditingTask(null); setEditError("");
       reloadRoutine();
     } catch {
       setEditError("Could not save. Check your connection.");
@@ -188,7 +188,7 @@ export function TodayScreen() {
     setEditMedError("");
     try {
       await editMed(editingMed!.id, editMedName.trim(), editMedDosage.trim(), editMedTime.trim());
-      setEditingMed(null);
+      setEditingMed(null); setEditMedError("");
     } catch {
       setEditMedError("Could not save. Check your connection.");
     }
@@ -203,7 +203,7 @@ export function TodayScreen() {
     setMedError("");
     try {
       await addMed(medName.trim(), medDosage.trim(), medTime.trim());
-      setMedName(""); setMedDosage(""); setMedTime(""); setShowMedModal(false);
+      setMedName(""); setMedDosage(""); setMedTime(""); setShowMedModal(false); setMedError("");
     } catch {
       setMedError("Could not save. Check your connection.");
     }

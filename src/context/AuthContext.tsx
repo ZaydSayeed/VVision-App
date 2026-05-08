@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, Alert } from "react-native";
 import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
 import { setAuthToken, setOnAuthExpired, syncProfile } from "../api/client";
@@ -109,7 +109,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const sync = await syncProfile(appUser.name, (appUser.role as UserRole) ?? "caregiver");
             if (sync?.patient_id) appUser.patient_id = sync.patient_id;
-          } catch {}
+          } catch (e) {
+            console.error("[auth] syncProfile failed:", e);
+            Alert.alert(
+              "Sign in error",
+              "We couldn't set up your account. Please sign in again.",
+              [{ text: "OK", onPress: () => supabase.auth.signOut() }]
+            );
+            setLoading(false);
+            return;
+          }
         }
         setUser(appUser);
         resetInactivityTimer();

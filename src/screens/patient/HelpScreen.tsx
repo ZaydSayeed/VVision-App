@@ -23,6 +23,7 @@ interface HelpScreenProps {
 export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   const { colors } = useTheme();
   const { alerts, sendHelp, sending, sentAt, sendError, dismissAlert, clearSentState, reload } = useHelpAlert();
+  const tapGuardRef = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -52,8 +53,13 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
   }, [alerts]);
 
   async function handlePress() {
-    clearSentState();
-    await sendHelp();
+    if (tapGuardRef.current || sending) return;
+    tapGuardRef.current = true;
+    try {
+      await sendHelp();
+    } finally {
+      tapGuardRef.current = false;
+    }
   }
 
   async function handleCancel() {

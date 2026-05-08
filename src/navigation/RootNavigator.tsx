@@ -72,6 +72,7 @@ export function RootNavigator() {
   const [visionOpen, setVisionOpen] = useState(false);
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const pushRegisteredRef = useRef(false);
+  const patientPushRegisteredRef = useRef(false);
 
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
@@ -158,6 +159,38 @@ export function RootNavigator() {
         });
       } catch (err) {
         console.error("Push token registration failed (non-fatal):", err);
+      }
+    })();
+  }, [user]);
+
+  // Register Expo push token for patient (for reminder notifications)
+  useEffect(() => {
+    if (!user || user.role !== "patient" || patientPushRegisteredRef.current) return;
+    patientPushRegisteredRef.current = true;
+
+    (async () => {
+      try {
+        const { status: existing } = await Notifications.getPermissionsAsync();
+        let finalStatus = existing;
+        if (existing !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== "granted") return;
+
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+        const tokenData = await Notifications.getExpoPushTokenAsync(
+          projectId ? { projectId } : undefined
+        );
+        await fetch(`${API_BASE_URL}/api/notifications/register-patient-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ expoPushToken: tokenData.data }),
+        });
+      } catch (err) {
+        console.error("Patient push token registration failed (non-fatal):", err);
       }
     })();
   }, [user]);

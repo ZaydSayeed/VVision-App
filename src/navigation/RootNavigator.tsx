@@ -80,7 +80,7 @@ export function RootNavigator() {
       setOnboardingDone(null);
       return;
     }
-    const timeout = new Promise<string | null>((resolve) => setTimeout(() => resolve("true"), 3000));
+    const timeout = new Promise<string | null>((resolve) => setTimeout(() => resolve(null), 3000));
     Promise.race([
       AsyncStorage.getItem(`@vela/onboarding_complete:${user.id}`),
       timeout,

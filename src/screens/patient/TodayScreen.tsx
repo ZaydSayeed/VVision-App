@@ -764,6 +764,8 @@ export function TodayScreen() {
               style={[styles.fullCardPlusBtn, { backgroundColor: colors.amber }]}
               onPress={() => setShowMedModal(true)}
               activeOpacity={0.8}
+              accessibilityLabel="Add medication"
+              accessibilityRole="button"
             >
               <Text style={styles.fullCardPlusBtnText}>+</Text>
             </TouchableOpacity>
@@ -817,6 +819,8 @@ export function TodayScreen() {
                   style={[styles.fullCardPlusBtn, { backgroundColor: colors.sage }]}
                   onPress={() => setShowTaskModal(true)}
                   activeOpacity={0.8}
+                  accessibilityLabel="Add task"
+                  accessibilityRole="button"
                 >
                   <Text style={styles.fullCardPlusBtnText}>+</Text>
                 </TouchableOpacity>

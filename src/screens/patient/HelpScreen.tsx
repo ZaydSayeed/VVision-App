@@ -304,8 +304,8 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
             activeOpacity={0.88}
             disabled={sent || sending || handledVisible}
             style={styles.btnOuter}
-            accessibilityLabel="Send help alert"
-            accessibilityHint="Notifies your caregiver immediately"
+            accessibilityLabel="Send help alert to caregiver"
+            accessibilityHint="Double tap to immediately notify your caregiver that you need assistance"
             accessibilityRole="button"
             accessibilityState={{ disabled: sent || sending || handledVisible }}
           >

@@ -59,9 +59,13 @@ router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
 router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
   try {
     const db = getDb();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+
     const docs = await db
       .collection("mood_checkins")
-      .find({ patient_id: req.patientId! })
+      .find({ patient_id: req.patientId!, date: { $gte: sevenDaysAgoStr } })
       .sort({ date: -1 })
       .limit(7)
       .toArray();

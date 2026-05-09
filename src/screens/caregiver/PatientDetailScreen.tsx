@@ -92,7 +92,7 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       headers: { ...authHeaders() },
     })
       .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setGeofence(data); })
+      .then((data) => { if (data && mountedRef.current) setGeofence(data); })
       .catch(() => {});
   }, [patientId]);
   const pollRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -72,6 +73,8 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
   const { alerts, dismissAlert } = useHelpAlert();
   const [liveLoading, setLiveLoading] = useState(false);
   const [moodHistory, setMoodHistory] = useState<Array<{ date: string; mood: string }>>([]);
+  const [geofence, setGeofence] = useState<{ lat: number; lng: number; radiusMeters: number; name: string } | null>(null);
+  const [geofenceSheetOpen, setGeofenceSheetOpen] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/mood`, {
@@ -81,6 +84,15 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       .then((data) => {
         if (Array.isArray(data)) setMoodHistory(data);
       })
+      .catch(() => {});
+  }, [patientId]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/profiles/${patientId}/geofence`, {
+      headers: { ...authHeaders() },
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setGeofence(data); })
       .catch(() => {});
   }, [patientId]);
   const pollRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -356,6 +368,33 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       backgroundColor: colors.border,
       marginVertical: 6,
     },
+    geofenceOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "flex-end",
+    },
+    geofenceSheet: {
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      padding: spacing.xl,
+      gap: spacing.md,
+    },
+    geofenceTitle: { fontSize: 18, ...fonts.medium, color: colors.text },
+    geofenceSub: { fontSize: 13, ...fonts.regular, color: colors.muted },
+    geofenceBtn: {
+      borderRadius: radius.pill,
+      paddingVertical: spacing.md,
+      alignItems: "center" as const,
+    },
+    geofenceBtnText: { fontSize: 15, ...fonts.medium, color: "#fff" },
+    actionBtn: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: spacing.xs,
+      borderRadius: radius.md,
+      padding: spacing.sm,
+    },
+    actionBtnLabel: { fontSize: 13, ...fonts.regular, color: colors.text },
   }), [colors]);
 
   return (
@@ -388,6 +427,18 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
             >
               <Text style={styles.liveCardBtnText}>
                 {liveLoading ? "Waiting…" : "Request"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: "row", marginTop: spacing.md }}>
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: colors.surface }]}
+              onPress={() => setGeofenceSheetOpen(true)}
+              accessibilityLabel="Set safe zone for patient"
+            >
+              <Ionicons name="location-outline" size={20} color={colors.violet} />
+              <Text style={styles.actionBtnLabel}>
+                {geofence ? `Zone: ${geofence.name}` : "Set Safe Zone"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -530,6 +581,39 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
 
         <ExportFlowSheet visible={exportOpen} patientId={patientId} onClose={() => setExportOpen(false)} />
       </ScrollView>
+
+      <Modal
+        visible={geofenceSheetOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setGeofenceSheetOpen(false)}
+      >
+        <View style={styles.geofenceOverlay}>
+          <View style={[styles.geofenceSheet, { backgroundColor: colors.surface }]}>
+            <Text style={styles.geofenceTitle}>Set Safe Zone</Text>
+            <Text style={styles.geofenceSub}>
+              {geofence
+                ? `Current: ${geofence.name} (${geofence.radiusMeters}m radius)`
+                : "No safe zone set yet"}
+            </Text>
+            <TouchableOpacity
+              style={[styles.geofenceBtn, { backgroundColor: colors.violet }]}
+              onPress={() => {
+                Alert.alert(
+                  "Set Safe Zone",
+                  "To set the safe zone, enter the patient's home coordinates. Contact support for full address search.",
+                  [{ text: "OK" }]
+                );
+              }}
+            >
+              <Text style={styles.geofenceBtnText}>Use Current Approach</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setGeofenceSheetOpen(false)}>
+              <Text style={[styles.geofenceSub, { textAlign: "center", marginTop: spacing.md }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

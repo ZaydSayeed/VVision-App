@@ -1,7 +1,7 @@
 // Vela Vision Brand Design Tokens
 
 export const lightColors = {
-  bg: "#FFFFFF",
+  bg: "#F4EEFC",
   surface: "#F7F5FF",
   darkSurface: "#2B2340",
   violet: "#7B5CE7",
@@ -118,42 +118,42 @@ export const shadow = {
   // Subtle — list items, inline cards
   sm: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 14,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  // Standard — main content cards
+  // Standard — main content cards (lifted, 3D)
   md: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    elevation: 8,
   },
   // Prominent — floating elements, modals
   lg: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
-    shadowRadius: 28,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 32,
+    elevation: 14,
   },
   // FAB / primary action buttons — keep contrasty
   fab: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.32,
+    shadowRadius: 20,
+    elevation: 12,
   },
   // Legacy alias
   card: {
     shadowColor: "#7B5CE7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    elevation: 8,
   },
 };
 

@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Easing,
   Pressable,
   Dimensions,
   Alert,
@@ -90,6 +91,29 @@ export function TodayScreen() {
   const pendingTasks = tasks.filter((t) => !isCompletedToday(t));
   const pendingMeds = meds.filter((m) => !isTakenToday(m));
   const totalNotifs = pendingTasks.length + pendingMeds.length;
+
+  // ── Greeting "buddy" emoji animation ────────────────────────
+  const buddyWave = useRef(new Animated.Value(0)).current;
+  const buddyBob = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const wave = Animated.loop(
+      Animated.sequence([
+        Animated.timing(buddyWave, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(buddyWave, { toValue: -1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(buddyWave, { toValue: 0, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.delay(1800),
+      ])
+    );
+    const bob = Animated.loop(
+      Animated.sequence([
+        Animated.timing(buddyBob, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(buddyBob, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    wave.start();
+    bob.start();
+    return () => { wave.stop(); bob.stop(); };
+  }, [buddyWave, buddyBob]);
 
   // ── Notification panel ──────────────────────────────────────
   const [notifOpen, setNotifOpen] = useState(false);
@@ -257,6 +281,16 @@ export function TodayScreen() {
       flexDirection: "row",
       alignItems: "flex-start",
       justifyContent: "space-between",
+    },
+    greetingGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      flex: 1,
+    },
+    buddyEmoji: {
+      fontSize: 52,
+      lineHeight: 60,
     },
     greetingIcon: {
       fontSize: 36,
@@ -758,14 +792,31 @@ export function TodayScreen() {
       {/* ── Greeting header ──────────────────────────────────── */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View>
-            <View style={styles.greetingLineRow}>
-              <Ionicons name={greeting.icon} size={16} color={colors.amber} />
-              <Text style={styles.greetingLine}>{greeting.text},</Text>
+          <View style={styles.greetingGroup}>
+            <Animated.Text
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[
+                styles.buddyEmoji,
+                {
+                  transform: [
+                    { translateY: buddyBob.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) },
+                    { rotate: buddyWave.interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] }) },
+                  ],
+                },
+              ]}
+            >
+              👵
+            </Animated.Text>
+            <View>
+              <View style={styles.greetingLineRow}>
+                <Ionicons name={greeting.icon} size={16} color={colors.amber} />
+                <Text style={styles.greetingLine}>{greeting.text},</Text>
+              </View>
+              <Text style={styles.greetingName}>
+                <Text style={styles.greetingAccent}>{firstName}</Text>
+              </Text>
             </View>
-            <Text style={styles.greetingName}>
-              <Text style={styles.greetingAccent}>{firstName}</Text>
-            </Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} onPress={openNotifs} activeOpacity={0.75}>
             <Ionicons name="notifications" size={22} color={colors.violet} />

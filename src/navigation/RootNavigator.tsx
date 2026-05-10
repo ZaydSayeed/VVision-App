@@ -44,6 +44,8 @@ import { flush } from "../lib/eventBatcher";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
+import { AmbientHearts } from "../components/AmbientHearts";
+import { BackgroundDecor } from "../components/BackgroundDecor";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -277,6 +279,8 @@ export function RootNavigator() {
         />
         <PatientStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
       </PatientStack.Navigator>
+      <BackgroundDecor />
+      <AmbientHearts />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
       <TouchableOpacity onPress={() => setVisionOpen(true)} style={styles.visionFab} activeOpacity={0.85}>
@@ -574,6 +578,8 @@ function CaregiverView({
           {({ navigation }: any) => <PatientProfileConfigScreen onBack={() => navigation.goBack()} />}
         </CaregiverStack.Screen>
       </CaregiverStack.Navigator>
+      <BackgroundDecor />
+      <AmbientHearts />
       <SideDrawer visible={drawerOpen} onClose={onCloseDrawer} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
       <TouchableOpacity

@@ -46,6 +46,12 @@ export function HealthScreen() {
     isHealthOnboarded().then((ok) => { if (!ok) nav.navigate("HealthOnboarding"); });
   }, [nav]);
 
+  useEffect(() => {
+    if (patientId) {
+      syncNow(patientId).catch(() => {}).then(() => summary.refresh());
+    }
+  }, [patientId]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     if (patientId) await syncNow(patientId).catch(() => {});

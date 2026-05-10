@@ -47,10 +47,18 @@ function formatXLabel(date: string, range: Range): string {
   return date.slice(5);
 }
 
-function shouldShowLabel(index: number, total: number, range: Range): boolean {
-  if (range === "7d") return true;
-  if (range === "30d") return index % 5 === 0 || index === total - 1;
-  if (range === "90d") return index % 14 === 0 || index === total - 1;
+function shouldShowLabel(date: string, range: Range): boolean {
+  if (range === "7d" || range === "1d") return true;
+  if (range === "30d") {
+    const day = new Date(date + "T12:00:00Z").getUTCDate();
+    return day % 5 === 1;
+  }
+  if (range === "90d") {
+    const d = new Date(date + "T12:00:00Z");
+    const startOfYear = Date.UTC(d.getUTCFullYear(), 0, 1);
+    const dayOfYear = Math.floor((d.getTime() - startOfYear) / 86400000);
+    return dayOfYear % 14 === 0;
+  }
   return true;
 }
 
@@ -64,7 +72,7 @@ export function ExpandableMetricCard({
   const chartData = useMemo(() => {
     return points.map((p, i) => ({
       value: p.value,
-      label: shouldShowLabel(i, points.length, range) ? formatXLabel(p.date, range) : "",
+      label: shouldShowLabel(p.date, range) ? formatXLabel(p.date, range) : "",
       dataPointText: "",
     }));
   }, [points, range]);

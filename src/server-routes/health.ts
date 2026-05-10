@@ -187,7 +187,7 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
           date: `${String(h).padStart(2, "0")}:00`,
           value: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length),
         }));
-      res.json({ metric, range, points: fillHourlyGaps(rawPoints) });
+      res.json({ metric, range, points: rawPoints });
       return;
     }
 
@@ -202,13 +202,13 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
         if (!byDate.has(d)) byDate.set(d, []);
         byDate.get(d)!.push(r.value as number);
       }
-      const rawPoints = Array.from(byDate.entries())
+      const points = Array.from(byDate.entries())
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, vals]) => ({
           date,
           value: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length),
         }));
-      res.json({ metric, range, points: fillDailyGaps(sinceIso, anchorDate, rawPoints) });
+      res.json({ metric, range, points });
       return;
     }
 
@@ -216,8 +216,7 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
       .find({ patientId, metric, date: { $gte: sinceIso } })
       .sort({ date: 1 })
       .toArray();
-    const rawPoints = rows.map((r) => ({ date: r.date as string, value: r.value as number }));
-    res.json({ metric, range, points: fillDailyGaps(sinceIso, anchorDate, rawPoints) });
+    res.json({ metric, range, points: rows.map((r) => ({ date: r.date as string, value: r.value as number })) });
   } catch (err) {
     console.error("[health/trends]", err);
     res.status(500).json({ detail: "Internal server error" });

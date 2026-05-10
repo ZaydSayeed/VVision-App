@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { TimelineScreen } from "../screens/TimelineScreen";
@@ -7,7 +8,6 @@ import { PeopleScreen } from "../screens/PeopleScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
 import { PatientsTab } from "../screens/caregiver/PatientsTab";
 import { AddCaregiverScreen } from "../screens/caregiver/AddCaregiverScreen";
-import FamilyCircleScreen from "../screens/caregiver/FamilyCircleScreen";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
@@ -20,7 +20,6 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Alerts: "notifications",
   Patients: "pulse",
   "Care Team": "person-add",
-  Family: "people-outline",
 };
 
 interface CaregiverTabNavigatorProps {
@@ -29,14 +28,15 @@ interface CaregiverTabNavigatorProps {
 
 export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigatorProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { people, alerts, stats, timeline, loading, refresh } = useDashboardData();
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
       position: "absolute",
-      left: 16,
-      right: 16,
-      bottom: 14,
+      left: 20,
+      right: 20,
+      bottom: Math.max(insets.bottom, 14),
       backgroundColor: colors.bg,
       borderTopWidth: 0,
       borderWidth: 1,
@@ -105,7 +105,6 @@ export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigato
       </Tab.Screen>
       <Tab.Screen name="Patients" component={PatientsTab} />
       <Tab.Screen name="Care Team" component={AddCaregiverScreen} />
-      <Tab.Screen name="Family" component={FamilyCircleScreen} />
     </Tab.Navigator>
   );
 }

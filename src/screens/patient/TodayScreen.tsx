@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Easing,
   Pressable,
   Dimensions,
   Alert,
@@ -39,6 +38,7 @@ import { SectionHeader } from "../../components/shared/SectionHeader";
 import { TimeSlider } from "../../components/shared/TimeSlider";
 import { fonts, spacing, radius, gradients, shadow } from "../../config/theme";
 import { registerReminderReload, registerTaskReload, registerMedReload } from "../../utils/reminderEvents";
+import { HeroStatCard } from "../../components/HeroStatCard";
 
 const SCREEN_W = Dimensions.get("window").width;
 const SCREEN_H = Dimensions.get("window").height;
@@ -91,29 +91,7 @@ export function TodayScreen() {
   const pendingTasks = tasks.filter((t) => !isCompletedToday(t));
   const pendingMeds = meds.filter((m) => !isTakenToday(m));
   const totalNotifs = pendingTasks.length + pendingMeds.length;
-
-  // ── Greeting "buddy" emoji animation ────────────────────────
-  const buddyWave = useRef(new Animated.Value(0)).current;
-  const buddyBob = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const wave = Animated.loop(
-      Animated.sequence([
-        Animated.timing(buddyWave, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(buddyWave, { toValue: -1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(buddyWave, { toValue: 0, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.delay(1800),
-      ])
-    );
-    const bob = Animated.loop(
-      Animated.sequence([
-        Animated.timing(buddyBob, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(buddyBob, { toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    wave.start();
-    bob.start();
-    return () => { wave.stop(); bob.stop(); };
-  }, [buddyWave, buddyBob]);
+  const [remindersOn, setRemindersOn] = useState(true);
 
   // ── Notification panel ──────────────────────────────────────
   const [notifOpen, setNotifOpen] = useState(false);
@@ -289,8 +267,10 @@ export function TodayScreen() {
       flex: 1,
     },
     buddyEmoji: {
-      fontSize: 52,
-      lineHeight: 60,
+      width: 56,
+      height: 56,
+      alignItems: "center",
+      justifyContent: "center",
     },
     greetingIcon: {
       fontSize: 36,
@@ -793,21 +773,13 @@ export function TodayScreen() {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View style={styles.greetingGroup}>
-            <Animated.Text
+            <View
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              style={[
-                styles.buddyEmoji,
-                {
-                  transform: [
-                    { translateY: buddyBob.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) },
-                    { rotate: buddyWave.interpolate({ inputRange: [-1, 1], outputRange: ["-8deg", "8deg"] }) },
-                  ],
-                },
-              ]}
+              style={styles.buddyEmoji}
             >
-              👵
-            </Animated.Text>
+              <Ionicons name="flower-outline" size={44} color={colors.violet} />
+            </View>
             <View>
               <View style={styles.greetingLineRow}>
                 <Ionicons name={greeting.icon} size={16} color={colors.amber} />
@@ -845,6 +817,24 @@ export function TodayScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />
         }
       >
+        {/* ── Hero progress card ──────────────────────────── */}
+        <HeroStatCard
+          stats={[
+            { label: "Routine", value: `${routineDone} of ${tasks.length}`, iconName: "leaf", iconColor: colors.sage },
+            { label: "Meds", value: `${medsDone} of ${meds.length}`, iconName: "medkit", iconColor: colors.amber },
+          ]}
+          toggle={{
+            label: "Reminders on",
+            value: remindersOn,
+            onChange: setRemindersOn,
+            iconName: "notifications-outline",
+          }}
+          cta={{
+            label: "See today's schedule",
+            onPress: openNotifs,
+          }}
+        />
+
         {/* ── Mood check-in card ────────────────────────────── */}
         {!moodSubmitted && (
           <View style={styles.moodCard}>

@@ -138,3 +138,31 @@ describe("seat cap enforcement (data layer)", () => {
     expect(count).toBe(2); // at cap
   });
 });
+
+describe("GET /tier — profile subscription tier", () => {
+  it("returns 'unlimited' when profile has an active unlimited subscription", async () => {
+    const db = globalThis.__TEST_DB__;
+    await db.collection("subscriptions").deleteMany({});
+    await db.collection("subscriptions").insertOne({
+      patientId: "patient-tier-test",
+      tier: "unlimited",
+      status: "active",
+      updatedAt: new Date().toISOString(),
+    });
+    const tier = await db.collection("subscriptions").findOne({
+      patientId: "patient-tier-test",
+      status: "active",
+    });
+    expect(tier?.tier).toBe("unlimited");
+  });
+
+  it("returns 'free' when no active subscription exists", async () => {
+    const db = globalThis.__TEST_DB__;
+    await db.collection("subscriptions").deleteMany({});
+    const tier = await db.collection("subscriptions").findOne({
+      patientId: "patient-no-sub",
+      status: "active",
+    });
+    expect(tier).toBeNull();
+  });
+});

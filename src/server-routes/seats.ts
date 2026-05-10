@@ -116,4 +116,21 @@ router.post("/accept-invite", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/profiles/:patientId/tier — get profile subscription tier
+router.get("/:patientId/tier", authMiddleware, requireSeat, async (req, res) => {
+  try {
+    const db = getDb();
+    const sub = await db.collection("subscriptions").findOne({
+      patientId: req.params.patientId,
+      status: "active",
+    });
+    if (!sub) { res.json({ tier: "free" }); return; }
+    const tier = sub.tier === "unlimited" || sub.tier === "starter" ? sub.tier : "free";
+    res.json({ tier });
+  } catch (err) {
+    console.error("get tier error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 export default router;

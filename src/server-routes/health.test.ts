@@ -38,10 +38,10 @@ describe("trendsQuerySchema", () => {
   it("accepts valid metric + range", () => {
     expect(trendsQuerySchema.safeParse({ metric: "steps", range: "7d" }).success).toBe(true);
   });
-  it("defaults range to 30d when omitted", () => {
+  it("defaults range to 7d when omitted", () => {
     const r = trendsQuerySchema.safeParse({ metric: "steps" });
     expect(r.success).toBe(true);
-    if (r.success) expect(r.data.range).toBe("30d");
+    if (r.success) expect(r.data.range).toBe("7d");
   });
   it("rejects unknown range", () => {
     expect(trendsQuerySchema.safeParse({ metric: "steps", range: "1y" }).success).toBe(false);

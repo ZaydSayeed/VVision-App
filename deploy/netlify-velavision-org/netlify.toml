@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/invite/*"
+  to = "/invite/index.html"
+  status = 200

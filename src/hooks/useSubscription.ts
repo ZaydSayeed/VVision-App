@@ -16,6 +16,9 @@ export function useSubscription(): { tier: Tier; ready: boolean; trialActive: bo
   const [profileReady, setProfileReady] = useState(false);
 
   useEffect(() => {
+    setSeatRole(null);
+    setProfileTier(null);
+    setProfileReady(false);
     if (!patientId || user?.role === "patient") {
       setProfileReady(true);
       return;

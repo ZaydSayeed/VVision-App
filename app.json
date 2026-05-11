@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.velavision.caregiver",
+      "associatedDomains": ["applinks:velavision.org"],
       "infoPlist": {
         "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
         "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",

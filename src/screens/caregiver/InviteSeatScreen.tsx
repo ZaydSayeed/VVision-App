@@ -117,7 +117,7 @@ export default function InviteSeatScreen({ navigation }: any) {
     setBusy(true);
     try {
       const { token } = await inviteSeat(patientId, email, role);
-      const link = `https://velavision.app/invite/${token}`;
+      const link = `https://velavision.org/invite/${token}`;
       await Share.share({ message: `You've been invited to join Vela: ${link}` });
       Alert.alert("Invite sent", "They'll accept inside the app.");
       navigation.goBack();

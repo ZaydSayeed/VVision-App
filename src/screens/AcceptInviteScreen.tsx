@@ -55,7 +55,7 @@ export default function AcceptInviteScreen({ route, navigation }: any) {
       </Text>
       <Text style={styles.message}>{message}</Text>
       <Pressable
-        onPress={() => navigation.replace("CaregiverHome")}
+        onPress={() => navigation.replace(user?.role === "patient" ? "PatientTabs" : "CaregiverHome")}
         style={styles.btn}
       >
         <Text style={styles.btnText}>Continue</Text>

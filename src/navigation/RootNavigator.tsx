@@ -105,38 +105,42 @@ export function RootNavigator() {
     });
   }, [user]);
 
-  // Handle Universal Link invite URLs (unauthenticated case)
+  // Cold start: check if app was opened via an invite link.
+  // Runs once — user may still be loading, so always save to AsyncStorage.
+  // Authenticated users are navigated by the pendingInviteToken effect once the stack mounts;
+  // unauthenticated users get the token picked up after login.
   useEffect(() => {
-    function handleInviteUrl(url: string | null) {
+    Linking.getInitialURL().then((url) => {
       if (!url) return;
       const match = url.match(/\/invite\/([a-f0-9]+)/);
       if (!match) return;
+      AsyncStorage.setItem("@vela/pending_invite", match[1]);
+    });
+  }, []);
+
+  // Foreground: handle invite URL when app is already running.
+  useEffect(() => {
+    function handleForegroundUrl({ url }: { url: string }) {
+      const match = url.match(/\/invite\/([a-f0-9]+)/);
+      if (!match) return;
       const token = match[1];
-      if (user) {
-        // Logged in — React Navigation's linking config handles this automatically
-        // This path is a safety net for cases the linking config misses
-        if (navigationRef.isReady()) {
-          (navigationRef.navigate as Function)("AcceptInvite", { token });
-        }
+      if (user && navigationRef.isReady()) {
+        (navigationRef.navigate as Function)("AcceptInvite", { token });
       } else {
-        // Not logged in — save for after login
         AsyncStorage.setItem("@vela/pending_invite", token);
       }
     }
-
-    Linking.getInitialURL().then(handleInviteUrl);
-    const subscription = Linking.addEventListener("url", ({ url }: { url: string }) => handleInviteUrl(url));
+    const subscription = Linking.addEventListener("url", handleForegroundUrl);
     return () => subscription.remove();
   }, [user]);
 
-  // After login: navigate to AcceptInvite when pendingInviteToken is set
+  // After login: navigate to AcceptInvite when pendingInviteToken is set.
+  // onboardingDone is a dep so this re-runs once the navigator stack is mounted.
   useEffect(() => {
-    if (!pendingInviteToken) return;
-    if (navigationRef.isReady()) {
-      (navigationRef.navigate as Function)("AcceptInvite", { token: pendingInviteToken });
-      clearPendingInviteToken();
-    }
-  }, [pendingInviteToken, clearPendingInviteToken]);
+    if (!pendingInviteToken || !navigationRef.isReady()) return;
+    (navigationRef.navigate as Function)("AcceptInvite", { token: pendingInviteToken });
+    clearPendingInviteToken();
+  }, [pendingInviteToken, clearPendingInviteToken, onboardingDone]);
 
   useEffect(() => {
     setOnNetworkChange(setOffline);

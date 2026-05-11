@@ -15,6 +15,7 @@ import { PurchasesProvider } from "./src/providers/PurchasesProvider";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
+import { navigationRef } from "./src/navigation/navigationRef";
 import { SplashScreen } from "./src/components/SplashScreen";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 
@@ -52,8 +53,9 @@ export default function App() {
           <AuthProvider>
             <PurchasesProvider>
             <NavigationContainer
+              ref={navigationRef}
               linking={{
-                prefixes: ["https://velavision.app", "velavision://"],
+                prefixes: ["https://velavision.org", "https://velavision.app", "velavision://"],
                 config: {
                   screens: {
                     CaregiverStack: {

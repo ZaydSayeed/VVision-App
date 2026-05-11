@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { AppState, AppStateStatus, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
 import { setAuthToken, setOnAuthExpired, syncProfile } from "../api/client";
@@ -25,6 +26,8 @@ interface AuthContextValue {
   ) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: AppUser) => void;
+  pendingInviteToken: string | null;
+  clearPendingInviteToken: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -48,6 +51,7 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes of inactivity
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingInviteToken, setPendingInviteToken] = useState<string | null>(null);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetInactivityTimer = useCallback(() => {
@@ -57,6 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setAuthToken(null); setAuthFetchToken(null);
     }, SESSION_TIMEOUT_MS);
+  }, []);
+
+  const clearPendingInviteToken = useCallback(() => {
+    setPendingInviteToken(null);
   }, []);
 
   // Track app foreground/background to manage session timeout
@@ -185,6 +193,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(appUser);
       resetInactivityTimer();
+
+      const pending = await AsyncStorage.getItem("@vela/pending_invite");
+      if (pending) {
+        setPendingInviteToken(pending);
+        await AsyncStorage.removeItem("@vela/pending_invite");
+      }
     },
     [resetInactivityTimer]
   );
@@ -217,6 +231,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(appUser);
     resetInactivityTimer();
 
+    const pending = await AsyncStorage.getItem("@vela/pending_invite");
+    if (pending) {
+      setPendingInviteToken(pending);
+      await AsyncStorage.removeItem("@vela/pending_invite");
+    }
+
   }, [resetInactivityTimer]);
 
   const logout = useCallback(async () => {
@@ -231,7 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, updateUser }}
+      value={{ user, loading, login, signup, logout, updateUser, pendingInviteToken, clearPendingInviteToken }}
     >
       {children}
     </AuthContext.Provider>

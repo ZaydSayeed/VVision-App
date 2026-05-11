@@ -18,7 +18,7 @@ export default function InviteSeatScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"sibling" | "paid_aide">("sibling");
   const [busy, setBusy] = useState(false);
-  const { tier } = useSubscription();
+  const { tier, isInvitedMember } = useSubscription();
   const { patientId } = useCurrentProfile();
   const { colors } = useTheme();
 
@@ -110,7 +110,7 @@ export default function InviteSeatScreen({ navigation }: any) {
 
   const submit = async () => {
     if (!patientId) return;
-    if (tier === "free") {
+    if (tier === "free" && !isInvitedMember) {
       navigation.navigate("Paywall");
       return;
     }

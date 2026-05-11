@@ -30,3 +30,10 @@ export async function acceptInvite(token: string) {
   if (!res.ok) throw new Error((await res.json()).detail ?? "Accept failed");
   return res.json() as Promise<{ ok: true; patientId: string; role: string }>;
 }
+
+export async function getProfileTier(patientId: string): Promise<"free" | "starter" | "unlimited"> {
+  const res = await authFetch(`/api/profiles/${patientId}/tier`);
+  if (!res.ok) return "free";
+  const data = await res.json();
+  return data.tier ?? "free";
+}

@@ -49,6 +49,8 @@ import { BackgroundDecor } from "../components/BackgroundDecor";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Linking from "expo-linking";
+import { navigationRef } from "./navigationRef";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { HealthOnboardingScreen } from "../screens/patient/HealthOnboardingScreen";
 import { useOnboarding } from "../hooks/useOnboarding";
@@ -68,7 +70,7 @@ const SCREEN_H = Dimensions.get("window").height;
 const PANEL_W = SCREEN_W * 0.85;
 
 export function RootNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, pendingInviteToken, clearPendingInviteToken } = useAuth();
   const { colors, isDark } = useTheme();
   const { setOffline } = useNetwork();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -102,6 +104,39 @@ export function RootNavigator() {
       setOnboardingDone(false);
     });
   }, [user]);
+
+  // Handle Universal Link invite URLs (unauthenticated case)
+  useEffect(() => {
+    function handleInviteUrl(url: string | null) {
+      if (!url) return;
+      const match = url.match(/\/invite\/([a-f0-9]+)/);
+      if (!match) return;
+      const token = match[1];
+      if (user) {
+        // Logged in — React Navigation's linking config handles this automatically
+        // This path is a safety net for cases the linking config misses
+        if (navigationRef.isReady()) {
+          (navigationRef.navigate as Function)("AcceptInvite", { token });
+        }
+      } else {
+        // Not logged in — save for after login
+        AsyncStorage.setItem("@vela/pending_invite", token);
+      }
+    }
+
+    Linking.getInitialURL().then(handleInviteUrl);
+    const subscription = Linking.addEventListener("url", ({ url }: { url: string }) => handleInviteUrl(url));
+    return () => subscription.remove();
+  }, [user]);
+
+  // After login: navigate to AcceptInvite when pendingInviteToken is set
+  useEffect(() => {
+    if (!pendingInviteToken) return;
+    if (navigationRef.isReady()) {
+      (navigationRef.navigate as Function)("AcceptInvite", { token: pendingInviteToken });
+      clearPendingInviteToken();
+    }
+  }, [pendingInviteToken, clearPendingInviteToken]);
 
   useEffect(() => {
     setOnNetworkChange(setOffline);

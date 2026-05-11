@@ -133,4 +133,9 @@ router.get("/:patientId/tier", authMiddleware, requireSeat, async (req, res) => 
   }
 });
 
+// GET /api/profiles/:patientId/my-seat — returns current user's seat role on this profile
+router.get("/:patientId/my-seat", authMiddleware, requireSeat, async (req, res) => {
+  res.json({ role: req.seat!.role });
+});
+
 export default router;

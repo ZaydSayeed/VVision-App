@@ -37,3 +37,10 @@ export async function getProfileTier(patientId: string): Promise<"free" | "start
   const data = await res.json();
   return data.tier ?? "free";
 }
+
+export async function getMySeatRole(patientId: string): Promise<string | null> {
+  const res = await authFetch(`/api/profiles/${patientId}/my-seat`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.role ?? null;
+}

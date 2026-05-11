@@ -104,6 +104,27 @@ export function fillHourlyGaps(
   });
 }
 
+export function aggregateByWeek(
+  points: { date: string; value: number }[]
+): { date: string; value: number }[] {
+  if (points.length === 0) return [];
+  const byWeek = new Map<string, number[]>();
+  for (const p of points) {
+    const d = new Date(p.date + "T12:00:00Z");
+    const dow = d.getUTCDay(); // 0=Sun
+    d.setUTCDate(d.getUTCDate() + (dow === 0 ? -6 : 1 - dow)); // back to Monday
+    const monday = d.toISOString().slice(0, 10);
+    if (!byWeek.has(monday)) byWeek.set(monday, []);
+    byWeek.get(monday)!.push(p.value);
+  }
+  return Array.from(byWeek.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, vals]) => ({
+      date,
+      value: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length),
+    }));
+}
+
 router.get("/:patientId/health/summary", authMiddleware, requirePatientAccess, async (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -202,13 +223,13 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
         if (!byDate.has(d)) byDate.set(d, []);
         byDate.get(d)!.push(r.value as number);
       }
-      const points = Array.from(byDate.entries())
+      const dailyPoints = Array.from(byDate.entries())
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, vals]) => ({
           date,
           value: Math.round(vals.reduce((s, v) => s + v, 0) / vals.length),
         }));
-      res.json({ metric, range, points });
+      res.json({ metric, range, points: range === "90d" ? aggregateByWeek(dailyPoints) : dailyPoints });
       return;
     }
 
@@ -216,7 +237,8 @@ router.get("/:patientId/health/trends", authMiddleware, requirePatientAccess, as
       .find({ patientId, metric, date: { $gte: sinceIso } })
       .sort({ date: 1 })
       .toArray();
-    res.json({ metric, range, points: rows.map((r) => ({ date: r.date as string, value: r.value as number })) });
+    const dailyPoints = rows.map((r) => ({ date: r.date as string, value: r.value as number }));
+    res.json({ metric, range, points: range === "90d" ? aggregateByWeek(dailyPoints) : dailyPoints });
   } catch (err) {
     console.error("[health/trends]", err);
     res.status(500).json({ detail: "Internal server error" });

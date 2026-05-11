@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { syncSchema, trendsQuerySchema, fillDailyGaps, fillHourlyGaps } from "./health";
+import { syncSchema, trendsQuerySchema, fillDailyGaps, fillHourlyGaps, aggregateByWeek } from "./health";
 
 describe("syncSchema", () => {
   it("accepts a valid batch", () => {
@@ -88,5 +88,37 @@ describe("fillHourlyGaps", () => {
     expect(result[0].date).toBe("00:00");
     expect(result[9].date).toBe("09:00");
     expect(result[23].date).toBe("23:00");
+  });
+});
+
+describe("aggregateByWeek", () => {
+  it("returns empty array for empty input", () => {
+    expect(aggregateByWeek([])).toEqual([]);
+  });
+
+  it("groups days into the correct Monday bucket", () => {
+    // 2026-05-06 is Wednesday, its Monday is 2026-05-04
+    const result = aggregateByWeek([
+      { date: "2026-05-04", value: 1000 },
+      { date: "2026-05-06", value: 2000 },
+      { date: "2026-05-08", value: 3000 },
+    ]);
+    expect(result).toEqual([{ date: "2026-05-04", value: 2000 }]);
+  });
+
+  it("handles Sunday correctly (maps to previous Monday)", () => {
+    // 2026-05-10 is Sunday, its Monday is 2026-05-04
+    const result = aggregateByWeek([{ date: "2026-05-10", value: 500 }]);
+    expect(result[0].date).toBe("2026-05-04");
+  });
+
+  it("produces one point per week across multiple weeks", () => {
+    const result = aggregateByWeek([
+      { date: "2026-05-04", value: 1000 }, // week of May 4
+      { date: "2026-05-11", value: 2000 }, // week of May 11
+    ]);
+    expect(result.length).toBe(2);
+    expect(result[0].date).toBe("2026-05-04");
+    expect(result[1].date).toBe("2026-05-11");
   });
 });

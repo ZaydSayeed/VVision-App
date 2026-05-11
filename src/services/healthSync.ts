@@ -4,9 +4,16 @@ import { getReadingsSince, enableBackgroundDelivery, isAvailable, Reading } from
 import { syncReadings } from "../api/health";
 
 const LAST_SYNC_KEY = "@vela/health/lastSyncedAt";
+const SYNC_VERSION_KEY = "@vela/health/syncVersion";
+const SYNC_VERSION = "2"; // bump to force re-sync when aggregation logic changes
 const INITIAL_LOOKBACK_DAYS = 30;
 
 async function getLastSync(): Promise<Date> {
+  const version = await AsyncStorage.getItem(SYNC_VERSION_KEY);
+  if (version !== SYNC_VERSION) {
+    await AsyncStorage.removeItem(LAST_SYNC_KEY);
+    await AsyncStorage.setItem(SYNC_VERSION_KEY, SYNC_VERSION);
+  }
   const raw = await AsyncStorage.getItem(LAST_SYNC_KEY);
   if (raw) return new Date(raw);
   const d = new Date();

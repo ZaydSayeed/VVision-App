@@ -52,12 +52,17 @@ export async function getReadingsSince(since: Date): Promise<Reading[]> {
   const startDate = startOfDay(since).toISOString();
   const endDate = new Date().toISOString();
 
-  // Steps — daily totals
+  // Steps — sum all samples per day (getDailyStepCountSamples returns individual bursts, not daily totals)
   await new Promise<void>((resolve) => {
     AppleHealthKit.getDailyStepCountSamples({ startDate, endDate } as HealthInputOptions, (err, results) => {
       if (!err && results) {
+        const byDate = new Map<string, number>();
         for (const s of results) {
-          out.push({ metric: "steps", date: isoDate(new Date(s.startDate)), value: Math.round(s.value), unit: "count" });
+          const date = isoDate(new Date(s.startDate));
+          byDate.set(date, (byDate.get(date) ?? 0) + Math.round(s.value));
+        }
+        for (const [date, value] of byDate) {
+          out.push({ metric: "steps", date, value, unit: "count" });
         }
       }
       resolve();
@@ -82,12 +87,17 @@ export async function getReadingsSince(since: Date): Promise<Reading[]> {
     });
   });
 
-  // Active minutes (Apple Exercise Time) — daily totals
+  // Active minutes (Apple Exercise Time) — sum all samples per day
   await new Promise<void>((resolve) => {
     AppleHealthKit.getAppleExerciseTime({ startDate, endDate } as HealthInputOptions, (err, results) => {
       if (!err && results) {
+        const byDate = new Map<string, number>();
         for (const s of results) {
-          out.push({ metric: "active_minutes", date: isoDate(new Date(s.startDate)), value: Math.round(s.value), unit: "min" });
+          const date = isoDate(new Date(s.startDate));
+          byDate.set(date, (byDate.get(date) ?? 0) + Math.round(s.value));
+        }
+        for (const [date, value] of byDate) {
+          out.push({ metric: "active_minutes", date, value, unit: "min" });
         }
       }
       resolve();

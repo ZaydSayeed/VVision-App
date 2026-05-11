@@ -59,8 +59,6 @@ import AcceptInviteScreen from "../screens/AcceptInviteScreen";
 import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 import { registerOnboardingReset } from "../utils/reminderEvents";
-import { startLocationWatcher } from "../services/locationWatcher";
-
 
 const CaregiverStack = createNativeStackNavigator();
 const PatientStack = createNativeStackNavigator();
@@ -231,10 +229,6 @@ export function RootNavigator() {
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify({ expoPushToken: tokenData.data }),
         });
-        // Start background location watcher for zone alerts (non-fatal)
-        startLocationWatcher().catch((err) =>
-          console.error("Location watcher start failed (non-fatal):", err)
-        );
       } catch (err) {
         console.error("Patient push token registration failed (non-fatal):", err);
       }

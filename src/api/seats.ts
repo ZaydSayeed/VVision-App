@@ -17,7 +17,7 @@ export async function listSeats(patientId: string) {
   const res = await authFetch(`/api/profiles/${patientId}/seats`);
   if (!res.ok) throw new Error("Failed to load seats");
   return res.json() as Promise<{
-    seats: Array<{ userId: string; role: string; createdAt: string }>;
+    seats: Array<{ userId: string; name: string | null; email: string | null; role: string; createdAt: string }>;
     invites: Array<{ email: string; role: string; status: string }>;
   }>;
 }

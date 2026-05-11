@@ -18,7 +18,7 @@ export default function InviteSeatScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"sibling" | "paid_aide">("sibling");
   const [busy, setBusy] = useState(false);
-  const { tier, isInvitedMember } = useSubscription();
+  const { tier, isInvitedMember, ready } = useSubscription();
   const { patientId } = useCurrentProfile();
   const { colors } = useTheme();
 
@@ -122,7 +122,7 @@ export default function InviteSeatScreen({ navigation }: any) {
       Alert.alert("Invite sent", "They'll accept inside the app.");
       navigation.goBack();
     } catch (e: any) {
-      if (e.message?.includes("Starter plan") || e.message?.includes("402")) {
+      if (!isInvitedMember && (e.message?.includes("Starter plan") || e.message?.includes("402"))) {
         navigation.navigate("Paywall");
       } else {
         Alert.alert("Couldn't send invite", e.message);
@@ -132,7 +132,7 @@ export default function InviteSeatScreen({ navigation }: any) {
     }
   };
 
-  const isDisabled = busy || !email.includes("@");
+  const isDisabled = busy || !email.includes("@") || !ready;
 
   return (
     <View style={styles.container}>

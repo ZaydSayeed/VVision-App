@@ -218,11 +218,11 @@ export function AddCaregiverScreen({ navigation }: any) {
               <View key={seat.userId + idx} style={styles.profileCard}>
                 <View style={styles.profileAvatar}>
                   <Text style={styles.profileInitial}>
-                    {(seat.userId ?? "?").charAt(0).toUpperCase()}
+                    {(seat.name ?? seat.email ?? seat.userId ?? "?").charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{seat.userId}</Text>
+                  <Text style={styles.profileName}>{seat.name ?? seat.email ?? seat.userId}</Text>
                 </View>
                 <View style={styles.roleBadge}>
                   <Text style={styles.roleBadgeText}>

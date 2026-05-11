@@ -69,8 +69,16 @@ router.get("/:patientId/seats", authMiddleware, requireSeat, async (req, res) =>
     const invites = await db.collection("seat_invites").find({
       patientId: req.params.patientId, status: "pending"
     }).toArray();
+    const userIds = seats.map((s) => s.userId);
+    const users = userIds.length > 0
+      ? await db.collection("users").find({ supabase_uid: { $in: userIds } }).toArray()
+      : [];
+    const userMap = new Map(users.map((u) => [u.supabase_uid, u]));
     res.json({
-      seats: seats.map((s) => ({ userId: s.userId, role: s.role, createdAt: s.createdAt })),
+      seats: seats.map((s) => {
+        const u = userMap.get(s.userId);
+        return { userId: s.userId, name: u?.name ?? null, email: u?.email ?? null, role: s.role, createdAt: s.createdAt };
+      }),
       invites: invites.map((i) => ({ email: i.email, role: i.role, status: i.status })),
     });
   } catch (err) {

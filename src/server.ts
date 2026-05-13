@@ -115,6 +115,7 @@ app.use("/api/profiles", healthRoutes);
 app.use("/api/profiles", subscriptionRoutes);
 app.use("/api/profiles", onboardingRoutes);
 app.use("/api/profiles", deviceRoutes);
+app.use("/api/device", deviceRoutes);
 app.use("/api/stream", streamSessionRoutes);
 app.use("/api/notifications", patientTokensRouter);
 app.use("/api/mood", moodRouter);

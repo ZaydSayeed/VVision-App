@@ -20,13 +20,28 @@ export function PurchasesProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (Platform.OS === "web") {
+      setReady(true);
+      return;
+    }
     const key = Platform.OS === "ios" ? RC_API_KEY_IOS : RC_API_KEY_ANDROID;
+    // Real RevenueCat keys: iOS -> "appl_...", Android -> "goog_...".
+    // A non-matching value (placeholder/test key) makes the native SDK
+    // fire a Swift Task on launch that can assert and kill the process.
+    const isRealKey =
+      (Platform.OS === "ios" && key.startsWith("appl_")) ||
+      (Platform.OS === "android" && key.startsWith("goog_"));
+    if (!isRealKey) {
+      setReady(true);
+      return;
+    }
     Purchases.configure({ apiKey: key, appUserID: user?.id });
     Purchases.addCustomerInfoUpdateListener(setCustomerInfo);
     Purchases.getCustomerInfo().then(setCustomerInfo).finally(() => setReady(true));
   }, [user?.id]);
 
   const refresh = async () => {
+    if (Platform.OS === "web") return;
     const info = await Purchases.getCustomerInfo();
     setCustomerInfo(info);
   };

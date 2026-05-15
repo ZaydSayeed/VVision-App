@@ -2,11 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -18,9 +20,11 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { usePatients } from "../hooks/usePatients";
-import { getMyLinkCode } from "../api/client";
+import { getMyLinkCode, deleteAccount } from "../api/client";
 import { fonts, spacing, radius, colors } from "../config/theme";
 import { triggerOnboardingReset } from "../utils/reminderEvents";
+
+const PRIVACY_POLICY_URL = "https://velavision.org/privacy/";
 
 const DRAWER_WIDTH = Dimensions.get("window").width * 0.78;
 
@@ -38,6 +42,10 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -178,8 +186,25 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </TouchableOpacity>
             </View>
 
+            {/* Privacy Policy */}
+            <View style={[styles.section, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.row}
+                activeOpacity={0.7}
+                accessibilityRole="link"
+                accessibilityLabel="Open privacy policy"
+                onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="shield-checkmark-outline" size={20} color={colors.violet} />
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Privacy Policy</Text>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
             {/* Sign out */}
-            <View style={styles.section}>
+            <View style={[styles.section, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
                 style={[styles.signOutBtn, { backgroundColor: "rgba(123,92,231,0.08)" }]}
                 onPress={() => { onClose(); logout(); }}
@@ -191,6 +216,145 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 <Text style={[styles.signOutText, { color: colors.violet }]}>Sign out</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Delete account */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.deleteRow}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Delete account"
+                onPress={() => {
+                  setDeleteConfirmText("");
+                  setDeleteError(null);
+                  setShowDeleteModal(true);
+                }}
+              >
+                <Ionicons name="trash-outline" size={18} color="#D95F5F" />
+                <Text style={styles.deleteText}>Delete account</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Delete account confirmation */}
+            <Modal
+              visible={showDeleteModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => !deleting && setShowDeleteModal(false)}
+            >
+              <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center", padding: 24 }}>
+                <View style={{ backgroundColor: colors.bg, borderRadius: 20, padding: 24, width: "100%", maxWidth: 400 }}>
+                  <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "rgba(217,95,95,0.12)", alignItems: "center", justifyContent: "center", marginBottom: spacing.md }}>
+                      <Ionicons name="warning-outline" size={26} color="#D95F5F" />
+                    </View>
+                    <Text style={{ fontSize: 18, ...fonts.medium, color: colors.text, textAlign: "center" }}>
+                      Delete your account?
+                    </Text>
+                  </View>
+
+                  <Text style={{ fontSize: 14, lineHeight: 20, ...fonts.regular, color: colors.muted, marginBottom: spacing.md }}>
+                    This permanently removes your Vela Vision account and all your data:
+                  </Text>
+                  <View style={{ marginBottom: spacing.lg, gap: 6 }}>
+                    {[
+                      "Your profile, routines, medications, and reminders",
+                      "All conversations with Vision and stored memories",
+                      "Face photos, alerts, and notes from your care team",
+                      user?.role === "patient"
+                        ? "Linked caregivers will be notified and lose access"
+                        : "Your access to all linked patients",
+                    ].map((line) => (
+                      <View key={line} style={{ flexDirection: "row", gap: 8 }}>
+                        <Text style={{ color: "#D95F5F", fontSize: 14 }}></Text>
+                        <Text style={{ fontSize: 13, lineHeight: 19, ...fonts.regular, color: colors.text, flex: 1 }}>{line}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <Text style={{ fontSize: 13, ...fonts.regular, color: colors.muted, marginBottom: spacing.sm }}>
+                    This cannot be undone. Type <Text style={{ ...fonts.medium, color: colors.text }}>DELETE</Text> to confirm.
+                  </Text>
+                  <TextInput
+                    value={deleteConfirmText}
+                    onChangeText={(t) => { setDeleteConfirmText(t); setDeleteError(null); }}
+                    placeholder="DELETE"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    editable={!deleting}
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: colors.border,
+                      borderRadius: radius.md,
+                      paddingHorizontal: spacing.md,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      color: colors.text,
+                      ...fonts.medium,
+                      marginBottom: spacing.lg,
+                    }}
+                  />
+
+                  {deleteError && (
+                    <Text style={{ fontSize: 13, color: "#D95F5F", marginBottom: spacing.md, textAlign: "center" }}>
+                      {deleteError}
+                    </Text>
+                  )}
+
+                  <View style={{ flexDirection: "row", gap: spacing.md }}>
+                    <TouchableOpacity
+                      style={{
+                        flex: 1,
+                        height: 48,
+                        borderRadius: radius.pill,
+                        backgroundColor: colors.surface,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: deleting ? 0.5 : 1,
+                      }}
+                      onPress={() => setShowDeleteModal(false)}
+                      disabled={deleting}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={{ fontSize: 15, ...fonts.medium, color: colors.text }}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{
+                        flex: 1,
+                        height: 48,
+                        borderRadius: radius.pill,
+                        backgroundColor: deleteConfirmText === "DELETE" ? "#D95F5F" : "rgba(217,95,95,0.4)",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      onPress={async () => {
+                        if (deleteConfirmText !== "DELETE" || deleting) return;
+                        setDeleting(true);
+                        setDeleteError(null);
+                        try {
+                          await deleteAccount();
+                          setShowDeleteModal(false);
+                          onClose();
+                          await logout();
+                        } catch (err: any) {
+                          setDeleteError(err?.message || "Could not delete account. Please try again.");
+                          setDeleting(false);
+                        }
+                      }}
+                      disabled={deleteConfirmText !== "DELETE" || deleting}
+                      activeOpacity={0.85}
+                    >
+                      {deleting ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={{ fontSize: 15, ...fonts.medium, color: "#FFFFFF" }}>Delete</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
 
             {/* Patient picker modal for Visit Reports */}
             <Modal visible={showPatientPicker} transparent animationType="fade" onRequestClose={() => setShowPatientPicker(false)}>
@@ -322,6 +486,18 @@ const styles = StyleSheet.create({
   },
   signOutText: {
     fontSize: 16,
+    ...fonts.medium,
+  },
+  deleteRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  deleteText: {
+    fontSize: 14,
+    color: "#D95F5F",
     ...fonts.medium,
   },
 });

@@ -63,11 +63,6 @@ export default function App() {
                         AcceptInvite: "invite/:token",
                       },
                     },
-                    PatientStack: {
-                      screens: {
-                        AcceptInvite: "invite/:token",
-                      },
-                    },
                   },
                 },
               }}

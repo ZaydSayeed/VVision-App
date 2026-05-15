@@ -10,6 +10,7 @@ export const config = {
   mongodbDbName: process.env.MONGODB_DB_NAME || "dvision",
   supabaseUrl: process.env.SUPABASE_URL || "",
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
   port: parseInt(process.env.PORT || "8000", 10),
   groqApiKey: process.env.GROQ_API_KEY || "",
   mem0ApiKey: process.env.MEM0_API_KEY || "",

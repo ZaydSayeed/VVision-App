@@ -48,3 +48,9 @@ export async function searchMemory(input: SearchMemoryInput) {
   const scope = buildMemoryScope(input.patientId);
   return getMemoryClient().search(input.query, { ...scope, limit: input.limit ?? 10 });
 }
+
+export async function deleteMemoriesForPatient(patientId: string) {
+  if (!config.mem0ApiKey) return;
+  const scope = buildMemoryScope(patientId);
+  await getMemoryClient().deleteAll(scope);
+}

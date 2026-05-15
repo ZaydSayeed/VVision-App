@@ -145,6 +145,10 @@ export async function getMyLinkCode(): Promise<{ link_code: string }> {
   return request("/api/patients/mine/link-code");
 }
 
+export async function deleteAccount(): Promise<{ success: boolean }> {
+  return request("/api/auth/me", { method: "DELETE" });
+}
+
 export async function fetchLinkedPatients(): Promise<PatientSummary[]> {
   return request<PatientSummary[]>("/api/patients/linked");
 }

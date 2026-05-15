@@ -25,8 +25,6 @@
         "NSMotionUsageDescription": "Vela uses motion data to detect activity patterns for your care team.",
         "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning.",
         "NSLocationWhenInUseUsageDescription": "Vela uses your location to alert your caregiver if you leave your safe zone.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
-        "NSLocationAlwaysUsageDescription": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
         "UIBackgroundModes": [
           "fetch"
         ],
@@ -64,8 +62,6 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
-          "locationAlwaysPermission": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
           "locationWhenInUsePermission": "Vela uses your location to alert your caregiver if you leave your safe zone.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": true

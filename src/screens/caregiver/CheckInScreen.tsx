@@ -81,9 +81,11 @@ export default function CheckInScreen({ navigation }: any) {
         </Text>
       )}
 
-      {!patientId && patients.length > 1 && (
+      {!patientId && (
         <Text style={{ color: "#94a3b8", textAlign: "center", marginBottom: 12, fontSize: 13 }}>
-          Pick a patient above to begin.
+          {patients.length > 1
+            ? "Pick a patient above to begin."
+            : "No patient linked yet. Ask your patient to share their link code from the Vela app."}
         </Text>
       )}
 

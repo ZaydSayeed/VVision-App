@@ -66,11 +66,21 @@ function isNetworkError(error: unknown): boolean {
 }
 
 // ── Base request helper ───────────────────────────────────
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  const isGet = !options?.method || options.method === "GET";
+// Normal/offline-with-cache path stays snappy; the longer window only kicks in
+// when there's no cached fallback (e.g. the backend is cold-starting — Render's
+// free tier takes ~30s to spin up after idle, which would otherwise fail the
+// first screen on launch).
+const FAST_TIMEOUT_MS = 8000;
+const COLD_START_TIMEOUT_MS = 35000;
 
+async function attempt<T>(
+  path: string,
+  options: RequestInit | undefined,
+  timeoutMs: number,
+  isGet: boolean
+): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -105,18 +115,45 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     }
 
     return data;
-  } catch (error) {
-    if (isGet && isNetworkError(error)) {
-      // Try to serve cached data when offline
-      const cached = await getCached<T>(path);
-      if (cached !== null) {
-        onNetworkChange?.(true);
-        return cached;
-      }
-    }
-    throw error;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const isGet = !options?.method || options.method === "GET";
+
+  // Writes: single patient attempt — long enough to ride out a backend cold
+  // start, but never auto-retried (avoids duplicate POSTs/PATCHes).
+  if (!isGet) {
+    return attempt<T>(path, options, COLD_START_TIMEOUT_MS, false);
+  }
+
+  try {
+    return await attempt<T>(path, options, FAST_TIMEOUT_MS, true);
+  } catch (error) {
+    if (!isNetworkError(error)) throw error;
+
+    // Offline but we have cached data — serve it immediately (stay snappy).
+    const cached = await getCached<T>(path);
+    if (cached !== null) {
+      onNetworkChange?.(true);
+      return cached;
+    }
+
+    // No cache: most likely the backend is cold-starting. Retry once, patiently.
+    try {
+      return await attempt<T>(path, options, COLD_START_TIMEOUT_MS, true);
+    } catch (retryError) {
+      if (isNetworkError(retryError)) {
+        const cachedAfterRetry = await getCached<T>(path);
+        if (cachedAfterRetry !== null) {
+          onNetworkChange?.(true);
+          return cachedAfterRetry;
+        }
+      }
+      throw retryError;
+    }
   }
 }
 
@@ -189,7 +226,7 @@ export async function enrollFace(
   );
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000); // longer for upload
+  const timeout = setTimeout(() => controller.abort(), COLD_START_TIMEOUT_MS); // longer for upload + cold start
 
   const formData = new FormData();
   formData.append("name", name);

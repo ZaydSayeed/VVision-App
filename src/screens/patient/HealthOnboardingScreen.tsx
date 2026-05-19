@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,6 +34,20 @@ export function HealthOnboardingScreen() {
     }
   };
 
+  if (Platform.OS === "ios" && (Platform as any).isPad) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32 }}>
+        <Ionicons name="phone-portrait-outline" size={48} color={colors.muted} />
+        <Text style={{ ...fonts.medium, fontSize: 18, color: colors.text, textAlign: "center", marginTop: 16 }}>
+          Health data is only available on iPhone
+        </Text>
+        <Text style={{ ...fonts.regular, fontSize: 15, color: colors.muted, textAlign: "center", marginTop: 8, lineHeight: 22 }}>
+          Open Vela on your iPhone to connect Apple Health.
+        </Text>
+      </View>
+    );
+  }
+
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg, padding: 24, justifyContent: "center" },
     iconWrap: { alignSelf: "center", marginBottom: 28 },
@@ -58,7 +72,7 @@ export function HealthOnboardingScreen() {
       <Text style={styles.bullet}>• You can change this anytime in iPhone Settings.</Text>
       <TouchableOpacity style={styles.button} onPress={onConnect} disabled={busy} activeOpacity={0.8}>
         <LinearGradient colors={[colors.violet, "#7B6BE0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.buttonInner}>
-          {busy ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonLabel}>Connect</Text>}
+          {busy ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.buttonLabel}>Continue</Text>}
         </LinearGradient>
       </TouchableOpacity>
     </View>

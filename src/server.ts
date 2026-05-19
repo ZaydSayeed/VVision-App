@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { config } from "./server-core/config";
+import { config, validateConfig } from "./server-core/config";
 import { connectDb, closeDb } from "./server-core/database";
 import { attachLiveBridge } from "./server-core/liveBridge";
 import { startCron } from "./server-jobs/scheduler";
@@ -45,14 +45,27 @@ const app = express();
 // Security headers
 app.use(helmet());
 
-// CORS — allow Expo Go and local dev
+// CORS — native app requests have no Origin header (always allowed); browser
+// origins are restricted to local dev and the velavision.org domain.
+function isAllowedOrigin(origin: string): boolean {
+  if (origin.startsWith("exp://")) return true; // Expo Go
+  try {
+    const { protocol, hostname } = new URL(origin);
+    if (protocol !== "http:" && protocol !== "https:") return false;
+    if (hostname === "localhost" || hostname === "127.0.0.1") return true;
+    return hostname === "velavision.org" || hostname.endsWith(".velavision.org");
+  } catch {
+    return false;
+  }
+}
+
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl) and Expo origins
-    if (!origin || origin.startsWith("exp://") || origin.startsWith("http://localhost")) {
+    // No origin = native mobile app / curl / server-to-server — allow.
+    if (!origin || isAllowedOrigin(origin)) {
       cb(null, true);
     } else {
-      cb(null, true); // Keep permissive for now; tighten when deploying web frontend
+      cb(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
@@ -62,8 +75,16 @@ app.use(cors({
 // Body parsing with size limit
 app.use(express.json({ limit: "1mb" }));
 
-// Request logging
-app.use((req, _res, next) => { console.log(`${req.method} ${req.path}`); next(); });
+// Request logging — method, path, status, and latency (logged on response
+// finish). Keeps prod debuggable without an APM; add a structured logger /
+// Sentry breadcrumb here later if needed.
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on("finish", () => {
+    console.log(`${req.method} ${req.path} ${res.statusCode} ${Date.now() - startedAt}ms`);
+  });
+  next();
+});
 
 // Rate limiting — strict on auth & link endpoints
 const authLimiter = rateLimit({
@@ -139,8 +160,9 @@ app.get("/ready", async (_req, res) => {
 });
 
 // Global error handler — catches any unhandled errors from routes
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error("Unhandled error:", err);
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  console.error(`Unhandled error: ${req.method} ${req.path} —`, err?.stack || err);
+  if (res.headersSent) return;
   res.status(500).json({ detail: "Internal server error" });
 });
 
@@ -151,6 +173,7 @@ process.on("unhandledRejection", (reason) => {
 
 async function start() {
   try {
+    validateConfig();
     await connectDb();
     console.log("MongoDB connected");
     startCron();

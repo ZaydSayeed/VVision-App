@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import { PatientSummary } from "../../types";
 import { PatientsDashboardScreen } from "./PatientsDashboardScreen";
@@ -23,6 +24,18 @@ export function PatientsTab() {
   const [selectedLog, setSelectedLog] = useState<CheckInLog | null>(null);
   const [liveParams, setLiveParams] = useState<LiveStreamParams | null>(null);
   const { patients } = usePatients();
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+
+  // Deep-link entry point (e.g. the "Link a patient" CTA on the Check In screen).
+  // Consume the param once so it doesn't re-trigger on later visits to this tab.
+  const startView = route.params?.startView;
+  useEffect(() => {
+    if (startView === "link") {
+      setView("link");
+      navigation.setParams({ startView: undefined });
+    }
+  }, [startView, navigation]);
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {

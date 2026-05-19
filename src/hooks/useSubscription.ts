@@ -4,6 +4,7 @@ import { RC_ENTITLEMENT_STARTER, RC_ENTITLEMENT_UNLIMITED } from "../config/reve
 import { useCurrentProfile } from "./useCurrentProfile";
 import { useAuth } from "../context/AuthContext";
 import { getMySeatRole, getProfileTier } from "../api/seats";
+import { isReviewer } from "../config/reviewer";
 
 export type Tier = "free" | "starter" | "unlimited";
 
@@ -43,6 +44,12 @@ export function useSubscription(): { tier: Tier; ready: boolean; trialActive: bo
   }, [patientId, user?.role]);
 
   return useMemo(() => {
+    // App Store reviewer: deterministically simulate an expired free trial so
+    // the post-trial IAP paywall is reachable in review (Guideline 2.1(b)).
+    if (isReviewer(user?.email)) {
+      return { tier: "free" as Tier, ready: true, trialActive: false, isInvitedMember: false };
+    }
+
     const isInvitedMember = !!seatRole && seatRole !== "primary_caregiver";
 
     if (isInvitedMember) {
@@ -63,5 +70,5 @@ export function useSubscription(): { tier: Tier; ready: boolean; trialActive: bo
     const tier: Tier = unlimited ? "unlimited" : starter ? "starter" : "free";
     const trialActive = active?.periodType === "trial";
     return { tier, ready: rcReady && profileReady, trialActive, isInvitedMember: false };
-  }, [customerInfo, rcReady, seatRole, profileTier, profileReady]);
+  }, [customerInfo, rcReady, seatRole, profileTier, profileReady, user?.email]);
 }

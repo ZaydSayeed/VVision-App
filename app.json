@@ -66,7 +66,7 @@
           "locationAlwaysAndWhenInUsePermission": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
           "locationAlwaysPermission": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
           "locationWhenInUsePermission": "Vela uses your location to alert your caregiver if you leave your safe zone.",
-          "isIosBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": true
         }
       ],

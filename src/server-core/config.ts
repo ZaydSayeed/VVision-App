@@ -21,3 +21,36 @@ export const config = {
   revenueCatSecretKey: process.env.REVENUECAT_SECRET_KEY || "",
   revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET || "",
 };
+
+/**
+ * Fail fast at startup if a required secret is missing, instead of silently
+ * defaulting to "" and erroring on the first DB/auth call with an unhelpful
+ * message. Call once from server start() before connecting to anything.
+ */
+export function validateConfig(): void {
+  const required: Array<[string, string]> = [
+    ["MONGODB_URI", config.mongodbUri],
+    ["SUPABASE_URL", config.supabaseUrl],
+    ["SUPABASE_SERVICE_ROLE_KEY", config.supabaseServiceRoleKey],
+  ];
+  const missing = required.filter(([, v]) => !v).map(([k]) => k);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}. ` +
+        `Set them in the deployment environment (e.g. Render dashboard) before starting the server.`
+    );
+  }
+
+  const optional: Array<[string, string]> = [
+    ["GROQ_API_KEY", config.groqApiKey],
+    ["GEMINI_API_KEY", config.geminiApiKey],
+    ["MEM0_API_KEY", config.mem0ApiKey],
+    ["REVENUECAT_WEBHOOK_SECRET", config.revenueCatWebhookSecret],
+  ];
+  const missingOptional = optional.filter(([, v]) => !v).map(([k]) => k);
+  if (missingOptional.length > 0) {
+    console.warn(
+      `[config] Optional env vars not set — related features are disabled: ${missingOptional.join(", ")}`
+    );
+  }
+}

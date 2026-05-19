@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Audio } from "expo-av";
+import { Audio, InterruptionModeIOS } from "expo-av";
 import { authFetch } from "../api/authFetch";
 
 export type VoiceState = "idle" | "connecting" | "listening" | "speaking" | "ended" | "error";
@@ -16,7 +16,15 @@ export function useVoiceSession(patientId: string | undefined) {
     try {
     const { granted } = await Audio.requestPermissionsAsync();
     if (!granted) { setState("error"); return; }
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+    // Explicit iOS audio session config — keeps recording reliable on iPad
+    // (incl. Split View / external-audio contexts) and never holds the session
+    // in the background.
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+    });
 
     const session = await authFetch(`/api/live/session/${patientId}`, { method: "POST" }).then(r => r.json());
     const ws = new WebSocket(session.wsUrl);

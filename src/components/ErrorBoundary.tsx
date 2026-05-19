@@ -17,6 +17,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
     return { hasError: true, error: error.message };
   }
 
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    // Single funnel for render crashes. Wire a crash reporter here when one is
+    // added (e.g. Sentry.captureException(error, { extra: info })).
+    console.error("[ErrorBoundary] render crash:", error, info.componentStack);
+  }
+
   render() {
     if (this.state.hasError) {
       return (

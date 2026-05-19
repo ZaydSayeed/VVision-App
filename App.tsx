@@ -41,6 +41,21 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
+  // Last-resort funnel for JS errors that escape React (async callbacks,
+  // event handlers, native module errors). Chain the previous handler so RN's
+  // default red-box/fatal behavior is preserved. Swap the log for a crash
+  // reporter (e.g. Sentry) when one is added.
+  useEffect(() => {
+    const errorUtils = (global as any).ErrorUtils;
+    if (!errorUtils?.getGlobalHandler) return;
+    const previous = errorUtils.getGlobalHandler();
+    errorUtils.setGlobalHandler((error: unknown, isFatal?: boolean) => {
+      console.error(`[GlobalError] fatal=${!!isFatal}`, error);
+      previous?.(error, isFatal);
+    });
+    return () => errorUtils.setGlobalHandler(previous);
+  }, []);
+
   const appReady = fontsLoaded && minTimePassed;
 
   return (

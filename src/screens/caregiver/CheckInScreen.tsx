@@ -77,7 +77,7 @@ export default function CheckInScreen({ navigation }: any) {
 
       {state === "error" && (
         <Text style={{ color: "#dc2626", marginBottom: 8, textAlign: "center" }}>
-          Microphone unavailable. Check app permissions, or use the text option below.
+          Microphone unavailable on this device. Allow microphone access in Settings, or tap “Type instead” below to continue.
         </Text>
       )}
 
@@ -89,6 +89,16 @@ export default function CheckInScreen({ navigation }: any) {
         </Text>
       )}
 
+      {patients.length === 0 ? (
+        <Pressable
+          onPress={() => navigation.navigate("CaregiverHome", { screen: "Patients", params: { startView: "link" } })}
+          style={{ backgroundColor: "#6366f1", padding: 18, borderRadius: 14 }}
+        >
+          <Text style={{ color: "white", textAlign: "center", fontWeight: "700", fontSize: 16 }}>
+            Link a patient to get started
+          </Text>
+        </Pressable>
+      ) : (
       <View style={{ flexDirection: "row", gap: 12 }}>
         {state === "listening" ? (
           <Pressable onPress={stop} style={{ flex: 1, backgroundColor: "#dc2626", padding: 18, borderRadius: 14 }}>
@@ -115,6 +125,7 @@ export default function CheckInScreen({ navigation }: any) {
           </Text>
         </Pressable>
       </View>
+      )}
 
       <Pressable onPress={() => navigation.navigate("CheckInText", { prefill: transcript })} style={{ marginTop: 16 }}>
         <Text style={{ color: "#6366f1", textAlign: "center" }}>Voice not working? Type instead</Text>

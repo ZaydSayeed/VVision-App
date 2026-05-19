@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.velavision.caregiver",
       "associatedDomains": ["applinks:velavision.org"],
-      "buildNumber": "6",
+      "buildNumber": "12",
       "infoPlist": {
         "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
         "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
@@ -26,10 +26,8 @@
         "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning.",
         "NSLocationWhenInUseUsageDescription": "Vela uses your location to alert your caregiver if you leave your safe zone.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
-        "NSLocationAlwaysUsageDescription": "Vela uses your location in the background to alert your caregiver if you leave your safe zone.",
         "UIBackgroundModes": [
-          "fetch",
-          "location"
+          "fetch"
         ],
         "NSHealthShareUsageDescription": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing.",
         "NSHealthUpdateUsageDescription": "Vela does not write to your health data.",

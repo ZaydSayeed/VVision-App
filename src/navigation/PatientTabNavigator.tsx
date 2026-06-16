@@ -107,7 +107,12 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
         options={{
           tabBarButton: (props) => (
             <View style={styles.fabWrapper}>
-              <TouchableOpacity onPress={props.onPress} style={styles.fabButton}>
+              <TouchableOpacity
+                onPress={props.onPress}
+                style={styles.fabButton}
+                accessibilityRole="button"
+                accessibilityLabel="Get help. Tap to alert your caregivers."
+              >
                 <LinearGradient
                   colors={["#D95F5F", "#E87878"]}
                   start={{ x: 0, y: 0 }}

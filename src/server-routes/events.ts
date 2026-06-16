@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { requireSeat } from "../server-core/seatResolver";
+import { getConsent, filterEventsByConsent } from "../server-core/consent";
 
 const eventKind = z.enum([
   "motion", "door", "presence", "sleep",
@@ -26,8 +27,15 @@ router.post("/:patientId/events", authMiddleware, requireSeat, async (req, res) 
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
     const db = getDb();
+    // Drop behavioral-biomarker events unless activityPatterns is consented (opt-in).
+    const consent = await getConsent(db, String(req.params.patientId));
+    const allowed = filterEventsByConsent(parsed.data.events, consent);
+    if (allowed.length === 0) {
+      res.status(201).json({ ok: true, inserted: 0, consent: false });
+      return;
+    }
     const now = new Date().toISOString();
-    const docs = parsed.data.events.map(e => ({
+    const docs = allowed.map(e => ({
       patientId: req.params.patientId,
       kind: e.kind,
       capturedAt: e.capturedAt,

@@ -40,6 +40,7 @@ import patientTokensRouter from "./server-routes/patientTokens";
 import moodRouter from "./server-routes/mood";
 import geofenceRouter, { patientGeofenceRouter } from "./server-routes/geofence";
 import cronRoutes from "./server-routes/cron";
+import consentRoutes from "./server-routes/consent";
 
 const app = express();
 
@@ -118,6 +119,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/profiles", seatRoutes);
 app.use("/api/profiles", memoryRoutes);
+app.use("/api/profiles", consentRoutes);
 app.use("/api/people", peopleRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/routines", routineRoutes);

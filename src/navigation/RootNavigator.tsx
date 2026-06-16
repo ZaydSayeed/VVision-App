@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   Alert,
+  AccessibilityInfo,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -46,6 +47,7 @@ import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
 import { BackgroundDecor } from "../components/BackgroundDecor";
 import { useHelpAlert } from "../hooks/useHelpAlert";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
@@ -348,6 +350,7 @@ function CaregiverView({
   const { completed: onboardingCompleted, ready: onboardingReady } = useOnboarding();
   const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert, acknowledgeAlert } = useHelpAlert();
   const { prefs } = useSensorPrefs();
+  const reducedMotion = useReducedMotion();
 
   // HomeKit listeners + periodic flush when smart home enabled
   useEffect(() => {
@@ -406,15 +409,20 @@ function CaregiverView({
       return;
     }
 
-    // Haptic burst
+    // Haptic burst + spoken announcement — the overlay was otherwise silent to
+    // VoiceOver users, who'd get no cue that their patient needs help (A11Y-4).
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 400);
     setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 800);
+    AccessibilityInfo.announceForAccessibility(
+      "Urgent. Your patient has requested help and needs immediate assistance. Please respond now."
+    );
 
     // Fade in overlay
     Animated.timing(urgentFadeIn, { toValue: 1, duration: 300, useNativeDriver: true }).start();
 
-    // Staggered pulsing rings
+    // Staggered pulsing rings — skipped under Reduce Motion (A11Y-10)
+    if (reducedMotion) return;
     const startRing = (anim: Animated.Value, delay: number) => {
       anim.setValue(0);
       setTimeout(() => {
@@ -427,7 +435,7 @@ function CaregiverView({
     startRing(pulse1, 0);
     startRing(pulse2, 733);
     startRing(pulse3, 1466);
-  }, [urgentVisible]);
+  }, [urgentVisible, reducedMotion]);
 
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed && !a.acknowledged);
   const latestAlert = pendingHelp[0];
@@ -699,7 +707,11 @@ function CaregiverView({
 
       {/* ── URGENT ALERT OVERLAY ─────────────────────────────────────────── */}
       {urgentVisible && (
-        <Animated.View style={[styles.urgentOverlay, { opacity: urgentFadeIn }]}>
+        <Animated.View
+          style={[styles.urgentOverlay, { opacity: urgentFadeIn }]}
+          accessibilityViewIsModal
+          accessibilityLiveRegion="assertive"
+        >
           <LinearGradient
             colors={["#7B0000", "#C0392B", "#E74C3C"]}
             start={{ x: 0, y: 0 }}
@@ -741,10 +753,22 @@ function CaregiverView({
                   </Text>
                 </View>
               )}
-              <TouchableOpacity style={styles.btnHandled} onPress={() => setResolveSheetVisible(true)} activeOpacity={0.85}>
+              <TouchableOpacity
+                style={styles.btnHandled}
+                onPress={() => setResolveSheetVisible(true)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Mark this help request as handled"
+              >
                 <Text style={styles.btnHandledText}>Mark as Handled</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.btnResponding} onPress={handleRespondingNow} activeOpacity={0.85}>
+              <TouchableOpacity
+                style={styles.btnResponding}
+                onPress={handleRespondingNow}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="I'm responding now"
+              >
                 <Text style={styles.btnRespondingText}>I'm Responding Now</Text>
               </TouchableOpacity>
             </View>

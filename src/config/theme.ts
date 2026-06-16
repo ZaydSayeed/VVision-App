@@ -16,7 +16,7 @@ export const lightColors = {
   violet900: "#2B2340",
   text: "#1E1B3A",
   subtext: "#3D3560",
-  muted: "#9590B0",
+  muted: "#6A6688", // darkened from #9590B0 to meet WCAG AA (4.5:1) on light surfaces (A11Y-1)
   border: "#E8E4F5",
   // Patient-facing warm palette
   warm: "#FDF8F3",

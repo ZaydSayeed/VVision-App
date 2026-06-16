@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Alert } from "react-native";
 import { Medication } from "../types";
 import { isDoneToday } from "../config/storage";
 import {
@@ -37,8 +38,22 @@ export function useMeds(patientId?: string) {
       if (!med) return;
       const today = new Date().toISOString().slice(0, 10);
       const newDate = med.taken_date === today ? null : today;
-      const data = await updateMedication(id, { taken_date: newDate });
-      setMeds((prev) => prev.map((m) => (m.id === id ? data : m)));
+      const previous = meds;
+
+      // Optimistic: reflect the tap immediately so the checkbox never lags.
+      setMeds((prev) => prev.map((m) => (m.id === id ? { ...m, taken_date: newDate } : m)));
+      try {
+        const data = await updateMedication(id, { taken_date: newDate });
+        setMeds((prev) => prev.map((m) => (m.id === id ? data : m)));
+      } catch {
+        // Roll back — a medication checkbox must never lie about whether a dose
+        // was logged (false "taken" risks a missed or double dose). (SAFE-3)
+        setMeds(previous);
+        Alert.alert(
+          "Not saved",
+          "We couldn't update this medication. Please check your connection and try again."
+        );
+      }
     },
     [meds]
   );

@@ -59,6 +59,17 @@ import { fonts, spacing, gradients, radius } from "../config/theme";
 import { formatRelativeTime } from "../hooks/useDashboardData";
 import { registerOnboardingReset } from "../utils/reminderEvents";
 
+// Show help/reminder pushes even when the app is in the foreground — otherwise a
+// caregiver with the app open would silently miss an SOS banner (NOTIF-7).
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 const CaregiverStack = createNativeStackNavigator();
 const PatientStack = createNativeStackNavigator();
 

@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Linking,
   StyleSheet,
 } from "react-native";
 import Purchases, { PurchasesPackage } from "react-native-purchases";
@@ -13,6 +14,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSubscription } from "../../hooks/useSubscription";
 import { useTheme } from "../../context/ThemeContext";
 import { fonts, gradients, radius, spacing, typography } from "../../config/theme";
+
+const PRIVACY_POLICY_URL = "https://velavision.org/privacy/";
+// Apple standard EULA — required functional Terms of Use link in the purchase flow (Guideline 3.1.2).
+const TERMS_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 
 // ─── Plan Card ────────────────────────────────────────────────────────────────
 
@@ -191,15 +196,20 @@ export default function PaywallScreen({ navigation }: any) {
   const { tier } = useSubscription();
   const { colors } = useTheme();
 
+  const loadOfferings = async () => {
+    setLoading(true);
+    try {
+      const offerings = await Purchases.getOfferings();
+      setPackages(offerings.current?.availablePackages ?? []);
+    } catch {
+      setPackages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const offerings = await Purchases.getOfferings();
-        setPackages(offerings.current?.availablePackages ?? []);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    loadOfferings();
   }, []);
 
   const handlePurchase = async (pkg: PurchasesPackage) => {
@@ -223,6 +233,13 @@ export default function PaywallScreen({ navigation }: any) {
     } catch (e: any) {
       Alert.alert("Restore failed", e.message ?? "Please try again.");
     }
+  };
+
+  const handleMaybeLater = () => {
+    // Never trap the caregiver behind the paywall (Apple 2.1(b), CARE-6). Mirrors
+    // the post-purchase path: in onboarding this completes the paywall step;
+    // standalone it returns to the dashboard.
+    navigation.replace("CaregiverHome");
   };
 
   const styles = useMemo(
@@ -288,11 +305,69 @@ export default function PaywallScreen({ navigation }: any) {
           color: colors.muted,
           textDecorationLine: "underline",
         },
+        laterBtn: {
+          borderRadius: radius.pill,
+          paddingVertical: 14,
+          alignItems: "center",
+          marginTop: spacing.sm,
+          borderWidth: 1.5,
+          borderColor: colors.border,
+        },
+        laterText: {
+          ...fonts.medium,
+          fontSize: typography.body,
+          color: colors.text,
+        },
         loaderContainer: {
           flex: 1,
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: colors.bg,
+        },
+        unavailableCard: {
+          backgroundColor: colors.surface,
+          borderRadius: radius.xl,
+          padding: spacing.xl,
+          marginBottom: spacing.lg,
+          alignItems: "center",
+          gap: spacing.md,
+        },
+        unavailableText: {
+          ...typography.bodyStyle,
+          ...fonts.regular,
+          color: colors.muted,
+          textAlign: "center",
+        },
+        retryBtn: {
+          borderRadius: radius.pill,
+          paddingVertical: 12,
+          paddingHorizontal: spacing.xxl,
+          backgroundColor: colors.violet,
+        },
+        retryText: {
+          ...fonts.medium,
+          fontSize: typography.body,
+          color: "#FFFFFF",
+        },
+        legalText: {
+          ...typography.smallStyle,
+          ...fonts.regular,
+          color: colors.muted,
+          textAlign: "center",
+          lineHeight: 18,
+          marginTop: spacing.lg,
+        },
+        legalLinksRow: {
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: spacing.lg,
+          marginTop: spacing.md,
+        },
+        legalLink: {
+          ...typography.smallStyle,
+          ...fonts.medium,
+          color: colors.violet,
+          textDecorationLine: "underline",
         },
       }),
     [colors]
@@ -325,6 +400,17 @@ export default function PaywallScreen({ navigation }: any) {
         <View style={styles.trialDot} />
         <Text style={styles.trialText}>7-day free trial included</Text>
       </View>
+
+      {!loading && packages.length === 0 && (
+        <View style={styles.unavailableCard}>
+          <Text style={styles.unavailableText}>
+            Plans couldn’t be loaded right now. Please check your connection and try again.
+          </Text>
+          <Pressable style={styles.retryBtn} onPress={loadOfferings} accessibilityRole="button" accessibilityLabel="Retry loading plans">
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Unlimited first — most prominent */}
       {unlimited && (
@@ -362,9 +448,34 @@ export default function PaywallScreen({ navigation }: any) {
         />
       )}
 
+      <Pressable
+        style={styles.laterBtn}
+        onPress={handleMaybeLater}
+        accessibilityRole="button"
+        accessibilityLabel="Continue with the free plan for now"
+      >
+        <Text style={styles.laterText}>Maybe later — continue free</Text>
+      </Pressable>
+
       <Pressable style={styles.restoreBtn} onPress={handleRestore}>
         <Text style={styles.restoreText}>Restore purchases</Text>
       </Pressable>
+
+      {/* Required auto-renewable subscription disclosure + functional links (Guideline 3.1.2) */}
+      <Text style={styles.legalText}>
+        Vela Vision Starter and Unlimited are auto-renewable monthly subscriptions
+        billed to your Apple ID. After the 7-day free trial, your subscription renews
+        automatically each month unless canceled at least 24 hours before the current
+        period ends. Manage or cancel anytime in your App Store account settings.
+      </Text>
+      <View style={styles.legalLinksRow}>
+        <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} accessibilityRole="link" accessibilityLabel="Open privacy policy">
+          <Text style={styles.legalLink}>Privacy Policy</Text>
+        </Pressable>
+        <Pressable onPress={() => Linking.openURL(TERMS_URL)} accessibilityRole="link" accessibilityLabel="Open terms of use">
+          <Text style={styles.legalLink}>Terms of Use (EULA)</Text>
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }

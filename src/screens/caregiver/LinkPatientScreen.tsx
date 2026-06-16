@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import { linkPatient } from "../../api/client";
 import { fonts, spacing, radius } from "../../config/theme";
 
@@ -18,6 +19,7 @@ interface Props {
 
 export function LinkPatientScreen({ onLinked, onCancel }: Props) {
   const { colors } = useTheme();
+  const { user, updateUser } = useAuth();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,10 @@ export function LinkPatientScreen({ onLinked, onCancel }: Props) {
     setLoading(true);
     setError("");
     try {
-      await linkPatient(code.trim().toUpperCase());
+      const linked = await linkPatient(code.trim().toUpperCase());
+      // Reflect the link immediately so seat/profile/onboarding features work
+      // this session instead of waiting for a re-login (CARE-2).
+      if (user) updateUser({ ...user, patient_id: linked.id });
       onLinked?.();
     } catch (err: any) {
       const msg = err?.message ?? "";

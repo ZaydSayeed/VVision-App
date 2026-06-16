@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
+import { notifyCaregiversOfHelp } from "../server-core/push";
 
 const router = Router();
 
@@ -49,6 +50,21 @@ router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
     };
     const result = await db.collection("help_alerts").insertOne(doc);
     res.status(201).json(alertOut({ ...doc, _id: result.insertedId }));
+
+    // Fan out a high-priority push to every caregiver. Best-effort and
+    // non-blocking: the alert is already persisted (the patient's ack), so a
+    // slow/failed push must never delay or fail the response (SAFE-1, NOTIF-1).
+    (async () => {
+      try {
+        const patient = ObjectId.isValid(req.patientId!)
+          ? await db.collection("patients").findOne({ _id: new ObjectId(req.patientId!) })
+          : null;
+        const name = patient?.name ?? "Your patient";
+        await notifyCaregiversOfHelp(db, req.patientId!, name);
+      } catch (err) {
+        console.error("help-alert caregiver push failed (non-fatal):", err);
+      }
+    })();
   } catch (err) {
     console.error("create help alert error:", err);
     res.status(500).json({ detail: "Internal server error" });

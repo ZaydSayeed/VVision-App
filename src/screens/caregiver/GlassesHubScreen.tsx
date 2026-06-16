@@ -10,7 +10,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../context/ThemeContext";
 import { spacing, fonts, radius, gradients } from "../../config/theme";
-import { MOCK_GLASSES_ALERTS, MOCK_DAILY_DIGEST } from "../../data/glassesMockData";
 
 interface Props {
   onBack: () => void;
@@ -22,35 +21,27 @@ interface HubTile {
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
-  badge?: string | number;
-  badgeColor?: string;
   gradientColors: readonly [string, string];
 }
 
 export default function GlassesHubScreen({ onBack, onNavigate }: Props) {
   const { colors } = useTheme();
 
-  const activeAlerts = MOCK_GLASSES_ALERTS.filter((a) => !a.dismissed).length;
-  const criticalAlerts = MOCK_GLASSES_ALERTS.filter((a) => a.priority === 4 && !a.dismissed).length;
-  const medWarnings = MOCK_DAILY_DIGEST.medications.filter((m) => !m.confirmed).length;
-
+  // No live data yet — the glasses hardware ships later. These tiles preview the
+  // features; the data-bearing ones open an honest "Coming soon" screen (CG-2).
   const tiles: HubTile[] = [
     {
       id: "alerts",
       title: "Alert Feed",
-      subtitle: activeAlerts === 0 ? "All clear" : `${activeAlerts} active alert${activeAlerts !== 1 ? "s" : ""}`,
+      subtitle: "Prioritized safety alerts",
       icon: "notifications",
-      badge: criticalAlerts > 0 ? criticalAlerts : undefined,
-      badgeColor: colors.coral,
       gradientColors: ["#C0392B", "#D95F5F"],
     },
     {
       id: "digest",
       title: "Daily Digest",
-      subtitle: `${MOCK_DAILY_DIGEST.warnings} warning${MOCK_DAILY_DIGEST.warnings !== 1 ? "s" : ""} today`,
+      subtitle: "Plain-language end-of-day recap",
       icon: "document-text",
-      badge: medWarnings > 0 ? "!" : undefined,
-      badgeColor: colors.amber,
       gradientColors: gradients.amber,
     },
     {
@@ -63,7 +54,7 @@ export default function GlassesHubScreen({ onBack, onNavigate }: Props) {
     {
       id: "repetitions",
       title: "Repetitions",
-      subtitle: "Weekly pattern heatmap",
+      subtitle: "Weekly pattern view",
       icon: "repeat",
       gradientColors: gradients.primary,
     },
@@ -118,17 +109,16 @@ export default function GlassesHubScreen({ onBack, onNavigate }: Props) {
     bannerText: { flex: 1 },
     bannerTitle: { fontSize: 18, color: colors.text, ...fonts.medium },
     bannerSub: { fontSize: 13, color: colors.muted, ...fonts.regular, marginTop: 3 },
-    liveChip: {
+    soonChip: {
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
-      backgroundColor: colors.sageSoft,
+      backgroundColor: colors.violet50 ?? colors.surface,
       borderRadius: radius.pill,
       paddingHorizontal: 10,
       paddingVertical: 5,
     },
-    liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.sage },
-    liveText: { fontSize: 11, color: colors.sage, ...fonts.medium },
+    soonText: { fontSize: 11, color: colors.violet, ...fonts.medium },
 
     // Grid
     grid: {
@@ -163,13 +153,6 @@ export default function GlassesHubScreen({ onBack, onNavigate }: Props) {
     },
     tileTitle: { fontSize: 15, color: colors.text, ...fonts.medium, marginBottom: 3 },
     tileSub: { fontSize: 12, color: colors.muted, ...fonts.regular, lineHeight: 17 },
-    badgeWrap: {
-      position: "absolute", top: spacing.lg, right: spacing.lg,
-      minWidth: 20, height: 20, borderRadius: 10,
-      alignItems: "center", justifyContent: "center",
-      paddingHorizontal: 6,
-    },
-    badgeText: { fontSize: 11, color: "#FFFFFF", ...fonts.medium },
     chevron: {
       position: "absolute", bottom: spacing.lg, right: spacing.lg,
     },
@@ -191,11 +174,6 @@ export default function GlassesHubScreen({ onBack, onNavigate }: Props) {
           <Text style={styles.tileTitle}>{tile.title}</Text>
           <Text style={styles.tileSub}>{tile.subtitle}</Text>
         </View>
-        {tile.badge != null && (
-          <View style={[styles.badgeWrap, { backgroundColor: tile.badgeColor }]}>
-            <Text style={styles.badgeText}>{tile.badge}</Text>
-          </View>
-        )}
         <Ionicons name="chevron-forward" size={14} color={colors.muted} style={styles.chevron} />
       </TouchableOpacity>
     );
@@ -222,11 +200,11 @@ export default function GlassesHubScreen({ onBack, onNavigate }: Props) {
           </View>
           <View style={styles.bannerText}>
             <Text style={styles.bannerTitle}>Glasses Dashboard</Text>
-            <Text style={styles.bannerSub}>Real-time data from the smart glasses</Text>
+            <Text style={styles.bannerSub}>Available when your Vela glasses arrive</Text>
           </View>
-          <View style={styles.liveChip}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>Live</Text>
+          <View style={styles.soonChip}>
+            <Ionicons name="time-outline" size={12} color={colors.violet} />
+            <Text style={styles.soonText}>Soon</Text>
           </View>
         </View>
 

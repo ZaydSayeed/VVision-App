@@ -33,11 +33,18 @@ router.post("/cron/tick", async (req, res) => {
     const db = getDb();
     // The jobs are idempotent (escalation claims levels atomically; reminders
     // dedup by notified_date), so running alongside in-process cron is safe.
-    const [escalated] = await Promise.all([
+    // allSettled so one job's failure never discards the other's work.
+    const [escalation, reminders] = await Promise.allSettled([
       escalateHelpAlerts(db),
       fireRemindersForAll(db),
     ]);
-    res.json({ ok: true, escalated });
+    for (const r of [escalation, reminders]) {
+      if (r.status === "rejected") console.error("cron tick job failed:", r.reason);
+    }
+    res.json({
+      ok: escalation.status === "fulfilled" && reminders.status === "fulfilled",
+      escalated: escalation.status === "fulfilled" ? escalation.value : null,
+    });
   } catch (err) {
     console.error("cron tick error:", err);
     res.status(500).json({ detail: "Internal server error" });

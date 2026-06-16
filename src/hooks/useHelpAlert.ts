@@ -20,6 +20,10 @@ function genId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 export function useHelpAlert() {
   const [alerts, setAlerts] = useState<HelpAlert[]>([]);
   const [sending, setSending] = useState(false);
@@ -98,7 +102,14 @@ export function useHelpAlert() {
       // Even if persistence fails, still attempt the direct send below.
     }
 
-    const { remaining } = await queueRef.current!.flush();
+    // Quick in-tap retries recover a flaky connection while the patient is still
+    // watching; the durable queue + background flush keep trying after this too.
+    // The serialized queue makes these overlap-safe.
+    let remaining = (await queueRef.current!.flush()).remaining;
+    for (let attempt = 1; attempt <= 2 && remaining > 0; attempt++) {
+      await sleep(1500 * attempt);
+      remaining = (await queueRef.current!.flush()).remaining;
+    }
 
     setSending(false);
     sendingRef.current = false;

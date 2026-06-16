@@ -159,18 +159,10 @@ ${conversationHistory}`;
                 // Refuse to fabricate clinical fields — ask the human instead.
                 result = `I can't add that yet — I still need the ${med.missing.join(" and ")}. Please tell me the exact value${med.missing.length > 1 ? "s" : ""}; I won't guess.`;
               } else {
-                await db.collection("medications").insertOne({
-                  name: med.name,
-                  dosage: med.dosage,
-                  time: med.time,
-                  taken_date: null,
-                  patient_id: patientId,
-                  source: "ai",
-                  needs_review: true,
-                  created_at: new Date().toISOString(),
-                });
-                result = "Medication proposed and added for your review.";
-                medicationCreated = true;
+                // Safety: never auto-commit a medication to the live list. Hand the
+                // details back so the caregiver adds and confirms it themselves in
+                // the Medications screen — no unreviewed AI dose goes live (AI-1).
+                result = `For safety I don't add medications automatically. Please add "${med.name}" (${med.dosage}, ${med.time}) from the Medications screen so it's confirmed by you.`;
               }
             } catch (e) {
               result = "Sorry, I couldn't add that medication.";

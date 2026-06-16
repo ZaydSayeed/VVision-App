@@ -60,4 +60,38 @@ describe("help offline queue", () => {
     const q = createHelpQueue(storage, async () => {});
     expect(await q.size()).toBe(0);
   });
+
+  it("serializes concurrent enqueues and flushes without losing or duplicating intents", async () => {
+    const sent: string[] = [];
+    const q = createHelpQueue(memStorage(), async (item) => { sent.push(item.id); });
+    await Promise.all([
+      q.enqueue("a", "t"),
+      q.enqueue("b", "t"),
+      q.flush(),
+      q.enqueue("c", "t"),
+      q.flush(),
+    ]);
+    await q.flush(); // drain any straggler
+    expect([...sent].sort()).toEqual(["a", "b", "c"]); // each delivered exactly once
+    expect(await q.size()).toBe(0);
+  });
+
+  it("coalesces concurrent flushes so one intent is delivered exactly once (no double-page)", async () => {
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const q = createHelpQueue(memStorage(), async () => {
+      calls++;
+      await gate; // hold the first send in-flight while a second flush races it
+    });
+    await q.enqueue("id1", "t");
+
+    const f1 = q.flush();
+    const f2 = q.flush(); // fires while f1's send is still awaiting
+    release();
+    await Promise.all([f1, f2]);
+
+    expect(calls).toBe(1);          // not 2 — the SOS is sent once, not duplicated
+    expect(await q.size()).toBe(0);
+  });
 });

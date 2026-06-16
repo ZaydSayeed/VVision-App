@@ -20,10 +20,19 @@ export async function ensureCaregiverSeat(
   const existing = await db.collection("seats").findOne({ userId, patientId });
   if (existing) return existing.role as SeatRole;
 
-  const hasPrimary = await db
+  // A patient self-signup creates a primary_caregiver seat for the patient's OWN
+  // user. That self-seat must not block the first real caregiver from becoming
+  // primary (otherwise the paying caregiver can never invite — they'd be a
+  // sibling). Exclude it when checking whether a caregiver primary already exists.
+  const patientUser = await db
+    .collection("users")
+    .findOne({ patient_id: patientId, role: "patient" });
+  const patientUid = patientUser?.supabase_uid ?? null;
+
+  const hasCaregiverPrimary = await db
     .collection("seats")
-    .findOne({ patientId, role: "primary_caregiver" });
-  const role: SeatRole = hasPrimary ? "sibling" : "primary_caregiver";
+    .findOne({ patientId, role: "primary_caregiver", userId: { $ne: patientUid } });
+  const role: SeatRole = hasCaregiverPrimary ? "sibling" : "primary_caregiver";
 
   await db.collection("seats").insertOne({
     userId,

@@ -36,27 +36,36 @@ export function buildHelpPushMessages(tokens: string[], patientName: string): Ex
   }));
 }
 
-/** POST a batch of messages to Expo. Best-effort: logs but never throws. */
-export async function sendExpoPush(messages: ExpoPushMessage[]): Promise<void> {
-  if (!messages.length) return;
+export interface ExpoTicket {
+  status?: string;
+  details?: { error?: string };
+}
+
+/** POST a batch of messages to Expo. Best-effort: logs but never throws. Returns the per-message tickets (same order as input). */
+export async function sendExpoPush(messages: ExpoPushMessage[]): Promise<ExpoTicket[]> {
+  if (!messages.length) return [];
   try {
     const res = await fetch("https://exp.host/push/send", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(messages),
     });
+    const json = await res.json().catch(() => null);
     if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      console.error("[push] exp.host error:", res.status, txt);
+      console.error("[push] exp.host error:", res.status, json);
+      return [];
     }
+    return Array.isArray(json?.data) ? (json.data as ExpoTicket[]) : [];
   } catch (err) {
     console.error("[push] send failed:", err);
+    return [];
   }
 }
 
 /**
  * Notify all of a patient's caregivers that help was requested.
  * Returns the number of devices a push was sent to (0 if none registered).
+ * Prunes any token Expo reports as no-longer-registered so it doesn't linger.
  */
 export async function notifyCaregiversOfHelp(
   db: Db,
@@ -65,6 +74,15 @@ export async function notifyCaregiversOfHelp(
 ): Promise<number> {
   const tokens = await getCaregiverPushTokens(db, patientId);
   const messages = buildHelpPushMessages(tokens, patientName);
-  await sendExpoPush(messages);
+  const tickets = await sendExpoPush(messages);
+
+  await Promise.all(
+    tickets.map((t, i) =>
+      t?.details?.error === "DeviceNotRegistered" && tokens[i]
+        ? db.collection("pushTokens").deleteOne({ expoPushToken: tokens[i] })
+        : Promise.resolve()
+    )
+  );
+
   return messages.length;
 }

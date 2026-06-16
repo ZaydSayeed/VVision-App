@@ -144,9 +144,13 @@ router.post("/register-push-token", authMiddleware, resolvePatientId, async (req
       return;
     }
     const db = getDb();
+    const caregiverId = req.auth?.userId ?? null;
+    // Key by (patientId, caregiverId) so multiple caregivers on one patient each
+    // keep their own token — a help-alert push must fan out to the whole care
+    // team, not just whoever registered last (SAFE-3).
     await db.collection("pushTokens").updateOne(
-      { patientId: req.patientId },
-      { $set: { patientId: req.patientId, expoPushToken, caregiverId: req.auth?.userId ?? null, updatedAt: new Date() } },
+      { patientId: req.patientId, caregiverId },
+      { $set: { patientId: req.patientId, expoPushToken, caregiverId, updatedAt: new Date() } },
       { upsert: true }
     );
     res.json({ success: true });

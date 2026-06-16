@@ -31,6 +31,35 @@ export function createHelpQueue(
   storage: KVStorage,
   send: (item: QueuedHelp) => Promise<void>
 ): HelpQueue {
+  // Serialize ALL queue mutations (enqueue + flush) through one chain. The hook
+  // fires flush() from four triggers (mount, foreground, poll tick, sendHelp);
+  // running them concurrently — or letting an enqueue interleave with a flush's
+  // read→modify→write — would either double-send an intent (double-paging the
+  // care team, SAFE-1) or clobber a freshly-enqueued tap. Serializing prevents both.
+  let chain: Promise<unknown> = Promise.resolve();
+
+  function serialize<T>(op: () => Promise<T>): Promise<T> {
+    const run = chain.then(op, op);
+    chain = run.then(() => undefined, () => undefined); // keep the chain alive on throw
+    return run;
+  }
+
+  async function doFlush(): Promise<{ sent: number; remaining: number }> {
+    const items = await read();
+    let sent = 0;
+    while (items.length > 0) {
+      try {
+        await send(items[0]);
+        items.shift(); // delivered — drop it
+        sent++;
+      } catch {
+        break; // still offline; keep this and the rest, try again later
+      }
+    }
+    await write(items);
+    return { sent, remaining: items.length };
+  }
+
   async function read(): Promise<QueuedHelp[]> {
     try {
       const raw = await storage.getItem(QUEUE_KEY);
@@ -51,26 +80,16 @@ export function createHelpQueue(
   }
 
   return {
-    async enqueue(id, createdAt) {
-      const items = await read();
-      items.push({ id, createdAt });
-      await write(items);
+    enqueue(id, createdAt) {
+      return serialize(async () => {
+        const items = await read();
+        items.push({ id, createdAt });
+        await write(items);
+      });
     },
 
-    async flush() {
-      const items = await read();
-      let sent = 0;
-      while (items.length > 0) {
-        try {
-          await send(items[0]);
-          items.shift(); // delivered — drop it
-          sent++;
-        } catch {
-          break; // still offline; keep this and the rest, try again later
-        }
-      }
-      await write(items);
-      return { sent, remaining: items.length };
+    flush() {
+      return serialize(doFlush);
     },
 
     async size() {

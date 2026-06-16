@@ -6,6 +6,7 @@ describe("ensureCaregiverSeat", () => {
 
   beforeEach(async () => {
     await db().collection("seats").deleteMany({});
+    await db().collection("users").deleteMany({});
   });
 
   it("makes the first caregiver on a profile the primary_caregiver", async () => {
@@ -25,6 +26,15 @@ describe("ensureCaregiverSeat", () => {
       .collection("seats")
       .countDocuments({ patientId: "patient-1", role: "primary_caregiver" });
     expect(primaries).toBe(1);
+  });
+
+  it("does not let the patient's own self-seat demote the first real caregiver to sibling", async () => {
+    // A patient self-signup creates a primary_caregiver seat for the patient's OWN user.
+    await db().collection("users").insertOne({ supabase_uid: "patient-uid", role: "patient", patient_id: "patient-1" });
+    await db().collection("seats").insertOne({ userId: "patient-uid", patientId: "patient-1", role: "primary_caregiver", createdAt: "t" });
+
+    const role = await ensureCaregiverSeat(db(), "caregiver-uid", "patient-1");
+    expect(role).toBe("primary_caregiver"); // the real caregiver must be primary, not sibling
   });
 
   it("is idempotent for the same caregiver — no duplicate seat, same role returned", async () => {

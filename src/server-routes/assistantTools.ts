@@ -79,7 +79,7 @@ const writeTools: Groq.Chat.ChatCompletionTool[] = [
     function: {
       name: "create_medication",
       description:
-        "Propose adding a medication. The caregiver must confirm it in the app before it is active. " +
+        "Use when a caregiver asks to add a medication. This does NOT add it directly — it returns the details for the caregiver to add and confirm in the Medications screen. " +
         "NEVER guess the dosage or time — if either was not stated, ask the caregiver for the exact value instead of calling this tool.",
       parameters: {
         type: "object",

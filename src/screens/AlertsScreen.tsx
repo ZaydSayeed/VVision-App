@@ -29,7 +29,9 @@ interface AlertsScreenProps {
 export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) {
   const { colors } = useTheme();
   const { alerts: helpAlerts, dismissAlert: dismissHelp, resolveAlert, reload: reloadHelp } = useHelpAlert();
-  const pendingHelp = helpAlerts.filter((a) => !a.dismissed);
+  // Acknowledged ("someone is responding") alerts drop out of the active list;
+  // they remain unresolved server-side but no longer read as unhandled.
+  const pendingHelp = helpAlerts.filter((a) => !a.dismissed && !a.acknowledged);
   const navigation = useNavigation();
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 

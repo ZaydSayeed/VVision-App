@@ -35,24 +35,6 @@ export interface Alert {
   patient_id?: string;
 }
 
-// ── Vitals ───────────────────────────────────────────────
-export interface VitalsReading {
-  pulse_rate: number | null;
-  breathing_rate: number | null;
-  expression: Expression;
-  engagement: number | null;
-  confidence: number;
-}
-
-export type Expression =
-  | "Happy"
-  | "Sad"
-  | "Surprised"
-  | "Confused"
-  | "Drowsy"
-  | "Neutral"
-  | "";
-
 // ── Dashboard ────────────────────────────────────────────
 export interface DashboardStats {
   seenToday: number;
@@ -112,6 +94,9 @@ export interface HelpAlert {
   note?: string;
   cause?: string;
   resolved_at?: string;
+  acknowledged?: boolean;
+  acknowledged_by?: string | null;
+  acknowledged_at?: string | null;
 }
 
 // ── Caregiver Profiles ───────────────────────────────────
@@ -122,14 +107,6 @@ export interface CaregiverProfile {
   phone?: string;
   relation?: string;
   addedAt?: string;
-}
-
-// ── Faces ────────────────────────────────────────────────
-export interface FacePerson {
-  id: string;
-  name: string;
-  photoUri: string | null;
-  addedAt: string;
 }
 
 // ── Reminders ────────────────────────────────────────────

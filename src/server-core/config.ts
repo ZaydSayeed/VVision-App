@@ -18,8 +18,10 @@ export const config = {
   mem0ProjectId: process.env.MEM0_PROJECT_ID || "",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiLiveModel: process.env.GEMINI_LIVE_MODEL || "gemini-live-2.5-flash-native-audio",
-  revenueCatSecretKey: process.env.REVENUECAT_SECRET_KEY || "",
   revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET || "",
+  // Shared secret for the external cron trigger (e.g. cron-job.org) that drives
+  // the minute-cadence jobs reliably even when Render's free tier is asleep.
+  cronSecret: process.env.CRON_SECRET || "",
 };
 
 /**
@@ -46,6 +48,7 @@ export function validateConfig(): void {
     ["GEMINI_API_KEY", config.geminiApiKey],
     ["MEM0_API_KEY", config.mem0ApiKey],
     ["REVENUECAT_WEBHOOK_SECRET", config.revenueCatWebhookSecret],
+    ["CRON_SECRET", config.cronSecret],
   ];
   const missingOptional = optional.filter(([, v]) => !v).map(([k]) => k);
   if (missingOptional.length > 0) {

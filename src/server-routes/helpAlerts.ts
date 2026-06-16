@@ -4,11 +4,11 @@ import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
-import { notifyCaregiversOfHelp } from "../server-core/push";
+import { notifyCaregiversOfHelp, notifyPatientHelpAcknowledged } from "../server-core/push";
 
 const router = Router();
 
-function alertOut(doc: any) {
+export function alertOut(doc: any) {
   return {
     id: String(doc._id),
     patient_id: String(doc.patient_id),
@@ -19,6 +19,9 @@ function alertOut(doc: any) {
     note: doc.note ?? null,
     cause: doc.cause ?? null,
     resolved_at: doc.resolved_at ?? null,
+    acknowledged: doc.acknowledged ?? false,
+    acknowledged_by: doc.acknowledged_by ?? null,
+    acknowledged_at: doc.acknowledged_at ?? null,
   };
 }
 
@@ -144,6 +147,53 @@ router.patch("/:alertId/resolve", authMiddleware, resolvePatientId, async (req, 
     res.json(alertOut(doc));
   } catch (err) {
     console.error("resolve help alert error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+// PATCH /api/help-alerts/:alertId/acknowledge — a caregiver is responding now.
+// Records who/when WITHOUT resolving, so the alert stays open for the audit trail
+// and future escalation logic can stop re-paging once someone has responded (CG-8).
+router.patch("/:alertId/acknowledge", authMiddleware, resolvePatientId, async (req, res) => {
+  if (!ObjectId.isValid(String(req.params.alertId))) {
+    res.status(400).json({ detail: "Invalid ID" });
+    return;
+  }
+  try {
+    const db = getDb();
+    const result = await db.collection("help_alerts").updateOne(
+      {
+        _id: new ObjectId(String(req.params.alertId)),
+        patient_id: req.patientId!,
+        // Don't move a closed alert back into a "responding" state (audit integrity).
+        dismissed: { $ne: true },
+        resolved: { $ne: true },
+        cancelled: { $ne: true },
+      },
+      { $set: { acknowledged: true, acknowledged_by: req.auth!.userId, acknowledged_at: new Date().toISOString() } }
+    );
+    if (result.matchedCount === 0) {
+      res.status(404).json({ detail: "Help alert not found or already closed" });
+      return;
+    }
+    const doc = await db.collection("help_alerts").findOne({ _id: new ObjectId(String(req.params.alertId)) });
+    if (!doc) {
+      res.status(404).json({ detail: "Help alert not found" });
+      return;
+    }
+    res.json(alertOut(doc));
+
+    // Reassure the patient that help is on the way (best-effort, non-blocking).
+    (async () => {
+      try {
+        const responder = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+        await notifyPatientHelpAcknowledged(db, req.patientId!, responder?.name);
+      } catch (e) {
+        console.error("help-ack patient reassurance push failed (non-fatal):", e);
+      }
+    })();
+  } catch (err) {
+    console.error("acknowledge help alert error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });

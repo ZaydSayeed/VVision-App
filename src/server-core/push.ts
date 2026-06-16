@@ -24,13 +24,25 @@ export async function getCaregiverPushTokens(db: Db, patientId: string): Promise
   return docs.map((d) => d.expoPushToken).filter(isValidExpoToken);
 }
 
-/** High-priority help-request push messages, one per caregiver token. */
-export function buildHelpPushMessages(tokens: string[], patientName: string): ExpoPushMessage[] {
+/**
+ * High-priority help-request push messages, one per caregiver token.
+ * `level` >= 2 means the alert is still unanswered and the copy escalates.
+ */
+export function buildHelpPushMessages(
+  tokens: string[],
+  patientName: string,
+  level = 1
+): ExpoPushMessage[] {
+  const escalated = level >= 2;
+  const title = escalated ? "⚠️ Still unanswered — help needed" : "🚨 Help requested";
+  const body = escalated
+    ? `${patientName} tapped Help and no one has responded yet. Please respond or call them now.`
+    : `${patientName} tapped the Help button and needs assistance now.`;
   return tokens.map((to) => ({
     to,
-    title: "🚨 Help requested",
-    body: `${patientName} tapped the Help button and needs assistance now.`,
-    data: { type: "help_request" },
+    title,
+    body,
+    data: { type: "help_request", escalation: level },
     priority: "high",
     sound: "default",
   }));
@@ -70,10 +82,11 @@ export async function sendExpoPush(messages: ExpoPushMessage[]): Promise<ExpoTic
 export async function notifyCaregiversOfHelp(
   db: Db,
   patientId: string,
-  patientName: string
+  patientName: string,
+  level = 1
 ): Promise<number> {
   const tokens = await getCaregiverPushTokens(db, patientId);
-  const messages = buildHelpPushMessages(tokens, patientName);
+  const messages = buildHelpPushMessages(tokens, patientName, level);
   const tickets = await sendExpoPush(messages);
 
   await Promise.all(
@@ -85,4 +98,38 @@ export async function notifyCaregiversOfHelp(
   );
 
   return messages.length;
+}
+
+/** The patient's own Expo push token (for reassurance pushes back to them). */
+export async function getPatientPushToken(db: Db, patientId: string): Promise<string | null> {
+  const doc = await db.collection("patientPushTokens").findOne({ patientId });
+  return isValidExpoToken(doc?.expoPushToken) ? doc!.expoPushToken : null;
+}
+
+/**
+ * Tell the patient that help is on the way once a caregiver acknowledges — the
+ * dignity/reassurance side of the help loop (EMO). Returns false if the patient
+ * has no registered device.
+ */
+export async function notifyPatientHelpAcknowledged(
+  db: Db,
+  patientId: string,
+  responderName?: string
+): Promise<boolean> {
+  const token = await getPatientPushToken(db, patientId);
+  if (!token) return false;
+  const body = responderName
+    ? `${responderName} is on the way to help you.`
+    : "Someone is on the way to help you.";
+  await sendExpoPush([
+    {
+      to: token,
+      title: "💜 Help is on the way",
+      body,
+      data: { type: "help_acknowledged" },
+      priority: "high",
+      sound: "default",
+    },
+  ]);
+  return true;
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getCaregiverPushTokens, buildHelpPushMessages } from "./push";
+import { getCaregiverPushTokens, buildHelpPushMessages, getPatientPushToken } from "./push";
 
 describe("getCaregiverPushTokens", () => {
   const db = () => globalThis.__TEST_DB__;
@@ -31,6 +31,25 @@ describe("getCaregiverPushTokens", () => {
   it("returns an empty array when the patient has no caregiver tokens", async () => {
     const tokens = await getCaregiverPushTokens(db(), "nobody");
     expect(tokens).toEqual([]);
+  });
+});
+
+describe("getPatientPushToken", () => {
+  const db = () => globalThis.__TEST_DB__;
+
+  beforeEach(async () => {
+    await db().collection("patientPushTokens").deleteMany({});
+  });
+
+  it("returns the patient's own valid Expo token", async () => {
+    await db().collection("patientPushTokens").insertOne({ patientId: "p1", expoPushToken: "ExponentPushToken[pat]" });
+    expect(await getPatientPushToken(db(), "p1")).toBe("ExponentPushToken[pat]");
+  });
+
+  it("returns null when the token is missing or malformed", async () => {
+    await db().collection("patientPushTokens").insertOne({ patientId: "p1", expoPushToken: "garbage" });
+    expect(await getPatientPushToken(db(), "p1")).toBeNull();
+    expect(await getPatientPushToken(db(), "nobody")).toBeNull();
   });
 });
 

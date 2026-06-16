@@ -39,6 +39,7 @@ import deviceRoutes from "./server-routes/device";
 import patientTokensRouter from "./server-routes/patientTokens";
 import moodRouter from "./server-routes/mood";
 import geofenceRouter, { patientGeofenceRouter } from "./server-routes/geofence";
+import cronRoutes from "./server-routes/cron";
 
 const app = express();
 
@@ -106,6 +107,9 @@ const generalLimiter = rateLimit({
 app.use("/api/auth", authLimiter);
 app.use("/api/patients/link", authLimiter);
 app.use("/api/webhooks", revenueCatWebhookRoutes);
+// Cron trigger is hit ~every minute by an external scheduler — mount it before
+// the general rate limiter (it has its own shared-secret auth).
+app.use("/api/internal", cronRoutes);
 app.use("/api", generalLimiter);
 
 // Routes

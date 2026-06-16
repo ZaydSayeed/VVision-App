@@ -24,13 +24,25 @@ export async function getCaregiverPushTokens(db: Db, patientId: string): Promise
   return docs.map((d) => d.expoPushToken).filter(isValidExpoToken);
 }
 
-/** High-priority help-request push messages, one per caregiver token. */
-export function buildHelpPushMessages(tokens: string[], patientName: string): ExpoPushMessage[] {
+/**
+ * High-priority help-request push messages, one per caregiver token.
+ * `level` >= 2 means the alert is still unanswered and the copy escalates.
+ */
+export function buildHelpPushMessages(
+  tokens: string[],
+  patientName: string,
+  level = 1
+): ExpoPushMessage[] {
+  const escalated = level >= 2;
+  const title = escalated ? "⚠️ Still unanswered — help needed" : "🚨 Help requested";
+  const body = escalated
+    ? `${patientName} tapped Help and no one has responded yet. Please respond or call them now.`
+    : `${patientName} tapped the Help button and needs assistance now.`;
   return tokens.map((to) => ({
     to,
-    title: "🚨 Help requested",
-    body: `${patientName} tapped the Help button and needs assistance now.`,
-    data: { type: "help_request" },
+    title,
+    body,
+    data: { type: "help_request", escalation: level },
     priority: "high",
     sound: "default",
   }));
@@ -70,10 +82,11 @@ export async function sendExpoPush(messages: ExpoPushMessage[]): Promise<ExpoTic
 export async function notifyCaregiversOfHelp(
   db: Db,
   patientId: string,
-  patientName: string
+  patientName: string,
+  level = 1
 ): Promise<number> {
   const tokens = await getCaregiverPushTokens(db, patientId);
-  const messages = buildHelpPushMessages(tokens, patientName);
+  const messages = buildHelpPushMessages(tokens, patientName, level);
   const tickets = await sendExpoPush(messages);
 
   await Promise.all(

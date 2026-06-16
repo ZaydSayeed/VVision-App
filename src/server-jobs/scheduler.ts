@@ -3,6 +3,7 @@ import { getDb } from "../server-core/database";
 import { runInferenceAll } from "./inferPatterns";
 import { fireRemindersForAll } from "./fireReminders";
 import { runDailySummaries } from "./dailySummary";
+import { escalateHelpAlerts } from "./escalateHelpAlerts";
 
 export function startCron() {
   // Nightly 03:00 UTC — pattern inference
@@ -13,6 +14,11 @@ export function startCron() {
   // Every 5 minutes — fire due reminders
   cron.schedule("*/5 * * * *", async () => {
     try { await fireRemindersForAll(getDb()); } catch (e) { console.error("fireReminders:", e); }
+  });
+
+  // Every minute — re-escalate unanswered help/SOS alerts to the care team
+  cron.schedule("* * * * *", async () => {
+    try { await escalateHelpAlerts(getDb()); } catch (e) { console.error("escalateHelpAlerts:", e); }
   });
 
   // Daily 08:00 UTC — caregiver morning summary push

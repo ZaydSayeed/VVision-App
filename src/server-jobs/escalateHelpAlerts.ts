@@ -6,10 +6,13 @@ import { notifyCaregiversOfHelp } from "../server-core/push";
  *
  * Each step says: once the alert is older than `afterMs` and no one has
  * acknowledged it, re-push the whole care team at this `level` (escalating copy).
+ * `maxAgeMs` is a give-up window — past it, escalation stops (so a long-open
+ * alert doesn't page forever, and a first deploy doesn't back-page history).
  * SMS/voice to an emergency contact is the deferred Twilio follow-up.
  */
 export interface EscalationConfig {
   steps: { level: number; afterMs: number }[];
+  maxAgeMs: number;
 }
 
 export const DEFAULT_ESCALATION: EscalationConfig = {
@@ -17,6 +20,7 @@ export const DEFAULT_ESCALATION: EscalationConfig = {
     { level: 2, afterMs: 2 * 60 * 1000 }, // still unanswered after 2 min
     { level: 3, afterMs: 5 * 60 * 1000 }, // urgent: respond or call after 5 min
   ],
+  maxAgeMs: 60 * 60 * 1000, // give up after 1 hour
 };
 
 interface EscalatableAlert {
@@ -43,6 +47,7 @@ export function nextEscalationLevel(
 
   const ageMs = now.getTime() - new Date(alert.timestamp).getTime();
   if (!(ageMs >= 0)) return null;
+  if (ageMs > config.maxAgeMs) return null; // give up on stale alerts
 
   const current = alert.escalation_level ?? 1;
   let target = current;
@@ -56,7 +61,11 @@ type NotifyFn = (db: Db, patientId: string, patientName: string, level: number) 
 
 /**
  * Re-push every open, unacknowledged help alert that has crossed a new
- * escalation threshold. Records the new level so it is not re-fired.
+ * escalation threshold, recording the level so it is not re-fired.
+ *
+ * The level is claimed atomically (a conditional updateOne) BEFORE the push, so
+ * neither a write failure nor an overlapping cron tick / second instance can
+ * double-page or re-fire the same level every minute.
  *
  * NOTE: this runs on node-cron; on Render's free tier the process sleeps while
  * idle, so escalation will not fire until the next request wakes it. Moving to
@@ -65,8 +74,10 @@ type NotifyFn = (db: Db, patientId: string, patientName: string, level: number) 
 export async function escalateHelpAlerts(
   db: Db,
   now: Date = new Date(),
-  notify: NotifyFn = notifyCaregiversOfHelp
+  notify: NotifyFn = notifyCaregiversOfHelp,
+  config: EscalationConfig = DEFAULT_ESCALATION
 ): Promise<number> {
+  const cutoff = new Date(now.getTime() - config.maxAgeMs).toISOString();
   const open = await db
     .collection("help_alerts")
     .find({
@@ -74,13 +85,22 @@ export async function escalateHelpAlerts(
       resolved: { $ne: true },
       acknowledged: { $ne: true },
       cancelled: { $ne: true },
+      timestamp: { $gte: cutoff }, // recency bound — never back-page old history
     })
     .toArray();
 
   let escalated = 0;
   for (const alert of open) {
-    const level = nextEscalationLevel(alert as EscalatableAlert, now);
+    const level = nextEscalationLevel(alert as EscalatableAlert, now, config);
     if (level == null) continue;
+
+    // Claim this level atomically: only the worker that actually advances the
+    // level proceeds to push. Recording before the push prevents a re-fire flood.
+    const claim = await db.collection("help_alerts").updateOne(
+      { _id: alert._id, $or: [{ escalation_level: { $exists: false } }, { escalation_level: { $lt: level } }] },
+      { $set: { escalation_level: level, last_escalated_at: now.toISOString() } }
+    );
+    if (claim.modifiedCount === 0) continue; // someone else already escalated to >= level
 
     const patientId = String(alert.patient_id);
     let name = "Your patient";
@@ -91,13 +111,9 @@ export async function escalateHelpAlerts(
 
     try {
       await notify(db, patientId, name, level);
-      await db.collection("help_alerts").updateOne(
-        { _id: alert._id },
-        { $set: { escalation_level: level, last_escalated_at: now.toISOString() } }
-      );
       escalated++;
     } catch (err) {
-      console.error("[escalateHelpAlerts] failed for alert", String(alert._id), err);
+      console.error("[escalateHelpAlerts] notify failed for alert", String(alert._id), err);
     }
   }
   return escalated;

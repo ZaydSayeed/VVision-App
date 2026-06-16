@@ -429,15 +429,25 @@ function CaregiverView({
     startRing(pulse3, 1466);
   }, [urgentVisible]);
 
-  const pendingHelp = helpAlerts.filter((a) => !a.dismissed);
+  const pendingHelp = helpAlerts.filter((a) => !a.dismissed && !a.acknowledged);
   const latestAlert = pendingHelp[0];
 
-  const handleRespondingNow = useCallback(() => {
-    // Record that a caregiver is responding (does not resolve the alert) so the
-    // care team and future escalation logic know help is on the way (CG-8).
-    if (latestAlert) acknowledgeAlert(latestAlert.id);
-    setUrgentVisible(false);
-  }, [latestAlert, acknowledgeAlert]);
+  const handleRespondingNow = useCallback(async () => {
+    // Acknowledge every currently-pending alert so escalation stops re-paging the
+    // team for something a caregiver is already handling (CG-8). Keep the overlay
+    // if the server can't be reached — never tell the caregiver it's handled when
+    // it isn't (the server would otherwise keep escalating).
+    const toAck = pendingHelp;
+    try {
+      await Promise.all(toAck.map((a) => acknowledgeAlert(a.id)));
+      setUrgentVisible(false);
+    } catch {
+      Alert.alert(
+        "Couldn't confirm",
+        "We couldn't reach the server. Please check your connection — the alert is still active."
+      );
+    }
+  }, [pendingHelp, acknowledgeAlert]);
 
   // Ring interpolations
   const makeRing = (anim: Animated.Value) => ({

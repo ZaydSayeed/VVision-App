@@ -132,13 +132,11 @@ export function useHelpAlert() {
   }, []);
 
   // Caregiver tapped "I'm responding" — record it (does not resolve the alert).
+  // Throws on failure so the caller can keep the alert visible instead of
+  // silently telling the caregiver it's handled while the server keeps paging.
   const acknowledgeAlert = useCallback(async (id: string) => {
-    try {
-      const updated = await acknowledgeHelpAlert(id);
-      setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
-    } catch {
-      // best-effort — the local "responding" UI still updates regardless
-    }
+    const updated = await acknowledgeHelpAlert(id);
+    setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
   }, []);
 
   const clearSentState = useCallback(() => {
@@ -146,7 +144,9 @@ export function useHelpAlert() {
     setSendError(null);
   }, []);
 
-  const pendingCount = alerts.filter((a) => !a.dismissed).length;
+  // "Pending" = needs a response. An acknowledged alert ("someone is responding")
+  // is no longer pending for the badge/overlay, even though it's not yet resolved.
+  const pendingCount = alerts.filter((a) => !a.dismissed && !a.acknowledged).length;
 
   return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, resolveAlert, acknowledgeAlert, clearSentState, reload: load };
 }

@@ -20,6 +20,7 @@ export function alertOut(doc: any) {
     cause: doc.cause ?? null,
     resolved_at: doc.resolved_at ?? null,
     acknowledged: doc.acknowledged ?? false,
+    acknowledged_by: doc.acknowledged_by ?? null,
     acknowledged_at: doc.acknowledged_at ?? null,
   };
 }
@@ -161,14 +162,25 @@ router.patch("/:alertId/acknowledge", authMiddleware, resolvePatientId, async (r
   try {
     const db = getDb();
     const result = await db.collection("help_alerts").updateOne(
-      { _id: new ObjectId(String(req.params.alertId)), patient_id: req.patientId! },
+      {
+        _id: new ObjectId(String(req.params.alertId)),
+        patient_id: req.patientId!,
+        // Don't move a closed alert back into a "responding" state (audit integrity).
+        dismissed: { $ne: true },
+        resolved: { $ne: true },
+        cancelled: { $ne: true },
+      },
       { $set: { acknowledged: true, acknowledged_by: req.auth!.userId, acknowledged_at: new Date().toISOString() } }
     );
     if (result.matchedCount === 0) {
-      res.status(404).json({ detail: "Help alert not found" });
+      res.status(404).json({ detail: "Help alert not found or already closed" });
       return;
     }
     const doc = await db.collection("help_alerts").findOne({ _id: new ObjectId(String(req.params.alertId)) });
+    if (!doc) {
+      res.status(404).json({ detail: "Help alert not found" });
+      return;
+    }
     res.json(alertOut(doc));
   } catch (err) {
     console.error("acknowledge help alert error:", err);

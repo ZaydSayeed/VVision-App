@@ -20,6 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { usePatients } from "../hooks/usePatients";
+import { useConsent } from "../hooks/useConsent";
 import { getMyLinkCode, deleteAccount } from "../api/client";
 import { fonts, spacing, radius, colors } from "../config/theme";
 import { triggerOnboardingReset } from "../utils/reminderEvents";
@@ -38,10 +39,12 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const { colors, toggleTheme, isDark } = useTheme();
   const navigation = useNavigation<any>();
   const { patients } = usePatients();
+  const { consent, setCategory, error: consentError } = useConsent();
   const [linkCode, setLinkCode] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -169,6 +172,25 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </View>
             )}
 
+            {/* Subscription (caregiver only) */}
+            {user?.role === "caregiver" && (
+              <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity
+                  style={styles.row}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Manage subscription"
+                  onPress={() => { onClose(); navigation.navigate("Paywall"); }}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="star-outline" size={20} color={colors.violet} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>Subscription</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Replay tour */}
             <View style={[styles.section, { borderBottomColor: colors.border }]}>
               <TouchableOpacity
@@ -202,6 +224,25 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 <Ionicons name="open-outline" size={16} color={colors.muted} />
               </TouchableOpacity>
             </View>
+
+            {/* Privacy & Sharing (patient or linked caregiver) */}
+            {user?.patient_id && (
+              <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity
+                  style={styles.row}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Privacy and sharing settings"
+                  onPress={() => setShowPrivacy(true)}
+                >
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="lock-closed-outline" size={20} color={colors.violet} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>Privacy & Sharing</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Sign out */}
             <View style={[styles.section, { borderBottomColor: colors.border }]}>
@@ -377,6 +418,55 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                   ))}
                 </View>
               </TouchableOpacity>
+            </Modal>
+
+            {/* Privacy & Sharing modal */}
+            <Modal visible={showPrivacy} transparent animationType="fade" onRequestClose={() => setShowPrivacy(false)}>
+              <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center", padding: 24 }}>
+                <View style={{ backgroundColor: colors.bg, borderRadius: 20, padding: 24, width: "100%", maxWidth: 420 }}>
+                  <Text style={{ fontSize: 20, ...fonts.medium, color: colors.text, marginBottom: spacing.sm }}>Privacy & Sharing</Text>
+                  <Text style={{ fontSize: 14, lineHeight: 20, ...fonts.regular, color: colors.muted, marginBottom: spacing.lg }}>
+                    Choose what's shared with the care team. Everything is off until you turn it on — nothing is collected silently.
+                  </Text>
+
+                  {([
+                    { key: "healthMetrics", label: "Health metrics", sub: "Steps, heart rate, sleep & activity from Apple Health", value: !!consent?.healthMetrics },
+                    { key: "activityPatterns", label: "Activity & typing patterns", sub: "Movement and typing rhythm, used to notice changes over time", value: !!consent?.activityPatterns },
+                  ] as const).map((row) => (
+                    <View key={row.key} style={{ flexDirection: "row", alignItems: "center", paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <View style={{ flex: 1, paddingRight: spacing.md }}>
+                        <Text style={{ fontSize: 15, ...fonts.medium, color: colors.text }}>{row.label}</Text>
+                        <Text style={{ fontSize: 12, ...fonts.regular, color: colors.muted, marginTop: 2, lineHeight: 17 }}>{row.sub}</Text>
+                      </View>
+                      <Switch
+                        value={row.value}
+                        onValueChange={(v) => { setCategory(row.key, v).catch(() => {}); }}
+                        trackColor={{ false: colors.border, true: colors.violet }}
+                        thumbColor="#FFFFFF"
+                        accessibilityLabel={`Share ${row.label} with the care team`}
+                      />
+                    </View>
+                  ))}
+
+                  {consentError ? (
+                    <Text style={{ fontSize: 12, color: "#D95F5F", marginTop: spacing.md }}>{consentError}</Text>
+                  ) : consent?.updatedAt ? (
+                    <Text style={{ fontSize: 12, ...fonts.regular, color: colors.muted, marginTop: spacing.md }}>
+                      Last changed by {consent.updatedByRole === "patient" ? "the patient" : "a caregiver"} on {new Date(consent.updatedAt).toLocaleDateString()}
+                    </Text>
+                  ) : null}
+
+                  <TouchableOpacity
+                    style={{ marginTop: spacing.xl, height: 48, borderRadius: radius.pill, backgroundColor: colors.violet, alignItems: "center", justifyContent: "center" }}
+                    onPress={() => setShowPrivacy(false)}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel="Done"
+                  >
+                    <Text style={{ fontSize: 15, ...fonts.medium, color: "#FFFFFF" }}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </Modal>
           </ScrollView>
         </Animated.View>

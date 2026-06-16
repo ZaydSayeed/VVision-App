@@ -7,7 +7,9 @@ export interface SensorPrefs {
   smartHomeEnabled: boolean;
 }
 const KEY = "vela:sensor_prefs";
-const DEFAULT: SensorPrefs = { gaitEnabled: true, typingEnabled: true, smartHomeEnabled: false };
+// Opt-in: passive sensors are OFF until the user explicitly enables sharing
+// (paired with the consent layer — no silent collection). (EMO-1)
+const DEFAULT: SensorPrefs = { gaitEnabled: false, typingEnabled: false, smartHomeEnabled: false };
 
 export function useSensorPrefs() {
   const [prefs, setPrefs] = useState<SensorPrefs>(DEFAULT);

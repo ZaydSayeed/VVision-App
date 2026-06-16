@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { requirePatientAccess } from "../server-core/seatResolver";
+import { getConsent, hasConsent } from "../server-core/consent";
 
 export const METRICS = ["steps", "heart_rate", "active_minutes", "sleep"] as const;
 export type Metric = typeof METRICS[number];
@@ -32,6 +33,14 @@ router.post("/:patientId/health/sync", authMiddleware, requirePatientAccess, asy
     const db = getDb();
     const col = db.collection("patient_health_readings");
     const patientId = String(req.params.patientId);
+
+    // Don't store health data without recorded consent (opt-in, EMO-1/ASR-4).
+    const consent = await getConsent(db, patientId);
+    if (!hasConsent(consent, "healthMetrics")) {
+      res.json({ written: 0, consent: false });
+      return;
+    }
+
     const now = new Date();
     const ops = parsed.data.readings.map((r) => {
       if (r.metric === "heart_rate") {

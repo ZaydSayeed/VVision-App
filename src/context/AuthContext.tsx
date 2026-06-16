@@ -26,6 +26,7 @@ interface AuthContextValue {
   ) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: AppUser) => void;
+  resetPassword: (email: string) => Promise<void>;
   pendingInviteToken: string | null;
   clearPendingInviteToken: () => void;
 }
@@ -53,10 +54,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [pendingInviteToken, setPendingInviteToken] = useState<string | null>(null);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userRef = useRef<AppUser | null>(null);
+
+  // Mirror the current user into a ref so timers can read the live role.
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    // Only caregivers are auto-logged-out for inactivity. A patient's session
+    // must never silently expire — that would disable their Help button (FAIL-2).
+    if (userRef.current?.role === "patient") return;
     inactivityTimer.current = setTimeout(() => {
+      // Re-check at fire time: the role may have resolved after the timer armed.
+      if (userRef.current?.role === "patient") return;
       supabase.auth.signOut();
       setUser(null);
       setAuthToken(null); setAuthFetchToken(null);
@@ -249,9 +261,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(updated);
   }, []);
 
+  // Account recovery — removes the permanent-lockout path for caregivers (FAIL-3).
+  const resetPassword = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+    if (error) throw new Error(error.message);
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, updateUser, pendingInviteToken, clearPendingInviteToken }}
+      value={{ user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken }}
     >
       {children}
     </AuthContext.Provider>

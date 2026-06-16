@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { AppState } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { HelpAlert } from "../types";
 import {
   fetchHelpAlerts,
@@ -6,12 +8,20 @@ import {
   dismissHelpAlert,
   resolveHelpAlert,
 } from "../api/client";
+import { createHelpQueue, HelpQueue, KVStorage } from "../services/helpQueue";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1500;
+const storageAdapter: KVStorage = {
+  getItem: (k) => AsyncStorage.getItem(k),
+  setItem: (k, v) => AsyncStorage.setItem(k, v),
+  removeItem: (k) => AsyncStorage.removeItem(k),
+};
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function genId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 export function useHelpAlert() {
@@ -20,6 +30,18 @@ export function useHelpAlert() {
   const [sentAt, setSentAt] = useState<Date | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const sendingRef = useRef(false);
+
+  // Durable SOS queue — an intent is persisted before delivery and only removed
+  // once the server acknowledges it, so a tap is never lost offline (SAFE-9).
+  const queueRef = useRef<HelpQueue | null>(null);
+  if (!queueRef.current) {
+    queueRef.current = createHelpQueue(storageAdapter, async () => {
+      const alert = await createHelpAlert();
+      setAlerts((prev) => [alert, ...prev]);
+      setSentAt(new Date());
+      setSendError(null);
+    });
+  }
 
   const load = useCallback(async () => {
     try {
@@ -30,20 +52,41 @@ export function useHelpAlert() {
     }
   }, []);
 
-  // Adaptive polling: 4s when active, 15s when idle
+  const flushQueue = useCallback(async () => {
+    try {
+      const { remaining } = await queueRef.current!.flush();
+      if (remaining === 0) setSendError(null);
+    } catch {
+      // ignore — next tick retries
+    }
+  }, []);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     load();
-  }, [load]);
+    flushQueue();
+  }, [load, flushQueue]);
 
+  // Retry delivery whenever the app returns to the foreground.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") flushQueue();
+    });
+    return () => sub.remove();
+  }, [flushQueue]);
+
+  // Adaptive polling: 4s when active, 15s when idle — also drains the SOS queue.
   const isActive = sending || !!sentAt || !!sendError || alerts.some((a) => !a.dismissed && !a.resolved && !a.cancelled);
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     const ms = isActive ? 4000 : 15000;
-    intervalRef.current = setInterval(load, ms);
+    intervalRef.current = setInterval(() => {
+      load();
+      flushQueue();
+    }, ms);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isActive, load]);
+  }, [isActive, load, flushQueue]);
 
   const sendHelp = useCallback(async () => {
     if (sendingRef.current) return; // prevent double-send
@@ -52,42 +95,39 @@ export function useHelpAlert() {
     setSendError(null);
     setSentAt(null);
 
-    let lastError: any;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        const alert = await createHelpAlert();
-        setAlerts((prev) => [alert, ...prev]);
-        setSentAt(new Date());
-        setSending(false);
-        sendingRef.current = false;
-        return;
-      } catch (e: any) {
-        lastError = e;
-        if (attempt < MAX_RETRIES) await sleep(RETRY_DELAY_MS * attempt);
-      }
+    // Persist first (survives crash/kill), then attempt delivery.
+    try {
+      await queueRef.current!.enqueue(genId(), new Date().toISOString());
+    } catch {
+      // Even if persistence fails, still attempt the direct send below.
+    }
+
+    // Quick in-tap retries recover a flaky connection while the patient is still
+    // watching; the durable queue + background flush keep trying after this too.
+    // The serialized queue makes these overlap-safe.
+    let remaining = (await queueRef.current!.flush()).remaining;
+    for (let attempt = 1; attempt <= 2 && remaining > 0; attempt++) {
+      await sleep(1500 * attempt);
+      remaining = (await queueRef.current!.flush()).remaining;
     }
 
     setSending(false);
     sendingRef.current = false;
-    setSendError(lastError?.message ?? "Unable to send help request. Please check your connection.");
+
+    if (remaining > 0) {
+      // Not yet acknowledged by the server — be honest, keep retrying in the background.
+      setSendError("We couldn't reach your caregiver yet — keep this screen open and we'll keep trying.");
+    }
   }, []);
 
   const dismissAlert = useCallback(async (id: string) => {
-    try {
-      const updated = await dismissHelpAlert(id);
-      setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
-    } catch (e: any) {
-      throw e; // Let the caller handle display
-    }
+    const updated = await dismissHelpAlert(id);
+    setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
   }, []);
 
   const resolveAlert = useCallback(async (id: string, cause: string, note?: string) => {
-    try {
-      const updated = await resolveHelpAlert(id, cause, note);
-      setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
-    } catch (e: any) {
-      throw e;
-    }
+    const updated = await resolveHelpAlert(id, cause, note);
+    setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
   }, []);
 
   const clearSentState = useCallback(() => {

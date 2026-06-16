@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,9 +19,12 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { fonts, spacing, radius } from "../config/theme";
 
+const PRIVACY_POLICY_URL = "https://velavision.org/privacy/";
+const TERMS_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+
 export function LoginScreen() {
   const { colors, isDark } = useTheme();
-  const { login, signup } = useAuth();
+  const { login, signup, resetPassword } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,6 +32,8 @@ export function LoginScreen() {
   const [role, setRole] = useState<UserRole | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [notice, setNotice] = useState("");
 
   async function handleSubmit() {
     setError("");
@@ -38,6 +44,10 @@ export function LoginScreen() {
     if (mode === "signup") {
       if (!name.trim()) { setError("Please enter your name."); return; }
       if (!role) { setError("Please select your role."); return; }
+      if (!agreed) {
+        setError("Please confirm you are 18+ and agree to the Privacy Policy and Terms of Use.");
+        return;
+      }
     }
     setLoading(true);
     try {
@@ -52,6 +62,21 @@ export function LoginScreen() {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    setError("");
+    setNotice("");
+    if (!email.trim()) {
+      setError("Enter your email above, then tap Forgot password.");
+      return;
+    }
+    try {
+      await resetPassword(email.trim());
+      setNotice("If an account exists for that email, a password reset link is on its way. Check your inbox.");
+    } catch (e: any) {
+      setError(e?.message ?? "Couldn't send a reset email. Please try again.");
     }
   }
 
@@ -189,6 +214,61 @@ export function LoginScreen() {
       overflow: "hidden",
     },
 
+    // ── Forgot password / notice ─────────────────────────────
+    forgotRow: {
+      alignSelf: "flex-end",
+      marginTop: -spacing.xs,
+      marginBottom: spacing.md,
+      paddingVertical: 4,
+    },
+    forgotText: { fontSize: 13, color: colors.violet, ...fonts.medium },
+    notice: {
+      fontSize: 14,
+      color: colors.sage,
+      ...fonts.regular,
+      marginBottom: spacing.md,
+      textAlign: "center",
+      backgroundColor: colors.sageSoft,
+      borderRadius: radius.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      overflow: "hidden",
+    },
+
+    // ── Consent (signup) ─────────────────────────────────────
+    agreeRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+      marginBottom: spacing.lg,
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderRadius: 6,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 1,
+    },
+    checkboxChecked: {
+      backgroundColor: colors.violet,
+      borderColor: colors.violet,
+    },
+    agreeText: {
+      flex: 1,
+      fontSize: 13,
+      lineHeight: 19,
+      color: colors.muted,
+      ...fonts.regular,
+    },
+    agreeLink: {
+      color: colors.violet,
+      ...fonts.medium,
+      textDecorationLine: "underline",
+    },
+
     // ── Submit ───────────────────────────────────────────────
     btn: {
       height: 58,
@@ -301,6 +381,19 @@ export function LoginScreen() {
           />
         </View>
 
+        {/* Forgot password (login only) */}
+        {mode === "login" && (
+          <TouchableOpacity
+            style={styles.forgotRow}
+            onPress={handleForgotPassword}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Forgot password"
+          >
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Role selection (signup only) */}
         {mode === "signup" && (
           <View style={styles.fieldGroup}>
@@ -337,7 +430,30 @@ export function LoginScreen() {
           </View>
         )}
 
-        {/* Error */}
+        {/* Consent (signup only) */}
+        {mode === "signup" && (
+          <TouchableOpacity
+            style={styles.agreeRow}
+            activeOpacity={0.8}
+            onPress={() => setAgreed((v) => !v)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreed }}
+            accessibilityLabel="I am 18 or older and agree to the Privacy Policy and Terms of Use"
+          >
+            <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+              {agreed && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+            </View>
+            <Text style={styles.agreeText}>
+              I am 18 or older and agree to the{" "}
+              <Text style={styles.agreeLink} onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>Privacy Policy</Text>
+              {" "}and{" "}
+              <Text style={styles.agreeLink} onPress={() => Linking.openURL(TERMS_URL)}>Terms of Use</Text>.
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Notice / Error */}
+        {notice ? <Text style={styles.notice}>{notice}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         {/* Submit */}

@@ -6,6 +6,7 @@ import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
 import { config } from "../server-core/config";
 import rateLimit from "express-rate-limit";
+import { buildAssistantTools, normalizeMedicationArgs } from "./assistantTools";
 
 const router = Router();
 
@@ -39,9 +40,13 @@ router.post("/chat", chatLimiter, authMiddleware, resolvePatientId, async (req, 
       db.collection("reminders").find({ patient_id: patientId }).sort({ created_at: -1 }).limit(20).toArray(),
     ]);
 
-    // Find patient first name from users collection
-    const userDoc = await db.collection("users").findOne({ patient_id: patientId });
-    const firstName = userDoc?.name?.split(" ")[0] ?? "there";
+    // Who is asking? Patients get a READ-ONLY assistant (no write tools).
+    const requester = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+    const requesterRole: "patient" | "caregiver" = requester?.role === "patient" ? "patient" : "caregiver";
+
+    // Patient first name (for tone) — prefer the patient's own user record.
+    const patientUser = await db.collection("users").findOne({ patient_id: patientId, role: "patient" });
+    const firstName = (patientUser?.name ?? requester?.name)?.split(" ")[0] ?? "there";
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -67,6 +72,7 @@ router.post("/chat", chatLimiter, authMiddleware, resolvePatientId, async (req, 
 
 Keep responses to 1-3 short sentences. Use a warm, reassuring tone.
 Never give medical advice. Never mention that you are AI.
+Never guess clinical details like a medication dosage or time — if they were not stated, ask for the exact value.
 It is okay to repeat information — the person may ask the same thing multiple times.
 
 PATIENT: ${firstName}
@@ -87,55 +93,8 @@ ${conversationHistory}`;
 
     const groq = new Groq({ apiKey: config.groqApiKey });
 
-    const tools: Groq.Chat.ChatCompletionTool[] = [
-      {
-        type: "function",
-        function: {
-          name: "create_reminder",
-          description: "Create a reminder for the patient. Call this when the patient asks to be reminded about something.",
-          parameters: {
-            type: "object",
-            properties: {
-              text: { type: "string", description: "What to remind the patient about, e.g. 'Take a walk'" },
-              time: { type: "string", description: "Time for the reminder, e.g. '6:00 PM'. Omit if no specific time mentioned." },
-              recurrence: { type: "string", description: "How often: 'once', 'daily', 'every 2 hours', etc. Omit if not mentioned." },
-            },
-            required: ["text"],
-          },
-        },
-      },
-      {
-        type: "function",
-        function: {
-          name: "create_task",
-          description: "Create a daily routine task for the patient. Call this when the patient asks to add something to their routine or schedule.",
-          parameters: {
-            type: "object",
-            properties: {
-              label: { type: "string", description: "Short description of the task, e.g. 'Morning walk'" },
-              time: { type: "string", description: "Time for the task, e.g. '8:00 AM'. Default to '9:00 AM' if not specified." },
-            },
-            required: ["label"],
-          },
-        },
-      },
-      {
-        type: "function",
-        function: {
-          name: "create_medication",
-          description: "Add a medication to the patient's schedule. Call this when the patient mentions a new medication they need to take.",
-          parameters: {
-            type: "object",
-            properties: {
-              name: { type: "string", description: "Name of the medication, e.g. 'Donepezil'" },
-              dosage: { type: "string", description: "Dosage amount, e.g. '10mg'. Default to 'as prescribed' if not specified." },
-              time: { type: "string", description: "Time to take it, e.g. '8:00 AM'. Default to '9:00 AM' if not specified." },
-            },
-            required: ["name"],
-          },
-        },
-      },
-    ];
+    // Read-only for patients; caregivers get propose-write tools.
+    const tools = buildAssistantTools(requesterRole);
 
     const firstCompletion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -143,8 +102,7 @@ ${conversationHistory}`;
         { role: "system", content: systemPrompt },
         { role: "user", content: parsed.data.message },
       ],
-      tools,
-      tool_choice: "auto",
+      ...(tools.length ? { tools, tool_choice: "auto" as const } : {}),
       max_tokens: 300,
       temperature: 0.7,
     });
@@ -183,7 +141,7 @@ ${conversationHistory}`;
               const args = JSON.parse(toolCall.function.arguments);
               await db.collection("routines").insertOne({
                 label: args.label,
-                time: args.time ?? "9:00 AM",
+                time: args.time ?? null,
                 completed_date: null,
                 patient_id: patientId,
               });
@@ -196,15 +154,16 @@ ${conversationHistory}`;
           } else if (toolCall.function.name === "create_medication") {
             try {
               const args = JSON.parse(toolCall.function.arguments);
-              await db.collection("medications").insertOne({
-                name: args.name,
-                dosage: args.dosage ?? "as prescribed",
-                time: args.time ?? "9:00 AM",
-                taken_date: null,
-                patient_id: patientId,
-              });
-              result = "Medication added.";
-              medicationCreated = true;
+              const med = normalizeMedicationArgs(args);
+              if (med.missing.length) {
+                // Refuse to fabricate clinical fields — ask the human instead.
+                result = `I can't add that yet — I still need the ${med.missing.join(" and ")}. Please tell me the exact value${med.missing.length > 1 ? "s" : ""}; I won't guess.`;
+              } else {
+                // Safety: never auto-commit a medication to the live list. Hand the
+                // details back so the caregiver adds and confirms it themselves in
+                // the Medications screen — no unreviewed AI dose goes live (AI-1).
+                result = `For safety I don't add medications automatically. Please add "${med.name}" (${med.dosage}, ${med.time}) from the Medications screen so it's confirmed by you.`;
+              }
             } catch (e) {
               result = "Sorry, I couldn't add that medication.";
               console.error("create_medication tool error:", e);

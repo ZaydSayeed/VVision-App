@@ -5,6 +5,7 @@ import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
 import { generateUniqueLinkCode } from "../server-core/linkCode";
+import { ensureCaregiverSeat } from "../server-core/seatProvisioning";
 
 const router = Router();
 
@@ -169,6 +170,17 @@ router.post("/link", authMiddleware, async (req, res) => {
       { _id: user._id },
       { $set: { patient_id: patientId } }
     );
+
+    // Grant the caregiver a seat so seat-gated profile features don't 403 (CARE-3).
+    // Best-effort: the link itself has already succeeded (patient_id + caregiver_ids
+    // are set, which requirePatientAccess honours), so a seat hiccup must not fail it.
+    try {
+      await ensureCaregiverSeat(db, req.auth!.userId, patientId);
+    } catch (err) {
+      console.error("Critical: seat insert failed after caregiver link.", {
+        userId: req.auth!.userId, patientId, err,
+      });
+    }
 
     const updated = await db.collection("patients").findOne({ _id: new ObjectId(patientId) });
     res.json(patientOut(updated));

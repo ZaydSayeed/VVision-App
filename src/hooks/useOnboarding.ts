@@ -9,6 +9,13 @@ export function useOnboarding() {
   const [ready, setReady] = useState(false);
 
   const load = useCallback(async () => {
+    // NOTE: the 6-step caregiver wizard (OnboardingNavigator) is not enabled.
+    // Its first step (ProfileBasicsStep) only PATCHes an existing patient and
+    // bails without a patientId, so it cannot create a profile for a brand-new
+    // caregiver — surfacing it would dead-end them. Until a "caregiver creates
+    // profile" flow exists, the working path is signup → dashboard → link code
+    // (fixed via patient_id refresh + seat-on-link). Keep ready=false when there
+    // is no patientId so the gate routes to the dashboard, not the broken wizard.
     if (!patientId) return;
     try {
       const r = await getOnboarding(patientId);

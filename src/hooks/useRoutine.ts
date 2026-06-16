@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Alert } from "react-native";
 import { RoutineTask } from "../types";
 import { isDoneToday } from "../config/storage";
 import {
@@ -37,8 +38,20 @@ export function useRoutine(patientId?: string) {
       if (!task) return;
       const today = new Date().toISOString().slice(0, 10);
       const newDate = task.completed_date === today ? null : today;
-      const data = await updateRoutine(id, { completed_date: newDate });
-      setTasks((prev) => prev.map((t) => (t.id === id ? data : t)));
+      const previous = tasks;
+
+      // Optimistic: reflect the tap immediately, roll back if the save fails.
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed_date: newDate } : t)));
+      try {
+        const data = await updateRoutine(id, { completed_date: newDate });
+        setTasks((prev) => prev.map((t) => (t.id === id ? data : t)));
+      } catch {
+        setTasks(previous);
+        Alert.alert(
+          "Not saved",
+          "We couldn't update this task. Please check your connection and try again."
+        );
+      }
     },
     [tasks]
   );

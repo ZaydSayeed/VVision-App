@@ -346,7 +346,7 @@ function CaregiverView({
 }) {
   const { colors } = useTheme();
   const { completed: onboardingCompleted, ready: onboardingReady } = useOnboarding();
-  const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert } = useHelpAlert();
+  const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert, acknowledgeAlert } = useHelpAlert();
   const { prefs } = useSensorPrefs();
 
   // HomeKit listeners + periodic flush when smart home enabled
@@ -432,7 +432,12 @@ function CaregiverView({
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed);
   const latestAlert = pendingHelp[0];
 
-  const handleRespondingNow = useCallback(() => setUrgentVisible(false), []);
+  const handleRespondingNow = useCallback(() => {
+    // Record that a caregiver is responding (does not resolve the alert) so the
+    // care team and future escalation logic know help is on the way (CG-8).
+    if (latestAlert) acknowledgeAlert(latestAlert.id);
+    setUrgentVisible(false);
+  }, [latestAlert, acknowledgeAlert]);
 
   // Ring interpolations
   const makeRing = (anim: Animated.Value) => ({

@@ -347,41 +347,15 @@ export async function resolveHelpAlert(id: string, cause: string, note?: string)
   });
 }
 
+export async function acknowledgeHelpAlert(id: string): Promise<HelpAlert> {
+  return request<HelpAlert>(`/api/help-alerts/${id}/acknowledge`, { method: "PATCH" });
+}
+
 // ── Caregiver profiles ───────────────────────────────────
 export async function fetchCaregiverProfiles(): Promise<
   { id: string; name: string; email: string }[]
 > {
   return request("/api/caregiver-profiles");
-}
-
-// ── SSE ───────────────────────────────────────────────────
-export function createSSEConnection(onUpdate: () => void): () => void {
-  const url = `${API_BASE_URL}/stream/events`;
-  let eventSource: EventSource | null = null;
-  let retryTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  function connect() {
-    eventSource = new EventSource(url);
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "update") {
-          onUpdate();
-        }
-      } catch {}
-    };
-    eventSource.onerror = () => {
-      eventSource?.close();
-      retryTimeout = setTimeout(connect, 5000);
-    };
-  }
-
-  connect();
-
-  return () => {
-    eventSource?.close();
-    if (retryTimeout) clearTimeout(retryTimeout);
-  };
 }
 
 // ── Reminders ─────────────────────────────────────────────

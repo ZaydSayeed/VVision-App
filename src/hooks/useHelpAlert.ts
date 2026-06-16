@@ -7,6 +7,7 @@ import {
   createHelpAlert,
   dismissHelpAlert,
   resolveHelpAlert,
+  acknowledgeHelpAlert,
 } from "../api/client";
 import { createHelpQueue, HelpQueue, KVStorage } from "../services/helpQueue";
 
@@ -130,6 +131,16 @@ export function useHelpAlert() {
     setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
   }, []);
 
+  // Caregiver tapped "I'm responding" — record it (does not resolve the alert).
+  const acknowledgeAlert = useCallback(async (id: string) => {
+    try {
+      const updated = await acknowledgeHelpAlert(id);
+      setAlerts((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    } catch {
+      // best-effort — the local "responding" UI still updates regardless
+    }
+  }, []);
+
   const clearSentState = useCallback(() => {
     setSentAt(null);
     setSendError(null);
@@ -137,5 +148,5 @@ export function useHelpAlert() {
 
   const pendingCount = alerts.filter((a) => !a.dismissed).length;
 
-  return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, resolveAlert, clearSentState, reload: load };
+  return { alerts, pendingCount, sending, sentAt, sendError, sendHelp, dismissAlert, resolveAlert, acknowledgeAlert, clearSentState, reload: load };
 }

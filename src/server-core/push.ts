@@ -99,3 +99,37 @@ export async function notifyCaregiversOfHelp(
 
   return messages.length;
 }
+
+/** The patient's own Expo push token (for reassurance pushes back to them). */
+export async function getPatientPushToken(db: Db, patientId: string): Promise<string | null> {
+  const doc = await db.collection("patientPushTokens").findOne({ patientId });
+  return isValidExpoToken(doc?.expoPushToken) ? doc!.expoPushToken : null;
+}
+
+/**
+ * Tell the patient that help is on the way once a caregiver acknowledges — the
+ * dignity/reassurance side of the help loop (EMO). Returns false if the patient
+ * has no registered device.
+ */
+export async function notifyPatientHelpAcknowledged(
+  db: Db,
+  patientId: string,
+  responderName?: string
+): Promise<boolean> {
+  const token = await getPatientPushToken(db, patientId);
+  if (!token) return false;
+  const body = responderName
+    ? `${responderName} is on the way to help you.`
+    : "Someone is on the way to help you.";
+  await sendExpoPush([
+    {
+      to: token,
+      title: "💜 Help is on the way",
+      body,
+      data: { type: "help_acknowledged" },
+      priority: "high",
+      sound: "default",
+    },
+  ]);
+  return true;
+}

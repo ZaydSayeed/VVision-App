@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
-import { notifyCaregiversOfHelp } from "../server-core/push";
+import { notifyCaregiversOfHelp, notifyPatientHelpAcknowledged } from "../server-core/push";
 
 const router = Router();
 
@@ -182,6 +182,16 @@ router.patch("/:alertId/acknowledge", authMiddleware, resolvePatientId, async (r
       return;
     }
     res.json(alertOut(doc));
+
+    // Reassure the patient that help is on the way (best-effort, non-blocking).
+    (async () => {
+      try {
+        const responder = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
+        await notifyPatientHelpAcknowledged(db, req.patientId!, responder?.name);
+      } catch (e) {
+        console.error("help-ack patient reassurance push failed (non-fatal):", e);
+      }
+    })();
   } catch (err) {
     console.error("acknowledge help alert error:", err);
     res.status(500).json({ detail: "Internal server error" });

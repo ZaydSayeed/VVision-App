@@ -46,6 +46,7 @@ import { OfflineBanner } from "../components/OfflineBanner";
 import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
 import { BackgroundDecor } from "../components/BackgroundDecor";
+import { AppHeader } from "../components/AppHeader";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
@@ -311,7 +312,7 @@ export function RootNavigator() {
 
   return (
     <Animated.View style={[styles.root, { opacity: contentOpacity }]}>
-      <Header onOpenDrawer={() => setDrawerOpen(true)} user={user} />
+      <AppHeader onOpenDrawer={() => setDrawerOpen(true)} user={user} />
       <OfflineBanner />
       <PatientStack.Navigator screenOptions={{ headerShown: false }}>
         <PatientStack.Screen name="PatientTabs">
@@ -591,7 +592,7 @@ function CaregiverView({
 
   return (
     <View style={styles.root}>
-      <Header onOpenDrawer={onOpenDrawer} user={user} notifCount={pendingCount} onOpenNotif={openNotif} />
+      <AppHeader onOpenDrawer={onOpenDrawer} user={user} notifCount={pendingCount} onOpenNotif={openNotif} />
       <OfflineBanner />
       <CaregiverStack.Navigator screenOptions={{ headerShown: false }}>
         <CaregiverStack.Screen name="CaregiverHome">
@@ -797,91 +798,4 @@ function CaregiverView({
   );
 }
 
-// ─── Header ──────────────────────────────────────────────────────────────────
-
-function Header({
-  onOpenDrawer, user, notifCount, onOpenNotif,
-}: {
-  onOpenDrawer: () => void;
-  user: import("../types").AppUser | null;
-  notifCount?: number;
-  onOpenNotif?: () => void;
-}) {
-  const { colors, isDark } = useTheme();
-  const [clock, setClock] = useState(new Date());
-
-  useEffect(() => {
-    const t = setInterval(() => setClock(new Date()), 60000);
-    return () => clearInterval(t);
-  }, []);
-
-  const timeStr = clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const dateStr = clock.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
-
-  return (
-    <View style={[headerStyles.wrap, { backgroundColor: colors.bg }]}>
-      <View style={[headerStyles.bar, { shadowColor: colors.border }]}>
-        <TouchableOpacity style={headerStyles.logo} onPress={onOpenDrawer} activeOpacity={0.8}>
-          <Image
-            source={isDark ? require("../../assets/logo-flame-light.png") : require("../../assets/logo-flame-dark.png")}
-            style={headerStyles.logoIcon}
-            resizeMode="contain"
-          />
-          <Text style={[headerStyles.logoText, { color: colors.text }]}>Vela Vision</Text>
-        </TouchableOpacity>
-
-        <View style={headerStyles.rightRow}>
-          {onOpenNotif && (
-            <TouchableOpacity onPress={onOpenNotif} activeOpacity={0.7} style={headerStyles.bellBtn}>
-              <Ionicons name="notifications-outline" size={24} color={colors.text} />
-              {notifCount != null && notifCount > 0 && (
-                <View style={[headerStyles.badge, { backgroundColor: colors.coral }]}>
-                  <Text style={headerStyles.badgeText}>{notifCount > 9 ? "9+" : notifCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={onOpenDrawer} activeOpacity={0.7} style={headerStyles.menuBtn}>
-            <Ionicons name="menu-outline" size={26} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <LinearGradient
-        colors={isDark ? [...gradients.dark] : [...gradients.primary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={headerStyles.timeBanner}
-      >
-        <Text style={headerStyles.timeText}>{timeStr}</Text>
-        <Text style={headerStyles.dateText}>{dateStr}</Text>
-      </LinearGradient>
-    </View>
-  );
-}
-
-const headerStyles = StyleSheet.create({
-  wrap: { zIndex: 10 },
-  bar: {
-    paddingTop: 54, paddingHorizontal: spacing.xl, paddingBottom: spacing.md,
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-  },
-  logo: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logoIcon: { width: 24, height: 28 },
-  logoText: { fontSize: 17, ...fonts.medium, letterSpacing: 0.2 },
-  rightRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  bellBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  badge: {
-    position: "absolute", top: 2, right: 2,
-    minWidth: 16, height: 16, borderRadius: 8,
-    alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
-  },
-  badgeText: { fontSize: 9, color: "#FFFFFF", ...fonts.medium },
-  menuBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  timeBanner: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: spacing.xl, paddingVertical: spacing.md,
-  },
-  timeText: { fontSize: 22, color: "#FFFFFF", ...fonts.medium },
-  dateText: { fontSize: 14, color: "rgba(255,255,255,0.85)", ...fonts.regular },
-});
+// Header extracted to ../components/AppHeader.tsx

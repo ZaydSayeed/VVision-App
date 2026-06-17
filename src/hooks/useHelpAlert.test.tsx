@@ -16,12 +16,12 @@ import * as client from "../api/client";
 beforeEach(async () => {
   jest.clearAllMocks();
   await AsyncStorage.clear();
-  (client.fetchHelpAlerts as jest.Mock).mockResolvedValue([]);
+  (client.fetchHelpAlerts as any).mockResolvedValue([]);
 });
 
 describe("useHelpAlert — SOS send", () => {
   it("delivers the SOS via the durable queue and records the server ack (SAFE-1)", async () => {
-    (client.createHelpAlert as jest.Mock).mockResolvedValue({
+    (client.createHelpAlert as any).mockResolvedValue({
       id: "a1",
       timestamp: new Date().toISOString(),
       dismissed: false,

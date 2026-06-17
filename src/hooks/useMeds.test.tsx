@@ -17,12 +17,12 @@ const baseMed = { id: "m1", name: "Donepezil", dosage: "10mg", time: "8:00 AM", 
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (client.fetchMedications as jest.Mock).mockResolvedValue([{ ...baseMed }]);
+  (client.fetchMedications as any).mockResolvedValue([{ ...baseMed }]);
 });
 
 describe("useMeds — optimistic check-off", () => {
   it("optimistically marks a med taken and keeps it on a successful save", async () => {
-    (client.updateMedication as jest.Mock).mockResolvedValue({ ...baseMed, taken_date: today });
+    (client.updateMedication as any).mockResolvedValue({ ...baseMed, taken_date: today });
 
     const { result } = renderHook(() => useMeds());
     await waitFor(() => expect(result.current.meds).toHaveLength(1));
@@ -36,7 +36,7 @@ describe("useMeds — optimistic check-off", () => {
   });
 
   it("rolls back and alerts when the save fails — never leaves a false 'taken' (SAFE-3)", async () => {
-    (client.updateMedication as jest.Mock).mockRejectedValue(new Error("offline"));
+    (client.updateMedication as any).mockRejectedValue(new Error("offline"));
     const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {});
 
     const { result } = renderHook(() => useMeds());

@@ -27,4 +27,5 @@ jobs:
       # Typecheck the whole tree — the build (Metro/Babel) strips types without
       # checking them, so this is the only gate against type regressions (CQ-1).
       - run: npm run typecheck
-      - run: npm test
+      - run: npm test            # backend / pure-logic (vitest)
+      - run: npm run test:components   # RN component/hook tests (jest-expo)

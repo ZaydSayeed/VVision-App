@@ -432,6 +432,7 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                   {([
                     { key: "healthMetrics", label: "Health metrics", sub: "Steps, heart rate, sleep & activity from Apple Health", value: !!consent?.healthMetrics },
                     { key: "activityPatterns", label: "Activity & typing patterns", sub: "Movement and typing rhythm, used to notice changes over time", value: !!consent?.activityPatterns },
+                    { key: "aiAssistant", label: "AI assistant & memory", sub: "Lets Vision answer questions and remember context — sends notes to an AI service", value: !!consent?.aiAssistant },
                   ] as const).map((row) => (
                     <View key={row.key} style={{ flexDirection: "row", alignItems: "center", paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.border }}>
                       <View style={{ flex: 1, paddingRight: spacing.md }}>

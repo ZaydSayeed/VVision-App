@@ -46,9 +46,6 @@ async function sendExpoPush(
   const ticket = json?.data?.[0];
   if (ticket?.status === "error") {
     console.error("[dailySummary] push delivery error:", ticket.details);
-    if (ticket.details?.error === "DeviceNotRegistered") {
-      return;
-    }
   }
 }
 

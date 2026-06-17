@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useMemo } from "react";
 
 interface NetworkContextValue {
   isOffline: boolean;
@@ -13,15 +13,9 @@ const NetworkContext = createContext<NetworkContextValue>({
 export function NetworkProvider({ children }: { children: React.ReactNode }) {
   const [isOffline, setOffline] = useState(false);
 
-  const handleSetOffline = useCallback((offline: boolean) => {
-    setOffline(offline);
-  }, []);
+  const value = useMemo(() => ({ isOffline, setOffline }), [isOffline]);
 
-  return (
-    <NetworkContext.Provider value={{ isOffline, setOffline: handleSetOffline }}>
-      {children}
-    </NetworkContext.Provider>
-  );
+  return <NetworkContext.Provider value={value}>{children}</NetworkContext.Provider>;
 }
 
 export function useNetwork() {

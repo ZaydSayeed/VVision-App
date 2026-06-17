@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { captureError } from "../lib/observability";
 
 interface Props {
   children: React.ReactNode;
@@ -18,9 +19,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    // Single funnel for render crashes. Wire a crash reporter here when one is
-    // added (e.g. Sentry.captureException(error, { extra: info })).
-    console.error("[ErrorBoundary] render crash:", error, info.componentStack);
+    // Single funnel for render crashes → the observability module (RPT-1).
+    captureError(error, { source: "ErrorBoundary", componentStack: info.componentStack });
   }
 
   render() {

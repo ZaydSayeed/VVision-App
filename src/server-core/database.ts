@@ -18,6 +18,13 @@ export async function connectDb(): Promise<void> {
   await db.collection("people").createIndex({ patient_id: 1 });
   await db.collection("alerts").createIndex({ patient_id: 1 });
   await db.collection("help_alerts").createIndex({ patient_id: 1 });
+  // Idempotency: a retried SOS POST carrying the same client_id resolves to the
+  // same alert instead of duplicating it (SAFE-1). Partial so legacy alerts
+  // without a client_id are unaffected.
+  await db.collection("help_alerts").createIndex(
+    { patient_id: 1, client_id: 1 },
+    { unique: true, partialFilterExpression: { client_id: { $exists: true } } }
+  );
   await db.collection("routines").createIndex({ patient_id: 1 });
   await db.collection("medications").createIndex({ patient_id: 1 });
   await db.collection("reminders").createIndex({ patient_id: 1 });

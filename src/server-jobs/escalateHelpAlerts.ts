@@ -96,11 +96,24 @@ export async function escalateHelpAlerts(
 
     // Claim this level atomically: only the worker that actually advances the
     // level proceeds to push. Recording before the push prevents a re-fire flood.
+    //
+    // The filter re-asserts the alert is STILL open (dismissed/resolved/
+    // acknowledged/cancelled $ne true) — not just the level. nextEscalationLevel
+    // checked those on the stale find() snapshot; without re-checking here, a
+    // caregiver who acknowledges in the find()->claim window would still be paged
+    // with the escalated "no one has responded — call them now" copy (SAFE-2).
     const claim = await db.collection("help_alerts").updateOne(
-      { _id: alert._id, $or: [{ escalation_level: { $exists: false } }, { escalation_level: { $lt: level } }] },
+      {
+        _id: alert._id,
+        dismissed: { $ne: true },
+        resolved: { $ne: true },
+        acknowledged: { $ne: true },
+        cancelled: { $ne: true },
+        $or: [{ escalation_level: { $exists: false } }, { escalation_level: { $lt: level } }],
+      },
       { $set: { escalation_level: level, last_escalated_at: now.toISOString() } }
     );
-    if (claim.modifiedCount === 0) continue; // someone else already escalated to >= level
+    if (claim.modifiedCount === 0) continue; // already escalated to >= level, or closed mid-window
 
     const patientId = String(alert.patient_id);
     let name = "Your patient";

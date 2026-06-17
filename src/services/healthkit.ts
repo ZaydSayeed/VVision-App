@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 
 const PERMS = AppleHealthKit.Constants.Permissions;
 
-export const healthKitPermissions: HealthKitPermissions = {
+const healthKitPermissions: HealthKitPermissions = {
   permissions: {
     read: [PERMS.StepCount, PERMS.HeartRate, PERMS.AppleExerciseTime, PERMS.SleepAnalysis],
     write: [],

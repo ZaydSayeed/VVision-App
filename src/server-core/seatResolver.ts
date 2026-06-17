@@ -56,7 +56,7 @@ export function requirePatientAccess(req: Request, res: Response, next: NextFunc
 export function requireSeat(req: Request, res: Response, next: NextFunction): void {
   const run = async () => {
     const userId = (req as any).auth?.userId;
-    const patientId = req.params.patientId;
+    const patientId = String(req.params.patientId);
     if (!userId || !patientId) { res.status(401).json({ detail: "Unauthorized" }); return; }
     const seat = await resolveSeatForRequest(getDb(), userId, patientId);
     if (!seat) { res.status(403).json({ detail: "No seat on this profile" }); return; }

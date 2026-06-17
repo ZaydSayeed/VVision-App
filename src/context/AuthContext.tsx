@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
 } from "react";
 import { AppState, AppStateStatus, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -267,13 +268,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw new Error(error.message);
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken }),
+    [user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

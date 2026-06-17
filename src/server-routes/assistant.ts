@@ -7,6 +7,7 @@ import { resolvePatientId } from "../server-core/patientResolver";
 import { config } from "../server-core/config";
 import rateLimit from "express-rate-limit";
 import { buildAssistantTools, normalizeMedicationArgs } from "./assistantTools";
+import { getConsent, hasConsent } from "../server-core/consent";
 
 const router = Router();
 
@@ -31,6 +32,19 @@ router.post("/chat", chatLimiter, authMiddleware, resolvePatientId, async (req, 
   try {
     const db = getDb();
     const patientId = req.patientId!;
+
+    // Gate the AI on explicit consent — patient data is sent to a third-party
+    // LLM, so don't process anything until aiAssistant consent is on (SEC-02).
+    const consent = await getConsent(db, patientId);
+    if (!hasConsent(consent, "aiAssistant")) {
+      res.json({
+        reply: "AI help is turned off for this profile. You can turn it on under Privacy & Sharing.",
+        reminderCreated: false,
+        taskCreated: false,
+        medicationCreated: false,
+      });
+      return;
+    }
 
     // Fetch context in parallel
     const [convDocs, routineDocs, medDocs, reminderDocs] = await Promise.all([
@@ -71,7 +85,8 @@ router.post("/chat", chatLimiter, authMiddleware, resolvePatientId, async (req, 
     const systemPrompt = `You are Vision, a warm and patient AI assistant built into smart glasses and a companion app for someone who needs help remembering things.
 
 Keep responses to 1-3 short sentences. Use a warm, reassuring tone.
-Never give medical advice. Never mention that you are AI.
+You are an AI assistant — if asked, you may say so plainly; never claim to be a person or a doctor.
+Never give medical advice.
 Never guess clinical details like a medication dosage or time — if they were not stated, ask for the exact value.
 It is okay to repeat information — the person may ask the same thing multiple times.
 

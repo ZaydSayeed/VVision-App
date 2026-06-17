@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
+import { getCaregiverPushTokens, sendExpoPush } from "../server-core/push";
 
 const router = Router();
 
@@ -54,9 +55,9 @@ router.post("/zone-exit", authMiddleware, resolvePatientId, async (req, res) => 
     const user = await db.collection("users").findOne({ patient_id: patientId });
     const patientName = user?.name ?? "Your patient";
 
-    // Get caregiver push token
-    const tokenDoc = await db.collection("pushTokens").findOne({ patientId });
-    if (!tokenDoc?.expoPushToken) {
+    // Fan out to every caregiver, not just one nondeterministic token (RPT-9).
+    const tokens = await getCaregiverPushTokens(db, patientId);
+    if (tokens.length === 0) {
       res.json({ sent: false, reason: "no_caregiver_token" });
       return;
     }
@@ -68,23 +69,15 @@ router.post("/zone-exit", authMiddleware, resolvePatientId, async (req, res) => 
       { upsert: true }
     );
 
-    // Send push
-    const pushRes = await fetch("https://exp.host/push/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: tokenDoc.expoPushToken,
+    await sendExpoPush(
+      tokens.map((to) => ({
+        to,
         title: "Zone Alert",
         body: `${patientName} has left their safe zone.`,
         data: { patientId, type: "zone_exit" },
-        priority: "high",
-      }),
-    });
-    const pushJson = await pushRes.json();
-    const ticket = pushJson?.data?.[0];
-    if (ticket?.status === "error") {
-      console.error("[zone-exit] push error:", ticket.details);
-    }
+        priority: "high" as const,
+      }))
+    );
 
     res.json({ sent: true });
   } catch (err) {

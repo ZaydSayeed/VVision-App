@@ -36,15 +36,9 @@ function formatXLabel(date: string, range: Range): string {
     const d = new Date(date + "T12:00:00Z");
     return d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
   }
-  if (range === "30d") {
-    const d = new Date(date + "T12:00:00Z");
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  }
-  if (range === "90d") {
-    const d = new Date(date + "T12:00:00Z");
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  }
-  return date.slice(5);
+  // 30d / 90d
+  const d = new Date(date + "T12:00:00Z");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 function shouldShowLabel(index: number, total: number, range: Range): boolean {

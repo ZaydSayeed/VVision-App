@@ -31,7 +31,7 @@ router.post("/:patientId/patterns/:patternId/dismiss", authMiddleware, requirePa
     const { ObjectId } = await import("mongodb");
     const db = getDb();
     await db.collection("patterns").updateOne(
-      { _id: new ObjectId(req.params.patternId), patientId: req.params.patientId },
+      { _id: new ObjectId(String(req.params.patternId)), patientId: String(req.params.patientId) },
       { $set: { dismissedAt: new Date().toISOString(), dismissedBy: req.seat!.userId } }
     );
     res.json({ ok: true });

@@ -330,8 +330,14 @@ export async function fetchHelpAlerts(): Promise<HelpAlert[]> {
   return request<HelpAlert[]>("/api/help-alerts");
 }
 
-export async function createHelpAlert(): Promise<HelpAlert> {
-  return request<HelpAlert>("/api/help-alerts", { method: "POST" });
+export async function createHelpAlert(clientId?: string): Promise<HelpAlert> {
+  // clientId is the durable-queue id. Sending it lets the server dedupe a retried
+  // POST (e.g. the first response was lost to a cold-start timeout after the
+  // server already committed) to the same alert instead of a duplicate SOS (SAFE-1).
+  return request<HelpAlert>("/api/help-alerts", {
+    method: "POST",
+    body: JSON.stringify(clientId ? { client_id: clientId } : {}),
+  });
 }
 
 export async function dismissHelpAlert(id: string): Promise<HelpAlert> {

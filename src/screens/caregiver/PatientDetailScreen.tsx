@@ -209,21 +209,6 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       borderLeftWidth: 4,
       borderLeftColor: colors.violet,
     },
-    liveCardTop: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    liveCardLeft: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-    liveCardTitle: { fontSize: 15, color: colors.text, ...fonts.medium },
-    liveCardSub: { fontSize: 12, color: colors.muted, ...fonts.regular, marginTop: 2 },
-    liveCardBtn: {
-      backgroundColor: colors.violet,
-      borderRadius: radius.pill,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    liveCardBtnText: { fontSize: 13, color: "#fff", ...fonts.medium },
     statsCard: {
       backgroundColor: colors.bg,
       borderRadius: radius.xl,
@@ -407,30 +392,9 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Live View card */}
+        {/* Safe Zone card */}
         <View style={styles.liveCard}>
-          <View style={styles.liveCardTop}>
-            <View style={styles.liveCardLeft}>
-              <Ionicons name="videocam-outline" size={22} color={colors.violet} />
-              <View>
-                <Text style={styles.liveCardTitle}>Live View</Text>
-                <Text style={styles.liveCardSub}>
-                  {liveLoading ? "Waiting for patient to approve…" : "Patient must approve before stream begins"}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={[styles.liveCardBtn, liveLoading && { opacity: 0.6 }]}
-              onPress={handleRequestLiveView}
-              activeOpacity={0.8}
-              disabled={liveLoading}
-            >
-              <Text style={styles.liveCardBtnText}>
-                {liveLoading ? "Waiting…" : "Request"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ flexDirection: "row", marginTop: spacing.md }}>
+          <View style={{ flexDirection: "row" }}>
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: colors.surface }]}
               onPress={() => setGeofenceSheetOpen(true)}

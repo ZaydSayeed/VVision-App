@@ -21,9 +21,9 @@ export default function ProfileBasicsStep({ navigation }: any) {
     input: { borderWidth: 1, borderColor: colors.border, padding: 14, borderRadius: 10, fontSize: 16, color: colors.text, marginBottom: 16 },
     stageLabel: { fontWeight: "600", color: colors.text, marginBottom: 8 },
     stageRow: { flexDirection: "row" as const, gap: 8, marginBottom: 24 },
-    stageBtn: (active: boolean) => ({ flex: 1, padding: 12, borderRadius: 10, backgroundColor: active ? colors.violet : colors.surface }),
-    stageBtnText: (active: boolean) => ({ textAlign: "center" as const, color: active ? "white" : colors.text, fontWeight: "600" as const, textTransform: "capitalize" as const }),
-    continueBtn: (enabled: boolean) => ({ backgroundColor: enabled ? colors.violet : colors.border, padding: 16, borderRadius: 12 }),
+    stageBtn: { flex: 1, padding: 12, borderRadius: 10 },
+    stageBtnText: { textAlign: "center" as const, fontWeight: "600" as const, textTransform: "capitalize" as const },
+    continueBtn: { padding: 16, borderRadius: 12 },
     continueBtnText: { color: "white", textAlign: "center" as const, fontWeight: "700" as const, fontSize: 16 },
   }), [colors]);
 
@@ -57,12 +57,20 @@ export default function ProfileBasicsStep({ navigation }: any) {
       <Text style={styles.stageLabel}>Current stage (you can change this later)</Text>
       <View style={styles.stageRow}>
         {(["mild", "moderate", "severe"] as const).map(s => (
-          <Pressable key={s} onPress={() => setStage(s)} style={styles.stageBtn(stage === s)}>
-            <Text style={styles.stageBtnText(stage === s)}>{s}</Text>
+          <Pressable
+            key={s}
+            onPress={() => setStage(s)}
+            style={[styles.stageBtn, { backgroundColor: stage === s ? colors.violet : colors.surface }]}
+          >
+            <Text style={[styles.stageBtnText, { color: stage === s ? "white" : colors.text }]}>{s}</Text>
           </Pressable>
         ))}
       </View>
-      <Pressable disabled={!name.trim() || busy} onPress={next} style={styles.continueBtn(!!name.trim() && !busy)}>
+      <Pressable
+        disabled={!name.trim() || busy}
+        onPress={next}
+        style={[styles.continueBtn, { backgroundColor: !!name.trim() && !busy ? colors.violet : colors.border }]}
+      >
         <Text style={styles.continueBtnText}>{busy ? "Saving…" : "Continue"}</Text>
       </Pressable>
     </ScrollView>

@@ -22,6 +22,9 @@ export const config = {
   // Shared secret for the external cron trigger (e.g. cron-job.org) that drives
   // the minute-cadence jobs reliably even when Render's free tier is asleep.
   cronSecret: process.env.CRON_SECRET || "",
+  // HMAC secret authorizing Gemini Live WebSocket connections. Without it the
+  // live voice relay is disabled (fail closed) — set LIVE_WS_SECRET to enable.
+  liveWsSecret: process.env.LIVE_WS_SECRET || "",
 };
 
 /**
@@ -40,6 +43,14 @@ export function validateConfig(): void {
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}. ` +
         `Set them in the deployment environment (e.g. Render dashboard) before starting the server.`
+    );
+  }
+
+  // In production the webhook signature secret MUST be set — an unverified
+  // RevenueCat webhook lets anyone grant themselves a subscription (SEC-07).
+  if (process.env.NODE_ENV === "production" && !config.revenueCatWebhookSecret) {
+    throw new Error(
+      "REVENUECAT_WEBHOOK_SECRET is required in production (webhook signature verification)."
     );
   }
 

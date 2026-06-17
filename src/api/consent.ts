@@ -3,12 +3,13 @@ import { authFetch } from "./authFetch";
 export interface ConsentState {
   healthMetrics: boolean;
   activityPatterns: boolean;
+  aiAssistant: boolean;
   updatedAt: string | null;
   updatedBy: string | null;
   updatedByRole: string | null;
 }
 
-export type ConsentCategory = "healthMetrics" | "activityPatterns";
+export type ConsentCategory = "healthMetrics" | "activityPatterns" | "aiAssistant";
 
 export async function getConsent(patientId: string): Promise<ConsentState> {
   const r = await authFetch(`/api/profiles/${patientId}/consent`);

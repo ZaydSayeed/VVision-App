@@ -16,7 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.velavision.caregiver",
-      "associatedDomains": ["applinks:velavision.org"],
+      "associatedDomains": [
+        "applinks:velavision.org"
+      ],
       "buildNumber": "12",
       "infoPlist": {
         "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
@@ -36,7 +38,9 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ]
       }
@@ -71,7 +75,8 @@
           "isClinicalDataEnabled": false,
           "healthSharePermission": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "owner": "haadi.siddiqui"
   }

@@ -44,7 +44,7 @@ router.get("/:patientId/visits", authMiddleware, requirePatientAccess, async (re
 router.delete("/:patientId/visits/:visitId", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
-    await db.collection("visits").deleteOne({ _id: new ObjectId(req.params.visitId), patientId: req.params.patientId });
+    await db.collection("visits").deleteOne({ _id: new ObjectId(String(req.params.visitId)), patientId: String(req.params.patientId) });
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ detail: "Internal server error" }); }
 });
@@ -52,7 +52,7 @@ router.delete("/:patientId/visits/:visitId", authMiddleware, requirePatientAcces
 router.get("/:patientId/visits/:visitId/prep.pdf", authMiddleware, requirePatientAccess, async (req, res) => {
   try {
     const db = getDb();
-    const v = await db.collection("visits").findOne({ _id: new ObjectId(req.params.visitId), patientId: req.params.patientId });
+    const v = await db.collection("visits").findOne({ _id: new ObjectId(String(req.params.visitId)), patientId: String(req.params.patientId) });
     if (!v?.prepFilePath) { res.status(404).json({ detail: "Visit prep not generated yet" }); return; }
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename="visit-prep-${v._id}.pdf"`);

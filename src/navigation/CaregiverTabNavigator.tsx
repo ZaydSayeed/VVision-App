@@ -55,7 +55,6 @@ export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigato
       fontSize: 13,
       ...fonts.medium,
     },
-    tabIcon: {},
     tabBadge: {
       backgroundColor: colors.violet,
     },

@@ -18,7 +18,7 @@ export default function ProfileStoryStep({ navigation }: any) {
     title: { fontSize: 24, fontWeight: "700", color: colors.text, marginBottom: 8 },
     subtitle: { color: colors.muted, marginBottom: 24 },
     textArea: { borderWidth: 1, borderColor: colors.border, padding: 14, borderRadius: 10, fontSize: 16, color: colors.text, minHeight: 160, textAlignVertical: "top" as const, marginBottom: 16 },
-    saveBtn: (enabled: boolean) => ({ backgroundColor: enabled ? colors.violet : colors.border, padding: 16, borderRadius: 12, marginBottom: 12 }),
+    saveBtn: { padding: 16, borderRadius: 12, marginBottom: 12 },
     saveBtnText: { color: "white", textAlign: "center" as const, fontWeight: "700" as const, fontSize: 16 },
     skipText: { color: colors.muted, textAlign: "center" as const },
   }), [colors]);
@@ -58,7 +58,11 @@ export default function ProfileStoryStep({ navigation }: any) {
         value={story} onChangeText={setStory}
         style={styles.textArea}
       />
-      <Pressable disabled={!story.trim() || busy} onPress={save} style={styles.saveBtn(!!story.trim() && !busy)}>
+      <Pressable
+        disabled={!story.trim() || busy}
+        onPress={save}
+        style={[styles.saveBtn, { backgroundColor: !!story.trim() && !busy ? colors.violet : colors.border }]}
+      >
         <Text style={styles.saveBtnText}>{busy ? "Saving…" : "Save"}</Text>
       </Pressable>
       <Pressable onPress={skip}>

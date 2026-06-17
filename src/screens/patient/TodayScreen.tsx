@@ -5,11 +5,8 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  TextInput,
   Modal,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   Animated,
   Pressable,
   Dimensions,
@@ -30,8 +27,6 @@ import { NotesHistoryModal } from "../../components/NotesHistoryModal";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TimeSlider } from "../../components/shared/TimeSlider";
 import { fonts, spacing, radius, shadow } from "../../config/theme";
 import { registerReminderReload, registerTaskReload, registerMedReload } from "../../utils/reminderEvents";
 import { HeroStatCard } from "../../components/HeroStatCard";
@@ -39,14 +34,13 @@ import { getGreeting } from "../../utils/greeting";
 import { useClock } from "../../hooks/useClock";
 import { MoodCheckIn } from "../../components/patient/MoodCheckIn";
 import { NotificationPanel } from "../../components/patient/NotificationPanel";
+import { AddTaskModal, EditTaskModal, AddMedModal } from "../../components/patient/TaskMedFormModals";
 
 const SCREEN_W = Dimensions.get("window").width;
-const SCREEN_H = Dimensions.get("window").height;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
 
 export function TodayScreen() {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
@@ -104,20 +98,6 @@ export function TodayScreen() {
 
   // ── Add Task modal ───────────────────────────────────────────
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [taskLabel, setTaskLabel] = useState("");
-  const [taskTime, setTaskTime] = useState("");
-  const [taskError, setTaskError] = useState("");
-
-  async function handleAddTask() {
-    if (!taskLabel.trim() || !taskTime.trim()) { setTaskError("Please fill in both fields."); return; }
-    setTaskError("");
-    try {
-      await addTask(taskLabel.trim(), taskTime.trim());
-      setTaskLabel(""); setTaskTime(""); setShowTaskModal(false); setTaskError("");
-    } catch {
-      setTaskError("Couldn't save. Check your connection and try again.");
-    }
-  }
 
   const [detailTask, setDetailTask] = useState<RoutineTask | null>(null);
 
@@ -132,46 +112,9 @@ export function TodayScreen() {
 
   // ── Edit Task modal ──────────────────────────────────────
   const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
-  useEffect(() => {
-    if (editingTask) {
-      setEditLabel(editingTask.label);
-      setEditTime(editingTask.time ?? "");
-    }
-  }, [editingTask]);
-  const [editLabel, setEditLabel] = useState("");
-  const [editTime, setEditTime] = useState("");
-  const [editError, setEditError] = useState("");
-
-  async function handleEditTask() {
-    if (!editLabel.trim() || !editTime.trim()) { setEditError("Please fill in both fields."); return; }
-    setEditError("");
-    try {
-      await updateRoutine(editingTask!.id, { label: editLabel.trim(), time: editTime.trim() });
-      setEditingTask(null); setEditError("");
-      reloadRoutine();
-    } catch {
-      setEditError("Couldn't save. Check your connection and try again.");
-    }
-  }
 
   // ── Add Med modal ────────────────────────────────────────────
   const [showMedModal, setShowMedModal] = useState(false);
-
-  const [medName, setMedName] = useState("");
-  const [medDosage, setMedDosage] = useState("");
-  const [medTime, setMedTime] = useState("");
-  const [medError, setMedError] = useState("");
-
-  async function handleAddMed() {
-    if (!medName.trim() || !medDosage.trim() || !medTime.trim()) { setMedError("Please fill in all fields."); return; }
-    setMedError("");
-    try {
-      await addMed(medName.trim(), medDosage.trim(), medTime.trim());
-      setMedName(""); setMedDosage(""); setMedTime(""); setShowMedModal(false); setMedError("");
-    } catch {
-      setMedError("Couldn't save. Check your connection and try again.");
-    }
-  }
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.warm },
@@ -397,39 +340,7 @@ export function TodayScreen() {
     chooserBtnSub: { fontSize: 14, color: colors.muted, ...fonts.regular },
 
     // ── Add modals ─────────────────────────────────────────────
-    modalOverlay: { flex: 1, backgroundColor: "rgba(30,27,58,0.45)", justifyContent: "flex-end" },
-    modalSheet: {
-      backgroundColor: colors.bg, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl,
-      padding: spacing.xxl, gap: spacing.sm,
-      maxHeight: SCREEN_H * 0.80,
-    },
-    modalHandle: {
-      width: 40, height: 4, borderRadius: radius.pill,
-      backgroundColor: colors.border, alignSelf: "center", marginBottom: spacing.lg,
-    },
-    modalTitle: { fontSize: 22, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
-    fieldLabel: {
-      fontSize: 11, color: colors.muted, ...fonts.medium,
-      letterSpacing: 1.2, textTransform: "uppercase",
-      marginTop: spacing.md, marginBottom: spacing.xs,
-    },
-    input: {
-      height: 54, backgroundColor: colors.surface,
-      borderRadius: radius.lg, paddingHorizontal: spacing.lg,
-      fontSize: 16, color: colors.text, ...fonts.regular,
-    },
-    error: { fontSize: 13, color: "#E05050", ...fonts.regular },
-    modalBtns: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
-    btnOutline: {
-      flex: 1, height: 54, borderWidth: 1.5, borderColor: colors.border,
-      borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
-    },
-    btnOutlineText: { fontSize: 16, color: colors.text, ...fonts.medium },
-    btnPrimary: {
-      flex: 1, height: 54, backgroundColor: colors.violet,
-      borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
-    },
-    btnPrimaryText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
+    // Add/Edit task + Add med form modals → ./components/patient/TaskMedFormModals
 
   }), [colors]);
 
@@ -715,53 +626,17 @@ export function TodayScreen() {
         </Pressable>
       </Modal>
 
-      {/* ── Add Task modal ─────────────────────────────────────── */}
-      <Modal visible={showTaskModal} transparent animationType="slide">
-        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setShowTaskModal(false); setTaskError(""); }} />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Add a Task</Text>
-            <Text style={styles.fieldLabel}>WHAT DO I NEED TO DO?</Text>
-            <TextInput style={styles.input} value={taskLabel} onChangeText={setTaskLabel} placeholder="e.g. Morning walk" placeholderTextColor={colors.muted} autoFocus />
-            <Text style={styles.fieldLabel}>TIME</Text>
-            <TimeSlider value={taskTime} onChange={setTaskTime} />
-            {taskError ? <Text style={styles.error}>{taskError}</Text> : null}
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnOutline} onPress={() => { setShowTaskModal(false); setTaskError(""); }}>
-                <Text style={styles.btnOutlineText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnPrimary} onPress={handleAddTask}>
-                <Text style={styles.btnPrimaryText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <AddTaskModal
+        visible={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        onAdd={addTask}
+      />
 
-      {/* ── Edit Task modal ───────────────────────────────────── */}
-      <Modal visible={editingTask !== null} transparent animationType="slide">
-        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingTask(null); setEditError(""); }} />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Edit Task</Text>
-            <Text style={styles.fieldLabel}>WHAT DO I NEED TO DO?</Text>
-            <TextInput style={styles.input} value={editLabel} onChangeText={setEditLabel} placeholder="e.g. Morning walk" placeholderTextColor={colors.muted} autoFocus />
-            <Text style={styles.fieldLabel}>TIME</Text>
-            <TimeSlider value={editTime} onChange={setEditTime} />
-            {editError ? <Text style={styles.error}>{editError}</Text> : null}
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingTask(null); setEditError(""); }}>
-                <Text style={styles.btnOutlineText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnPrimary} onPress={handleEditTask}>
-                <Text style={styles.btnPrimaryText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <EditTaskModal
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSave={async (id, patch) => { await updateRoutine(id, patch); reloadRoutine(); }}
+      />
 
       <NotesHistoryModal
         visible={notesModalVisible}
@@ -788,37 +663,11 @@ export function TodayScreen() {
         isCompletedToday={isCompletedToday}
       />
 
-      {/* ── Add Med modal ──────────────────────────────────────── */}
-      <Modal visible={showMedModal} transparent animationType="slide">
-        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setShowMedModal(false); setMedError(""); }} />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Add Medication</Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>NAME</Text>
-                <TextInput style={styles.input} value={medName} onChangeText={setMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>DOSAGE</Text>
-                <TextInput style={styles.input} value={medDosage} onChangeText={setMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
-              </View>
-            </View>
-            <Text style={styles.fieldLabel}>TIME</Text>
-            <TimeSlider value={medTime} onChange={setMedTime} />
-            {medError ? <Text style={styles.error}>{medError}</Text> : null}
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnOutline} onPress={() => { setShowMedModal(false); setMedError(""); }}>
-                <Text style={styles.btnOutlineText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnPrimary} onPress={handleAddMed}>
-                <Text style={styles.btnPrimaryText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <AddMedModal
+        visible={showMedModal}
+        onClose={() => setShowMedModal(false)}
+        onAdd={addMed}
+      />
     </View>
   );
 }

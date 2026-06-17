@@ -5,10 +5,8 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Modal,
   StyleSheet,
   Animated,
-  Pressable,
   Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -35,6 +33,8 @@ import { MoodCheckIn } from "../../components/patient/MoodCheckIn";
 import { NotificationPanel } from "../../components/patient/NotificationPanel";
 import { AddTaskModal, EditTaskModal, AddMedModal } from "../../components/patient/TaskMedFormModals";
 import { MedicationsCard, TasksCard } from "../../components/patient/TodayListCards";
+import { GreetingHeader } from "../../components/patient/GreetingHeader";
+import { AddChooserSheet } from "../../components/patient/AddChooserSheet";
 
 const SCREEN_W = Dimensions.get("window").width;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
@@ -119,77 +119,7 @@ export function TodayScreen() {
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.warm },
 
-    // ── Greeting header ────────────────────────────────────────
-    header: {
-      paddingHorizontal: spacing.xl,
-      paddingTop: spacing.lg,
-      paddingBottom: spacing.xl,
-      backgroundColor: colors.warm,
-    },
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      justifyContent: "space-between",
-    },
-    greetingGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
-      flex: 1,
-    },
-    buddyEmoji: {
-      width: 56,
-      height: 56,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    greetingIcon: {
-      fontSize: 36,
-      marginBottom: 2,
-    },
-    greetingLineRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginBottom: 2,
-    },
-    greetingLine: {
-      fontSize: 17,
-      color: colors.muted,
-      ...fonts.regular,
-    },
-    greetingName: {
-      fontSize: 36,
-      color: colors.text,
-      ...fonts.medium,
-      lineHeight: 42,
-    },
-    greetingAccent: {
-      color: colors.violet,
-    },
-    notifBtn: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: colors.warmSurface,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    notifBadge: {
-      position: "absolute",
-      top: 9,
-      right: 9,
-      minWidth: 16,
-      height: 16,
-      borderRadius: 8,
-      backgroundColor: colors.violet,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 3,
-      borderWidth: 1.5,
-      borderColor: colors.warm,
-    },
-    notifBadgeText: { fontSize: 9, color: "#FFFFFF", ...fonts.medium },
+    // Greeting header → ./components/patient/GreetingHeader
 
     // ── Progress summary ───────────────────────────────────────
     progressBar: {
@@ -248,30 +178,7 @@ export function TodayScreen() {
 
     // Full-width stacked cards → ./components/patient/TodayListCards
 
-    // ── Chooser sheet ──────────────────────────────────────────
-    chooserOverlay: { flex: 1, backgroundColor: "rgba(30,27,58,0.45)", justifyContent: "flex-end" },
-    chooserSheet: {
-      backgroundColor: colors.bg, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl,
-      padding: spacing.xxl, gap: spacing.md,
-    },
-    chooserHandle: {
-      width: 40, height: 4, borderRadius: radius.pill,
-      backgroundColor: colors.border, alignSelf: "center", marginBottom: spacing.lg,
-    },
-    chooserTitle: { fontSize: 20, color: colors.text, ...fonts.medium, marginBottom: spacing.sm },
-    chooserBtn: {
-      flexDirection: "row", alignItems: "center", gap: spacing.lg,
-      backgroundColor: colors.surface, borderRadius: radius.lg,
-      paddingVertical: spacing.lg, paddingHorizontal: spacing.lg,
-    },
-    chooserBtnIcon: {
-      width: 48, height: 48, borderRadius: 24,
-      alignItems: "center", justifyContent: "center",
-    },
-    chooserBtnLabel: { fontSize: 18, color: colors.text, ...fonts.medium },
-    chooserBtnSub: { fontSize: 14, color: colors.muted, ...fonts.regular },
-
-    // ── Add modals ─────────────────────────────────────────────
+    // Chooser sheet → ./components/patient/AddChooserSheet
     // Add/Edit task + Add med form modals → ./components/patient/TaskMedFormModals
 
   }), [colors]);
@@ -291,36 +198,12 @@ export function TodayScreen() {
       />
 
       {/* ── Greeting header ──────────────────────────────────── */}
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={styles.greetingGroup}>
-            <View
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={styles.buddyEmoji}
-            >
-              <Ionicons name="flower-outline" size={44} color={colors.violet} />
-            </View>
-            <View>
-              <View style={styles.greetingLineRow}>
-                <Ionicons name={greeting.icon} size={16} color={colors.amber} />
-                <Text style={styles.greetingLine}>{greeting.text},</Text>
-              </View>
-              <Text style={styles.greetingName}>
-                <Text style={styles.greetingAccent}>{firstName}</Text>
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.notifBtn} onPress={openNotifs} activeOpacity={0.75}>
-            <Ionicons name="notifications" size={22} color={colors.violet} />
-            {totalNotifs > 0 && (
-              <View style={styles.notifBadge}>
-                <Text style={styles.notifBadgeText}>{totalNotifs}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+      <GreetingHeader
+        greeting={greeting}
+        firstName={firstName}
+        notifCount={totalNotifs}
+        onOpenNotifs={openNotifs}
+      />
 
       {/* ── Data error banner ────────────────────────────────── */}
       {dataError ? (
@@ -405,40 +288,12 @@ export function TodayScreen() {
       </ScrollView>
 
       {/* ── Chooser sheet ─────────────────────────────────────── */}
-      <Modal visible={showChooser} transparent animationType="slide">
-        <Pressable style={styles.chooserOverlay} onPress={() => setShowChooser(false)}>
-          <Pressable style={styles.chooserSheet} onPress={() => {}}>
-            <View style={styles.chooserHandle} />
-            <Text style={styles.chooserTitle}>What would you like to add?</Text>
-            <TouchableOpacity
-              style={styles.chooserBtn}
-              onPress={() => { setShowChooser(false); setShowTaskModal(true); }}
-              activeOpacity={0.85}
-            >
-              <View style={[styles.chooserBtnIcon, { backgroundColor: colors.sageSoft }]}>
-                <Ionicons name="calendar-clear" size={22} color={colors.sage} />
-              </View>
-              <View>
-                <Text style={styles.chooserBtnLabel}>A routine task</Text>
-                <Text style={styles.chooserBtnSub}>Something you do every day</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.chooserBtn}
-              onPress={() => { setShowChooser(false); setShowMedModal(true); }}
-              activeOpacity={0.85}
-            >
-              <View style={[styles.chooserBtnIcon, { backgroundColor: colors.amberSoft }]}>
-                <Ionicons name="medkit" size={22} color={colors.amber} />
-              </View>
-              <View>
-                <Text style={styles.chooserBtnLabel}>A medication</Text>
-                <Text style={styles.chooserBtnSub}>Track your daily medicines</Text>
-              </View>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <AddChooserSheet
+        visible={showChooser}
+        onClose={() => setShowChooser(false)}
+        onChooseTask={() => { setShowChooser(false); setShowTaskModal(true); }}
+        onChooseMed={() => { setShowChooser(false); setShowMedModal(true); }}
+      />
 
       <AddTaskModal
         visible={showTaskModal}

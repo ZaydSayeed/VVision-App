@@ -10,7 +10,6 @@ import {
   Animated,
   Pressable,
   Dimensions,
-  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,6 +34,7 @@ import { useClock } from "../../hooks/useClock";
 import { MoodCheckIn } from "../../components/patient/MoodCheckIn";
 import { NotificationPanel } from "../../components/patient/NotificationPanel";
 import { AddTaskModal, EditTaskModal, AddMedModal } from "../../components/patient/TaskMedFormModals";
+import { MedicationsCard, TasksCard } from "../../components/patient/TodayListCards";
 
 const SCREEN_W = Dimensions.get("window").width;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
@@ -246,75 +246,7 @@ export function TodayScreen() {
     notePlaceholder: { fontSize: 14, color: colors.muted, ...fonts.regular, fontStyle: "italic" },
     noteTimestamp: { fontSize: 11, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
 
-    // ── Full-width stacked cards ───────────────────────────────
-    fullCard: {
-      marginHorizontal: spacing.xl,
-      marginBottom: spacing.lg,
-      backgroundColor: colors.bg,
-      borderRadius: radius.xl,
-      padding: spacing.lg,
-      paddingLeft: spacing.lg + 4,
-      ...shadow.md,
-    },
-    fullCardAccent: {
-      position: "absolute",
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 4,
-      borderTopLeftRadius: radius.xl,
-      borderBottomLeftRadius: radius.xl,
-    },
-    fullCardHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-      marginBottom: spacing.sm,
-    },
-    fullCardTitle: {
-      fontSize: 10,
-      ...fonts.medium,
-      letterSpacing: 1.2,
-      textTransform: "uppercase",
-      marginRight: "auto" as const,
-    },
-    fullCardPill: {
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
-      borderRadius: radius.pill,
-    },
-    fullCardPillText: { fontSize: 11, ...fonts.medium },
-    fullCardPlusBtn: {
-      width: 28, height: 28, borderRadius: 14,
-      alignItems: "center", justifyContent: "center",
-    },
-    fullCardPlusBtnText: { color: "#fff", fontSize: 18, lineHeight: 22, fontWeight: "400" as const },
-    fullCardItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.sm,
-      paddingVertical: 4,
-    },
-    fullCardCheckboxBtn: {
-      width: 44,
-      height: 44,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    fullCardCheckbox: {
-      width: 22, height: 22, borderRadius: radius.sm,
-      alignItems: "center", justifyContent: "center",
-    },
-    fullCardItemText: { fontSize: 14, color: colors.text, ...fonts.regular },
-    fullCardItemDone: { color: colors.muted, textDecorationLine: "line-through" },
-    fullCardProgressTrack: {
-      height: 5, borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      marginTop: spacing.sm,
-    },
-    fullCardProgressFill: { height: 5, borderRadius: radius.pill },
-    fullCardProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
-    fullCardEmpty: { fontSize: 13, color: colors.muted, ...fonts.regular },
+    // Full-width stacked cards → ./components/patient/TodayListCards
 
     // ── Chooser sheet ──────────────────────────────────────────
     chooserOverlay: { flex: 1, backgroundColor: "rgba(30,27,58,0.45)", justifyContent: "flex-end" },
@@ -452,142 +384,24 @@ export function TodayScreen() {
         </View>
 
         {/* ── Medications card ──────────────────────────────── */}
-        <View style={styles.fullCard}>
-          <View style={[styles.fullCardAccent, { backgroundColor: colors.amber }]} />
-          <View style={styles.fullCardHeader}>
-            <Text style={[styles.fullCardTitle, { color: colors.amber }]}>Medications</Text>
-            <View style={[styles.fullCardPill, { backgroundColor: colors.amberSoft }]}>
-              <Text style={[styles.fullCardPillText, { color: colors.amber }]}>{medsDone} of {meds.length} taken</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.fullCardPlusBtn, { backgroundColor: colors.amber }]}
-              onPress={() => setShowMedModal(true)}
-              activeOpacity={0.8}
-              accessibilityLabel="Add medication"
-              accessibilityRole="button"
-            >
-              <Text style={styles.fullCardPlusBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          {meds.length === 0 ? (
-            <Text style={styles.fullCardEmpty}>No meds added yet.</Text>
-          ) : (
-            meds
-              .slice()
-              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-              .map((med) => {
-                const taken = isTakenToday(med);
-                return (
-                  <View key={med.id} style={styles.fullCardItem}>
-                    <TouchableOpacity style={styles.fullCardCheckboxBtn} onPress={() => toggleTaken(med.id)} activeOpacity={0.75} accessibilityLabel={`Mark ${med.name} as ${taken ? "not taken" : "taken"}`} accessibilityRole="checkbox" accessibilityState={{ checked: taken }}>
-                      <View style={[styles.fullCardCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
-                        {taken && <Ionicons name="checkmark" size={13} color="#fff" />}
-                      </View>
-                    </TouchableOpacity>
-                    <Text style={[styles.fullCardItemText, taken && styles.fullCardItemDone]} numberOfLines={2}>
-                      {med.name}
-                    </Text>
-                  </View>
-                );
-              })
-          )}
-
-          <View style={styles.fullCardProgressTrack}>
-            <View style={[styles.fullCardProgressFill, {
-              backgroundColor: colors.amber,
-              width: `${meds.length > 0 ? Math.round((medsDone / meds.length) * 100) : 0}%`,
-            }]} />
-          </View>
-          <Text style={styles.fullCardProgressText}>{medsDone} of {meds.length} taken</Text>
-        </View>
+        <MedicationsCard
+          meds={meds}
+          medsDone={medsDone}
+          isTakenToday={isTakenToday}
+          onToggleTaken={toggleTaken}
+          onAddMed={() => setShowMedModal(true)}
+        />
 
         {/* ── Tasks card ────────────────────────────────────── */}
-        <View style={styles.fullCard}>
-          <View style={[styles.fullCardAccent, { backgroundColor: colors.sage }]} />
-          {(() => {
-            const allItems = tasks.length + reminders.length;
-            const doneItems = tasks.filter(isCompletedToday).length + reminders.filter((r) => !!r.completed_date).length;
-            return (
-              <View style={styles.fullCardHeader}>
-                <Text style={[styles.fullCardTitle, { color: colors.sage }]}>Tasks</Text>
-                <View style={[styles.fullCardPill, { backgroundColor: colors.sageSoft }]}>
-                  <Text style={[styles.fullCardPillText, { color: colors.sage }]}>{doneItems} of {allItems} done</Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.fullCardPlusBtn, { backgroundColor: colors.sage }]}
-                  onPress={() => setShowTaskModal(true)}
-                  activeOpacity={0.8}
-                  accessibilityLabel="Add task"
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.fullCardPlusBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })()}
-
-          {tasks.length === 0 && reminders.length === 0 ? (
-            <Text style={styles.fullCardEmpty}>No tasks yet.</Text>
-          ) : (
-            [...tasks.map((t) => ({ id: t.id, label: t.label, time: t.time, done: isCompletedToday(t), type: "task" as const, task: t })),
-             ...reminders.map((r) => ({ id: r.id, label: r.text, time: r.time ?? "", done: !!r.completed_date, type: "reminder" as const, task: null as RoutineTask | null }))]
-              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-              .map((item) => (
-                <View key={item.id} style={styles.fullCardItem}>
-                  <TouchableOpacity
-                    style={styles.fullCardCheckboxBtn}
-                    onPress={() => { if (item.type === "task") toggleComplete(item.id); }}
-                    activeOpacity={0.75}
-                    accessibilityLabel={`Mark ${item.label} as ${item.done ? "incomplete" : "complete"}`}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: item.done }}
-                  >
-                    <View style={[styles.fullCardCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
-                      {item.done && <Ionicons name="checkmark" size={13} color="#fff" />}
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{ flex: 1, justifyContent: "center" }}
-                    onPress={() => item.type === "task" && item.task ? setDetailTask(item.task) : undefined}
-                    activeOpacity={item.type === "task" ? 0.6 : 1}
-                  >
-                    <Text style={[styles.fullCardItemText, item.done && styles.fullCardItemDone]} numberOfLines={2}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                  {item.type === "reminder" && (
-                    <TouchableOpacity
-                      style={styles.fullCardCheckboxBtn}
-                      onPress={() => Alert.alert("Remove reminder?", `"${item.label}" will be removed.`, [
-                        { text: "Cancel", style: "cancel" },
-                        { text: "Remove", style: "destructive", onPress: () => deleteReminder(item.id) },
-                      ])}
-                      activeOpacity={0.75}
-                    >
-                      <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))
-          )}
-
-          {(() => {
-            const allItems = tasks.length + reminders.length;
-            const doneItems = tasks.filter(isCompletedToday).length + reminders.filter((r) => !!r.completed_date).length;
-            return (
-              <>
-                <View style={styles.fullCardProgressTrack}>
-                  <View style={[styles.fullCardProgressFill, {
-                    backgroundColor: colors.sage,
-                    width: `${allItems > 0 ? Math.round((doneItems / allItems) * 100) : 0}%`,
-                  }]} />
-                </View>
-                <Text style={styles.fullCardProgressText}>{doneItems} of {allItems} done</Text>
-              </>
-            );
-          })()}
-        </View>
+        <TasksCard
+          tasks={tasks}
+          reminders={reminders}
+          isCompletedToday={isCompletedToday}
+          onToggleComplete={toggleComplete}
+          onOpenTaskDetail={setDetailTask}
+          onDeleteReminder={deleteReminder}
+          onAddTask={() => setShowTaskModal(true)}
+        />
       </ScrollView>
 
       {/* ── Chooser sheet ─────────────────────────────────────── */}

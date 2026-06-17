@@ -9,11 +9,9 @@ import {
   ScrollView,
   Dimensions,
   Alert,
-  AccessibilityInfo,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
@@ -44,8 +42,8 @@ import { SideDrawer } from "../components/SideDrawer";
 import { VisionSheet } from "../components/VisionSheet";
 import { BackgroundDecor } from "../components/BackgroundDecor";
 import { AppHeader } from "../components/AppHeader";
+import { UrgentAlertOverlay } from "../components/UrgentAlertOverlay";
 import { useHelpAlert } from "../hooks/useHelpAlert";
-import { useReducedMotion } from "../hooks/useReducedMotion";
 import { usePushRegistration } from "../hooks/usePushRegistration";
 import { useInviteDeepLink } from "../hooks/useInviteDeepLink";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
@@ -234,7 +232,6 @@ function CaregiverView({
   const { completed: onboardingCompleted, ready: onboardingReady } = useOnboarding();
   const { alerts: helpAlerts, pendingCount, dismissAlert: dismissHelp, resolveAlert, acknowledgeAlert } = useHelpAlert();
   const { prefs } = useSensorPrefs();
-  const reducedMotion = useReducedMotion();
 
   // HomeKit listeners + periodic flush when smart home enabled
   useEffect(() => {
@@ -260,14 +257,10 @@ function CaregiverView({
     Animated.spring(notifX, { toValue: SCREEN_W, useNativeDriver: true, bounciness: 0, speed: 20 }).start(() => setNotifOpen(false));
   }, [notifX]);
 
-  // Urgent alert overlay
+  // Urgent alert overlay — animations/haptics/a11y live in <UrgentAlertOverlay>.
   const [urgentVisible, setUrgentVisible] = useState(false);
   const [resolveSheetVisible, setResolveSheetVisible] = useState(false);
   const prevCountRef = useRef<number | null>(null);
-  const pulse1 = useRef(new Animated.Value(0)).current;
-  const pulse2 = useRef(new Animated.Value(0)).current;
-  const pulse3 = useRef(new Animated.Value(0)).current;
-  const urgentFadeIn = useRef(new Animated.Value(0)).current;
 
   // Show urgent overlay when pending count increases
   useEffect(() => {
@@ -282,44 +275,6 @@ function CaregiverView({
       setUrgentVisible(false);
     }
   }, [pendingCount]);
-
-  // Pulse animation + haptic when overlay appears
-  useEffect(() => {
-    if (!urgentVisible) {
-      pulse1.stopAnimation();
-      pulse2.stopAnimation();
-      pulse3.stopAnimation();
-      urgentFadeIn.setValue(0);
-      return;
-    }
-
-    // Haptic burst + spoken announcement — the overlay was otherwise silent to
-    // VoiceOver users, who'd get no cue that their patient needs help (A11Y-4).
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 400);
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 800);
-    AccessibilityInfo.announceForAccessibility(
-      "Urgent. Your patient has requested help and needs immediate assistance. Please respond now."
-    );
-
-    // Fade in overlay
-    Animated.timing(urgentFadeIn, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-
-    // Staggered pulsing rings — skipped under Reduce Motion (A11Y-10)
-    if (reducedMotion) return;
-    const startRing = (anim: Animated.Value, delay: number) => {
-      anim.setValue(0);
-      setTimeout(() => {
-        Animated.loop(
-          Animated.timing(anim, { toValue: 1, duration: 2200, useNativeDriver: true })
-        ).start();
-      }, delay);
-    };
-
-    startRing(pulse1, 0);
-    startRing(pulse2, 733);
-    startRing(pulse3, 1466);
-  }, [urgentVisible, reducedMotion]);
 
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed && !a.acknowledged);
   const latestAlert = pendingHelp[0];
@@ -340,15 +295,6 @@ function CaregiverView({
       );
     }
   }, [pendingHelp, acknowledgeAlert]);
-
-  // Ring interpolations
-  const makeRing = (anim: Animated.Value) => ({
-    scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 3.2] }),
-    opacity: anim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.55, 0] }),
-  });
-  const ring1 = makeRing(pulse1);
-  const ring2 = makeRing(pulse2);
-  const ring3 = makeRing(pulse3);
 
   const styles = useMemo(() => StyleSheet.create({
     root: { flex: 1 },
@@ -397,76 +343,6 @@ function CaregiverView({
     helpDismissText: { fontSize: 13, color: "#FFFFFF", ...fonts.medium },
     emptyWrap: { alignItems: "center", paddingVertical: spacing.xxxl, gap: spacing.md },
     emptyText: { fontSize: 15, color: colors.muted, ...fonts.regular },
-
-    // ── Urgent alert overlay ────────────────────────────────────────────────
-    urgentOverlay: {
-      position: "absolute", top: 0, bottom: 0, left: 0, right: 0, zIndex: 999,
-    },
-    urgentGradient: { flex: 1, alignItems: "center", justifyContent: "center" },
-    urgentTop: {
-      flex: 1, alignItems: "center", justifyContent: "center", width: "100%",
-    },
-    ringContainer: {
-      width: 120, height: 120,
-      alignItems: "center", justifyContent: "center",
-    },
-    ringAbsolute: {
-      position: "absolute",
-      width: 120, height: 120,
-      borderRadius: 60,
-      borderWidth: 2,
-      borderColor: "rgba(255,255,255,0.6)",
-    },
-    urgentIconCircle: {
-      width: 120, height: 120, borderRadius: 60,
-      backgroundColor: "rgba(255,255,255,0.18)",
-      borderWidth: 2.5, borderColor: "rgba(255,255,255,0.9)",
-      alignItems: "center", justifyContent: "center",
-    },
-    urgentLabel: {
-      fontSize: 11, color: "rgba(255,255,255,0.7)", ...fonts.medium,
-      letterSpacing: 4, textTransform: "uppercase", marginTop: 36,
-    },
-    urgentTitle: {
-      fontSize: 38, color: "#FFFFFF", ...fonts.medium,
-      letterSpacing: -0.5, marginTop: 8, textAlign: "center",
-      paddingHorizontal: spacing.xl,
-    },
-    urgentSubtitle: {
-      fontSize: 15, color: "rgba(255,255,255,0.75)", ...fonts.regular,
-      textAlign: "center", marginTop: 10, paddingHorizontal: spacing.xxxl,
-      lineHeight: 22,
-    },
-    urgentTimeWrap: {
-      flexDirection: "row", alignItems: "center", gap: 6,
-      backgroundColor: "rgba(0,0,0,0.2)", borderRadius: radius.pill,
-      paddingHorizontal: spacing.lg, paddingVertical: 7, marginTop: 20,
-    },
-    urgentTime: { fontSize: 13, color: "rgba(255,255,255,0.85)", ...fonts.medium },
-    urgentBottom: {
-      width: "100%", paddingHorizontal: spacing.xl,
-      paddingBottom: 52, gap: spacing.md,
-    },
-    urgentCountWrap: {
-      alignItems: "center", marginBottom: spacing.md,
-    },
-    urgentCount: {
-      fontSize: 13, color: "rgba(255,255,255,0.65)", ...fonts.regular, letterSpacing: 0.3,
-    },
-    btnHandled: {
-      backgroundColor: "#FFFFFF", borderRadius: radius.pill,
-      paddingVertical: 17, alignItems: "center",
-      shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25, shadowRadius: 12, elevation: 8,
-    },
-    btnHandledText: { fontSize: 16, color: "#C0392B", ...fonts.medium },
-    btnResponding: {
-      backgroundColor: "rgba(255,255,255,0.15)",
-      borderRadius: radius.pill, borderWidth: 1.5,
-      borderColor: "rgba(255,255,255,0.4)",
-      paddingVertical: 16, alignItems: "center",
-    },
-    btnRespondingText: { fontSize: 16, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   if (onboardingReady && !onboardingCompleted && !user.patient_id) {
@@ -590,75 +466,13 @@ function CaregiverView({
       )}
 
       {/* ── URGENT ALERT OVERLAY ─────────────────────────────────────────── */}
-      {urgentVisible && (
-        <Animated.View
-          style={[styles.urgentOverlay, { opacity: urgentFadeIn }]}
-          accessibilityViewIsModal
-          accessibilityLiveRegion="assertive"
-        >
-          <LinearGradient
-            colors={["#7B0000", "#C0392B", "#E74C3C"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.3, y: 1 }}
-            style={styles.urgentGradient}
-          >
-            {/* Top — icon + rings + text */}
-            <View style={styles.urgentTop}>
-              {/* Pulsing rings */}
-              <View style={styles.ringContainer}>
-                <Animated.View style={[styles.ringAbsolute, { transform: [{ scale: ring1.scale }], opacity: ring1.opacity }]} />
-                <Animated.View style={[styles.ringAbsolute, { transform: [{ scale: ring2.scale }], opacity: ring2.opacity }]} />
-                <Animated.View style={[styles.ringAbsolute, { transform: [{ scale: ring3.scale }], opacity: ring3.opacity }]} />
-                <View style={styles.urgentIconCircle}>
-                  <Ionicons name="hand-left" size={52} color="#FFFFFF" />
-                </View>
-              </View>
-
-              <Text style={styles.urgentLabel}>Urgent</Text>
-              <Text style={styles.urgentTitle}>Help Requested</Text>
-              <Text style={styles.urgentSubtitle}>
-                Your patient needs immediate assistance. Please respond now.
-              </Text>
-
-              {latestAlert && (
-                <View style={styles.urgentTimeWrap}>
-                  <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.85)" />
-                  <Text style={styles.urgentTime}>{formatRelativeTime(latestAlert.timestamp)}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Bottom — actions */}
-            <View style={styles.urgentBottom}>
-              {pendingHelp.length > 1 && (
-                <View style={styles.urgentCountWrap}>
-                  <Text style={styles.urgentCount}>
-                    {pendingHelp.length} pending request{pendingHelp.length !== 1 ? "s" : ""}
-                  </Text>
-                </View>
-              )}
-              <TouchableOpacity
-                style={styles.btnHandled}
-                onPress={() => setResolveSheetVisible(true)}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Mark this help request as handled"
-              >
-                <Text style={styles.btnHandledText}>Mark as Handled</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.btnResponding}
-                onPress={handleRespondingNow}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="I'm responding now"
-              >
-                <Text style={styles.btnRespondingText}>I'm Responding Now</Text>
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-        </Animated.View>
-      )}
+      <UrgentAlertOverlay
+        visible={urgentVisible}
+        pendingCount={pendingHelp.length}
+        latestTimestamp={latestAlert?.timestamp}
+        onRespond={handleRespondingNow}
+        onMarkHandled={() => setResolveSheetVisible(true)}
+      />
       <ResolveSheet
         visible={resolveSheetVisible}
         onResolve={async (cause: HelpCause, note: string) => {

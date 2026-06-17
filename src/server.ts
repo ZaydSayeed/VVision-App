@@ -41,6 +41,7 @@ import moodRouter from "./server-routes/mood";
 import geofenceRouter, { patientGeofenceRouter } from "./server-routes/geofence";
 import cronRoutes from "./server-routes/cron";
 import consentRoutes from "./server-routes/consent";
+import { initServerObservability, captureServerError } from "./server-core/serverObservability";
 
 const app = express();
 
@@ -168,6 +169,7 @@ app.get("/ready", async (_req, res) => {
 // Global error handler — catches any unhandled errors from routes
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   console.error(`Unhandled error: ${req.method} ${req.path} —`, err?.stack || err);
+  captureServerError(err, { method: req.method, path: req.path });
   if (res.headersSent) return;
   res.status(500).json({ detail: "Internal server error" });
 });
@@ -175,11 +177,13 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 // Catch unhandled promise rejections so server doesn't crash silently
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled promise rejection:", reason);
+  captureServerError(reason);
 });
 
 async function start() {
   try {
     validateConfig();
+    await initServerObservability();
     await connectDb();
     console.log("MongoDB connected");
     startCron();

@@ -8,6 +8,15 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    env:
+      # globalSetup connects to this real Mongo instead of spinning up an
+      # in-memory one (faster, no binary download).
+      TEST_MONGODB_URI: mongodb://localhost:27017
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,6 +27,4 @@ jobs:
       # Typecheck the whole tree — the build (Metro/Babel) strips types without
       # checking them, so this is the only gate against type regressions (CQ-1).
       - run: npm run typecheck
-      # Backend + pure-logic tests. The suite falls back to mongodb-memory-server
-      # when TEST_MONGODB_URI is unset, so no external Mongo is needed in CI.
       - run: npm test

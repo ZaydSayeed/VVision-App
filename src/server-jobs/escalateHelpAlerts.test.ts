@@ -102,6 +102,42 @@ describe("escalateHelpAlerts (job)", () => {
     expect(calls).toBe(0);
   });
 
+  it("does not escalate an alert acknowledged in the find()->claim window (SAFE-2 race)", async () => {
+    // Two open, overdue alerts. While the first is being pushed, a caregiver
+    // acknowledges the SECOND — after find() snapshotted it (so its in-memory
+    // copy still looks open) but before its atomic claim runs. The claim must
+    // re-check the open state and refuse, so the acked alert is never paged.
+    const now = new Date();
+    const p = await db().collection("patients").insertOne({ name: "Mary" });
+    const pid = String(p.insertedId);
+    await db().collection("help_alerts").insertMany([
+      alertAged(now, T1 + 1000, { patient_id: pid, dismissed: false }),
+      alertAged(now, T1 + 1000, { patient_id: pid, dismissed: false }),
+    ]);
+
+    let notifyCalls = 0;
+    const notify = async () => {
+      notifyCalls++;
+      if (notifyCalls === 1) {
+        // The first alert was just claimed (escalation_level set before notify);
+        // ack every still-unclaimed alert to simulate the caregiver responding
+        // mid-batch.
+        await db().collection("help_alerts").updateMany(
+          { escalation_level: { $exists: false } },
+          { $set: { acknowledged: true, acknowledged_at: now.toISOString() } }
+        );
+      }
+      return 1;
+    };
+
+    const escalated = await escalateHelpAlerts(db(), now, notify);
+
+    expect(escalated).toBe(1);       // only the first; the acked one is skipped
+    expect(notifyCalls).toBe(1);     // the acked alert was never paged
+    const acked = await db().collection("help_alerts").findOne({ acknowledged: true });
+    expect(acked?.escalation_level).toBeUndefined(); // never claimed an escalation level
+  });
+
   it("leaves acknowledged alerts alone (escalation stops once someone is responding)", async () => {
     const now = new Date();
     const p = await db().collection("patients").insertOne({ name: "Mary" });

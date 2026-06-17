@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ObjectId } from "mongodb";
+import { ObjectId, Db } from "mongodb";
 import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
@@ -25,6 +25,46 @@ export function alertOut(doc: any) {
   };
 }
 
+export const createHelpAlertSchema = z.object({
+  client_id: z.string().min(1).max(128).optional(),
+});
+
+/**
+ * Insert a help alert idempotently. When the client supplies a stable client_id
+ * (the durable-queue id), a retried POST — e.g. the first response was lost to a
+ * cold-start timeout after the server already committed — resolves to the SAME
+ * alert instead of inserting a duplicate SOS (SAFE-1). `isNew` tells the caller
+ * whether this call actually created the alert, so the caregiver push only fans
+ * out once. Relies on the unique partial index on {patient_id, client_id}.
+ */
+export async function insertHelpAlertIdempotent(
+  db: Db,
+  patient_id: string,
+  clientId?: string
+): Promise<{ doc: any; isNew: boolean }> {
+  const timestamp = new Date().toISOString();
+  if (!clientId) {
+    const base = { patient_id, timestamp, dismissed: false };
+    const result = await db.collection("help_alerts").insertOne(base);
+    return { doc: { ...base, _id: result.insertedId }, isNew: true };
+  }
+  try {
+    const r = await db.collection("help_alerts").updateOne(
+      { patient_id, client_id: clientId },
+      { $setOnInsert: { patient_id, client_id: clientId, timestamp, dismissed: false } },
+      { upsert: true }
+    );
+    if (r.upsertedId) {
+      return { doc: { _id: r.upsertedId, patient_id, client_id: clientId, timestamp, dismissed: false }, isNew: true };
+    }
+  } catch (err: any) {
+    if (err?.code !== 11000) throw err; // not a duplicate-key race — surface it
+  }
+  // Matched an existing alert (sequential retry) or lost a concurrent insert race.
+  const existing = await db.collection("help_alerts").findOne({ patient_id, client_id: clientId });
+  return { doc: existing, isNew: false };
+}
+
 // GET /api/help-alerts
 router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
   try {
@@ -46,13 +86,15 @@ router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
 router.post("/", authMiddleware, resolvePatientId, async (req, res) => {
   try {
     const db = getDb();
-    const doc = {
-      patient_id: req.patientId!,
-      timestamp: new Date().toISOString(),
-      dismissed: false,
-    };
-    const result = await db.collection("help_alerts").insertOne(doc);
-    res.status(201).json(alertOut({ ...doc, _id: result.insertedId }));
+    const parsed = createHelpAlertSchema.safeParse(req.body ?? {});
+    const clientId = parsed.success ? parsed.data.client_id : undefined;
+
+    const { doc, isNew } = await insertHelpAlertIdempotent(db, req.patientId!, clientId);
+    res.status(isNew ? 201 : 200).json(alertOut(doc));
+
+    // A retried (idempotent) POST resolves to the existing alert — the care team
+    // was already paged, so don't fan out a second push or double-page (SAFE-1).
+    if (!isNew) return;
 
     // Fan out a high-priority push to every caregiver. Best-effort and
     // non-blocking: the alert is already persisted (the patient's ack), so a

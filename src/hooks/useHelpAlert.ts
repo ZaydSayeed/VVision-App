@@ -36,8 +36,10 @@ export function useHelpAlert() {
   // once the server acknowledges it, so a tap is never lost offline (SAFE-9).
   const queueRef = useRef<HelpQueue | null>(null);
   if (!queueRef.current) {
-    queueRef.current = createHelpQueue(storageAdapter, async () => {
-      const alert = await createHelpAlert();
+    queueRef.current = createHelpQueue(storageAdapter, async (item) => {
+      // Pass the queue id as an idempotency key so a retried send (after a lost
+      // response) resolves to the same alert server-side instead of duplicating it.
+      const alert = await createHelpAlert(item.id);
       setAlerts((prev) => [alert, ...prev]);
       setSentAt(new Date());
       setSendError(null);

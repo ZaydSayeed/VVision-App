@@ -24,7 +24,7 @@ const baseProps = {
 
 // The overlay schedules haptic setTimeouts when shown; fake timers keep them
 // from leaking past the test and triggering a worker-exit warning.
-beforeEach(() => jest.useFakeTimers());
+beforeEach(() => { jest.useFakeTimers(); });
 afterEach(() => {
   jest.clearAllTimers();
   jest.useRealTimers();

@@ -18,7 +18,6 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Swipeable } from "react-native-gesture-handler";
 import { updateRoutine, authHeaders } from "../../api/client";
 import { RoutineTask } from "../../types";
 import { API_BASE_URL } from "../../config/api";
@@ -33,23 +32,16 @@ import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CheckRow } from "../../components/shared/CheckRow";
-import { SectionHeader } from "../../components/shared/SectionHeader";
 import { TimeSlider } from "../../components/shared/TimeSlider";
-import { fonts, spacing, radius, gradients, shadow } from "../../config/theme";
+import { fonts, spacing, radius, shadow } from "../../config/theme";
 import { registerReminderReload, registerTaskReload, registerMedReload } from "../../utils/reminderEvents";
 import { HeroStatCard } from "../../components/HeroStatCard";
+import { getGreeting } from "../../utils/greeting";
+import { useClock } from "../../hooks/useClock";
 
 const SCREEN_W = Dimensions.get("window").width;
 const SCREEN_H = Dimensions.get("window").height;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
-
-function getGreeting(hour: number): { text: string; icon: keyof typeof Ionicons.glyphMap } {
-  if (hour >= 5 && hour < 12) return { text: "Good morning", icon: "sunny" };
-  if (hour >= 12 && hour < 17) return { text: "Good afternoon", icon: "partly-sunny" };
-  if (hour >= 17 && hour < 21) return { text: "Good evening", icon: "moon" };
-  return { text: "Good night", icon: "moon" };
-}
 
 export function TodayScreen() {
   const { colors } = useTheme();
@@ -57,7 +49,7 @@ export function TodayScreen() {
   const { user } = useAuth();
   const patientId = user?.patient_id ?? undefined;
   const { tasks, addTask, toggleComplete, deleteTask, isCompletedToday, loadError: routineError, reload: reloadRoutine } = useRoutine(patientId);
-  const { meds, addMed, editMed, toggleTaken, deleteMed, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
+  const { meds, addMed, toggleTaken, isTakenToday, loadError: medsError, reload: reloadMeds } = useMeds(patientId);
   const { alerts } = useHelpAlert();
   const { reminders, deleteReminder, reload: reloadReminders } = useReminders();
   useEffect(() => { registerReminderReload(reloadReminders); }, [reloadReminders]);
@@ -74,17 +66,11 @@ export function TodayScreen() {
     setRefreshing(false);
   }, [reloadRoutine, reloadMeds, reloadReminders, reloadNotes]);
 
-  const [clock, setClock] = useState(new Date());
-  useEffect(() => {
-    const t = setInterval(() => setClock(new Date()), 60000);
-    return () => clearInterval(t);
-  }, []);
+  const clock = useClock();
 
   const hour = clock.getHours();
   const greeting = getGreeting(hour);
   const firstName = user?.name?.split(" ")[0] ?? "there";
-  const dayStr = clock.toLocaleDateString([], { weekday: "long" });
-  const dateStr = clock.toLocaleDateString([], { month: "long", day: "numeric" });
 
   const routineDone = tasks.filter(isCompletedToday).length;
   const medsDone = meds.filter(isTakenToday).length;
@@ -154,7 +140,6 @@ export function TodayScreen() {
   const [editLabel, setEditLabel] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editError, setEditError] = useState("");
-  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   async function handleEditTask() {
     if (!editLabel.trim() || !editTime.trim()) { setEditError("Please fill in both fields."); return; }
@@ -171,31 +156,6 @@ export function TodayScreen() {
   // ── Add Med modal ────────────────────────────────────────────
   const [showMedModal, setShowMedModal] = useState(false);
 
-  // ── Edit Med modal ───────────────────────────────────────────
-  const [editingMed, setEditingMed] = useState<import("../../types").Medication | null>(null);
-  useEffect(() => {
-    if (editingMed) {
-      setEditMedName(editingMed.name);
-      setEditMedDosage(editingMed.dosage ?? "");
-      setEditMedTime(editingMed.time ?? "");
-    }
-  }, [editingMed]);
-  const [editMedName, setEditMedName] = useState("");
-  const [editMedDosage, setEditMedDosage] = useState("");
-  const [editMedTime, setEditMedTime] = useState("");
-  const [editMedError, setEditMedError] = useState("");
-  const medSwipeableRefs = useRef<Map<string, import("react-native-gesture-handler").Swipeable>>(new Map());
-
-  async function handleEditMed() {
-    if (!editMedName.trim() || !editMedDosage.trim() || !editMedTime.trim()) { setEditMedError("Please fill in all fields."); return; }
-    setEditMedError("");
-    try {
-      await editMed(editingMed!.id, editMedName.trim(), editMedDosage.trim(), editMedTime.trim());
-      setEditingMed(null); setEditMedError("");
-    } catch {
-      setEditMedError("Couldn't save. Check your connection and try again.");
-    }
-  }
   const [medName, setMedName] = useState("");
   const [medDosage, setMedDosage] = useState("");
   const [medTime, setMedTime] = useState("");
@@ -319,23 +279,6 @@ export function TodayScreen() {
       borderColor: colors.warm,
     },
     notifBadgeText: { fontSize: 9, color: "#FFFFFF", ...fonts.medium },
-    dateRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: spacing.md,
-      gap: spacing.sm,
-    },
-    datePill: {
-      backgroundColor: colors.warmSurface,
-      borderRadius: radius.pill,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 6,
-    },
-    datePillText: {
-      fontSize: 14,
-      color: colors.subtext,
-      ...fonts.medium,
-    },
 
     // ── Progress summary ───────────────────────────────────────
     progressBar: {
@@ -362,8 +305,6 @@ export function TodayScreen() {
 
     // ── Scroll content ─────────────────────────────────────────
     content: { paddingHorizontal: spacing.xl, paddingBottom: 120 },
-
-    section: { marginBottom: spacing.lg },
 
     // ── Note card ──────────────────────────────────────────────
     noteCard: {
@@ -463,70 +404,6 @@ export function TodayScreen() {
     fullCardProgressFill: { height: 5, borderRadius: radius.pill },
     fullCardProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
     fullCardEmpty: { fontSize: 13, color: colors.muted, ...fonts.regular },
-
-    allDoneBanner: {
-      borderRadius: radius.xl,
-      padding: spacing.lg,
-      marginBottom: spacing.md,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
-      overflow: "hidden",
-    },
-    bannerText: {
-      fontSize: 17,
-      color: "#FFFFFF",
-      ...fonts.medium,
-    },
-    bannerSub: {
-      fontSize: 14,
-      color: "rgba(255,255,255,0.85)",
-      ...fonts.regular,
-    },
-
-    emptyCTA: {
-      alignItems: "center",
-      paddingVertical: spacing.xxl,
-      gap: spacing.sm,
-    },
-    emptyBtn: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: spacing.xs,
-    },
-    emptyTitle: {
-      fontSize: 18,
-      color: colors.text,
-      ...fonts.medium,
-    },
-    emptySub: {
-      fontSize: 15,
-      color: colors.muted,
-      ...fonts.regular,
-      textAlign: "center",
-      lineHeight: 22,
-    },
-
-    // ── FAB ────────────────────────────────────────────────────
-    fab: {
-      position: "absolute",
-      bottom: 32,
-      right: 24,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: colors.violet,
-      alignItems: "center",
-      justifyContent: "center",
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 5 },
-      shadowOpacity: 0.4,
-      shadowRadius: 12,
-      elevation: 8,
-    },
 
     // ── Notification panel ─────────────────────────────────────
     backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(11,7,30,0.38)" },
@@ -663,31 +540,6 @@ export function TodayScreen() {
       color: colors.muted,
     },
   }), [colors]);
-
-  const allTasksDone = tasks.length > 0 && tasks.every(isCompletedToday);
-  const allMedsDone = meds.length > 0 && meds.every(isTakenToday);
-
-  // Animated banner entrance — slides down + fades in when all tasks done
-  const taskBannerAnim = useRef(new Animated.Value(0)).current;
-  const medBannerAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(taskBannerAnim, {
-      toValue: allTasksDone ? 1 : 0,
-      useNativeDriver: true,
-      friction: 7,
-      tension: 80,
-    }).start();
-  }, [allTasksDone]);
-
-  useEffect(() => {
-    Animated.spring(medBannerAnim, {
-      toValue: allMedsDone ? 1 : 0,
-      useNativeDriver: true,
-      friction: 7,
-      tension: 80,
-    }).start();
-  }, [allMedsDone]);
 
   return (
     <View style={styles.container}>
@@ -1108,38 +960,6 @@ export function TodayScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* ── Edit Med modal ─────────────────────────────────────── */}
-      <Modal visible={editingMed !== null} transparent animationType="slide">
-        <KeyboardAvoidingView style={[styles.modalOverlay, { paddingTop: insets.top }]} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingMed(null); setEditMedError(""); }} />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Edit Medication</Text>
-            <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>NAME</Text>
-                <TextInput style={styles.input} value={editMedName} onChangeText={setEditMedName} placeholder="e.g. Donepezil" placeholderTextColor={colors.muted} autoFocus />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>DOSAGE</Text>
-                <TextInput style={styles.input} value={editMedDosage} onChangeText={setEditMedDosage} placeholder="e.g. 1 tablet" placeholderTextColor={colors.muted} />
-              </View>
-            </View>
-            <Text style={styles.fieldLabel}>TIME</Text>
-            <TimeSlider value={editMedTime} onChange={setEditMedTime} />
-            {editMedError ? <Text style={styles.error}>{editMedError}</Text> : null}
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnOutline} onPress={() => { setEditingMed(null); setEditMedError(""); }}>
-                <Text style={styles.btnOutlineText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnPrimary} onPress={handleEditMed}>
-                <Text style={styles.btnPrimaryText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
       <NotesHistoryModal
         visible={notesModalVisible}
         notes={caregiverNotes}
@@ -1196,59 +1016,6 @@ export function TodayScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
-  );
-}
-
-function RemindersSection({ reminders, colors, onDelete }: {
-  reminders: import("../../types").Reminder[];
-  colors: import("../../config/theme").AppColors;
-  onDelete: (id: string) => void;
-}) {
-  if (reminders.length === 0) return null;
-  return (
-    <View>
-      {reminders.map((r) => (
-        <View
-          key={r.id}
-          style={{
-            backgroundColor: colors.bg,
-            borderRadius: radius.xl,
-            padding: spacing.md,
-            paddingVertical: 18,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing.md,
-            marginBottom: spacing.md,
-            borderLeftWidth: 4,
-            borderLeftColor: colors.violet,
-            shadowColor: "#7B5CE7",
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.07,
-            shadowRadius: 12,
-            elevation: 3,
-          }}
-        >
-          <Ionicons name="notifications-outline" size={18} color={colors.violet} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 14, color: colors.text, ...fonts.medium }}>{r.text}</Text>
-            {(r.time || r.source) && (
-              <Text style={{ fontSize: 11, color: colors.muted, marginTop: 2, ...fonts.regular }}>
-                {[r.time, r.source === "glasses" ? "via glasses" : "via app"].filter(Boolean).join(" · ")}
-              </Text>
-            )}
-          </View>
-          <TouchableOpacity
-            onPress={() => Alert.alert("Remove reminder?", `"${r.text}" will be removed.`, [
-              { text: "Keep it", style: "cancel" },
-              { text: "Remove", style: "destructive", onPress: () => onDelete(r.id) },
-            ])}
-            style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
-          >
-            <Ionicons name="close" size={18} color={colors.muted} />
-          </TouchableOpacity>
-        </View>
-      ))}
     </View>
   );
 }

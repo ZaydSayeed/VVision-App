@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { useClock } from "../hooks/useClock";
 import { fonts, spacing, gradients } from "../config/theme";
 import { AppUser } from "../types";
 
@@ -16,12 +17,7 @@ interface AppHeaderProps {
 /** Global top header: logo (opens drawer), notifications bell, and the live time banner. */
 export function AppHeader({ onOpenDrawer, notifCount, onOpenNotif }: AppHeaderProps) {
   const { colors, isDark } = useTheme();
-  const [clock, setClock] = useState(new Date());
-
-  useEffect(() => {
-    const t = setInterval(() => setClock(new Date()), 60000);
-    return () => clearInterval(t);
-  }, []);
+  const clock = useClock();
 
   const timeStr = clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const dateStr = clock.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });

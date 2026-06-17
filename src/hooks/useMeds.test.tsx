@@ -1,0 +1,54 @@
+import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { renderHook, act, waitFor } from "@testing-library/react-native";
+import { Alert } from "react-native";
+
+jest.mock("../api/client", () => ({
+  fetchMedications: jest.fn(),
+  createMedication: jest.fn(),
+  updateMedication: jest.fn(),
+  deleteMedication: jest.fn(),
+}));
+
+import { useMeds } from "./useMeds";
+import * as client from "../api/client";
+
+const today = new Date().toISOString().slice(0, 10);
+const baseMed = { id: "m1", name: "Donepezil", dosage: "10mg", time: "8:00 AM", taken_date: null };
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  (client.fetchMedications as jest.Mock).mockResolvedValue([{ ...baseMed }]);
+});
+
+describe("useMeds — optimistic check-off", () => {
+  it("optimistically marks a med taken and keeps it on a successful save", async () => {
+    (client.updateMedication as jest.Mock).mockResolvedValue({ ...baseMed, taken_date: today });
+
+    const { result } = renderHook(() => useMeds());
+    await waitFor(() => expect(result.current.meds).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.toggleTaken("m1");
+    });
+
+    expect(client.updateMedication).toHaveBeenCalledWith("m1", { taken_date: today });
+    expect(result.current.meds[0].taken_date).toBe(today);
+  });
+
+  it("rolls back and alerts when the save fails — never leaves a false 'taken' (SAFE-3)", async () => {
+    (client.updateMedication as jest.Mock).mockRejectedValue(new Error("offline"));
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+
+    const { result } = renderHook(() => useMeds());
+    await waitFor(() => expect(result.current.meds).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.toggleTaken("m1");
+    });
+
+    // The checkbox must NOT claim "taken" when the server never recorded it.
+    expect(result.current.meds[0].taken_date).toBeNull();
+    expect(alertSpy).toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
+});

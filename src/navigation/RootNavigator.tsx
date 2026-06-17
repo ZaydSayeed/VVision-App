@@ -8,7 +8,6 @@ import {
   Animated,
   ScrollView,
   Dimensions,
-  Platform,
   Alert,
   AccessibilityInfo,
 } from "react-native";
@@ -16,13 +15,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
-import { setOnNetworkChange, authHeaders } from "../api/client";
-import { API_BASE_URL } from "../config/api";
+import { setOnNetworkChange } from "../api/client";
 import { LoginScreen } from "../screens/LoginScreen";
 import { CaregiverTabNavigator } from "./CaregiverTabNavigator";
 import { PatientTabNavigator } from "./PatientTabNavigator";
@@ -49,10 +46,10 @@ import { BackgroundDecor } from "../components/BackgroundDecor";
 import { AppHeader } from "../components/AppHeader";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { useReducedMotion } from "../hooks/useReducedMotion";
+import { usePushRegistration } from "../hooks/usePushRegistration";
+import { useInviteDeepLink } from "../hooks/useInviteDeepLink";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Linking from "expo-linking";
-import { navigationRef } from "./navigationRef";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { HealthOnboardingScreen } from "../screens/patient/HealthOnboardingScreen";
 import { useOnboarding } from "../hooks/useOnboarding";
@@ -87,8 +84,6 @@ export function RootNavigator() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [visionOpen, setVisionOpen] = useState(false);
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const pushRegisteredRef = useRef(false);
-  const patientPushRegisteredRef = useRef(false);
 
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
@@ -116,42 +111,11 @@ export function RootNavigator() {
     });
   }, [user]);
 
-  // Cold start: check if app was opened via an invite link.
-  // Runs once — user may still be loading, so always save to AsyncStorage.
-  // Authenticated users are navigated by the pendingInviteToken effect once the stack mounts;
-  // unauthenticated users get the token picked up after login.
-  useEffect(() => {
-    Linking.getInitialURL().then((url) => {
-      if (!url) return;
-      const match = url.match(/\/invite\/([a-f0-9]+)/);
-      if (!match) return;
-      AsyncStorage.setItem("@vela/pending_invite", match[1]);
-    });
-  }, []);
+  // Invite deep links (cold start / foreground / post-login) — see hook.
+  useInviteDeepLink(user, pendingInviteToken, clearPendingInviteToken, onboardingDone);
 
-  // Foreground: handle invite URL when app is already running.
-  useEffect(() => {
-    function handleForegroundUrl({ url }: { url: string }) {
-      const match = url.match(/\/invite\/([a-f0-9]+)/);
-      if (!match) return;
-      const token = match[1];
-      if (user && navigationRef.isReady()) {
-        (navigationRef.navigate as Function)("AcceptInvite", { token });
-      } else {
-        AsyncStorage.setItem("@vela/pending_invite", token);
-      }
-    }
-    const subscription = Linking.addEventListener("url", handleForegroundUrl);
-    return () => subscription.remove();
-  }, [user]);
-
-  // After login: navigate to AcceptInvite when pendingInviteToken is set.
-  // onboardingDone is a dep so this re-runs once the navigator stack is mounted.
-  useEffect(() => {
-    if (!pendingInviteToken || !navigationRef.isReady()) return;
-    (navigationRef.navigate as Function)("AcceptInvite", { token: pendingInviteToken });
-    clearPendingInviteToken();
-  }, [pendingInviteToken, clearPendingInviteToken, onboardingDone]);
+  // Expo push-token registration (caregiver livestream + patient reminders).
+  usePushRegistration(user);
 
   useEffect(() => {
     setOnNetworkChange(setOffline);
@@ -166,87 +130,6 @@ export function RootNavigator() {
       }).start();
     }
   }, [loading]);
-
-  // Register Expo push token once when a caregiver logs in (for livestream invites)
-  useEffect(() => {
-    if (!user || user.role !== "caregiver" || pushRegisteredRef.current) return;
-    pushRegisteredRef.current = true;
-
-    (async () => {
-      try {
-        if (Platform.OS === "android") {
-          await Notifications.setNotificationChannelAsync("livestream", {
-            name: "Live View Requests",
-            importance: Notifications.AndroidImportance.MAX,
-          });
-        }
-        const { status: existing } = await Notifications.getPermissionsAsync();
-        let finalStatus = existing;
-        if (existing !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-        if (finalStatus !== "granted") {
-          const notifAlertKey = `@vela/notif_alert_shown:${user.id}`;
-          const alreadyShown = await AsyncStorage.getItem(notifAlertKey);
-          if (!alreadyShown) {
-            await AsyncStorage.setItem(notifAlertKey, "1");
-            Alert.alert(
-              "Notifications off",
-              "To get help alerts, go to Settings → Notifications → Vela Vision and turn on notifications.",
-              [{ text: "OK" }]
-            );
-          }
-          return;
-        }
-        const projectId =
-          Constants.expoConfig?.extra?.eas?.projectId ??
-          Constants.easConfig?.projectId;
-        const tokenData = await Notifications.getExpoPushTokenAsync(
-          projectId ? { projectId } : undefined
-        );
-        await fetch(`${API_BASE_URL}/api/stream/register-push-token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
-          body: JSON.stringify({ expoPushToken: tokenData.data }),
-        });
-      } catch (err) {
-        console.error("Push token registration failed (non-fatal):", err);
-      }
-    })();
-  }, [user]);
-
-  // Register Expo push token for patient (for reminder notifications)
-  useEffect(() => {
-    if (!user || user.role !== "patient" || patientPushRegisteredRef.current) return;
-    patientPushRegisteredRef.current = true;
-
-    (async () => {
-      try {
-        const { status: existing } = await Notifications.getPermissionsAsync();
-        let finalStatus = existing;
-        if (existing !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-        if (finalStatus !== "granted") return;
-
-        const projectId =
-          Constants.expoConfig?.extra?.eas?.projectId ??
-          Constants.easConfig?.projectId;
-        const tokenData = await Notifications.getExpoPushTokenAsync(
-          projectId ? { projectId } : undefined
-        );
-        await fetch(`${API_BASE_URL}/api/notifications/register-patient-token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
-          body: JSON.stringify({ expoPushToken: tokenData.data }),
-        });
-      } catch (err) {
-        console.error("Patient push token registration failed (non-fatal):", err);
-      }
-    })();
-  }, [user]);
 
   const styles = useMemo(() => StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg },

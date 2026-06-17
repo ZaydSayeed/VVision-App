@@ -11,10 +11,12 @@ const patchSchema = z
   .object({
     healthMetrics: z.boolean().optional(),
     activityPatterns: z.boolean().optional(),
+    aiAssistant: z.boolean().optional(),
   })
-  .refine((d) => d.healthMetrics !== undefined || d.activityPatterns !== undefined, {
-    message: "Provide at least one consent category",
-  });
+  .refine(
+    (d) => d.healthMetrics !== undefined || d.activityPatterns !== undefined || d.aiAssistant !== undefined,
+    { message: "Provide at least one consent category" }
+  );
 
 // GET /api/profiles/:patientId/consent — patient or a caregiver with access.
 router.get("/:patientId/consent", authMiddleware, requirePatientAccess, async (req, res) => {

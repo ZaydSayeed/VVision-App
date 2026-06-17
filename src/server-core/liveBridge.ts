@@ -2,13 +2,21 @@ import { WebSocketServer, WebSocket } from "ws";
 import { Server as HTTPServer, IncomingMessage } from "http";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { config } from "./config";
+import { verifyLiveToken } from "./liveToken";
 
 export function attachLiveBridge(server: HTTPServer) {
   const wss = new WebSocketServer({ noServer: true });
 
   server.on("upgrade", (req, socket, head) => {
     if (!req.url?.startsWith("/api/live/ws")) return;
-    // TODO: validate auth (Supabase JWT in Sec-WebSocket-Protocol header or query)
+    // Authorize the WS with the short-lived signed token minted by the authed
+    // /api/live/session endpoint — otherwise this is an open AI relay (SEC-01).
+    const token = new URL(req.url, "http://localhost").searchParams.get("token") ?? "";
+    if (!verifyLiveToken(token, config.liveWsSecret)) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
     wss.handleUpgrade(req, socket, head, (ws) => bridgeClient(ws, req));
   });
 }

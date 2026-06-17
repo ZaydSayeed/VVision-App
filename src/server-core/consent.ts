@@ -7,8 +7,8 @@ import { Db } from "mongodb";
  * explicitly enabled. Both the patient and a caregiver with access can change
  * it, and every change records who/when so it is never covert.
  */
-export type ConsentCategory = "healthMetrics" | "activityPatterns";
-export const CONSENT_CATEGORIES: ConsentCategory[] = ["healthMetrics", "activityPatterns"];
+export type ConsentCategory = "healthMetrics" | "activityPatterns" | "aiAssistant";
+export const CONSENT_CATEGORIES: ConsentCategory[] = ["healthMetrics", "activityPatterns", "aiAssistant"];
 
 /** Behavioral-biomarker event kinds gated by the activityPatterns consent. */
 export const BIOMARKER_EVENT_KINDS = ["gait", "typing_cadence", "voice_sample"];
@@ -16,6 +16,7 @@ export const BIOMARKER_EVENT_KINDS = ["gait", "typing_cadence", "voice_sample"];
 export interface ConsentState {
   healthMetrics: boolean;
   activityPatterns: boolean;
+  aiAssistant: boolean;
   updatedAt: string | null;
   updatedBy: string | null;
   updatedByRole: string | null;
@@ -30,6 +31,7 @@ export function defaultConsent(): ConsentState {
   return {
     healthMetrics: false,
     activityPatterns: false,
+    aiAssistant: false,
     updatedAt: null,
     updatedBy: null,
     updatedByRole: null,
@@ -73,6 +75,7 @@ function toState(doc: any): ConsentState {
   return {
     healthMetrics: !!doc.healthMetrics,
     activityPatterns: !!doc.activityPatterns,
+    aiAssistant: !!doc.aiAssistant,
     updatedAt: doc.updatedAt ?? null,
     updatedBy: doc.updatedBy ?? null,
     updatedByRole: doc.updatedByRole ?? null,

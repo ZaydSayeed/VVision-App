@@ -23,15 +23,22 @@
         "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
         "NSMicrophoneUsageDescription": "Vela Vision uses the microphone for voice check-ins with your care team.",
         "NSMotionUsageDescription": "Vela uses motion data to detect activity patterns for your care team.",
-        "NSHomeKitUsageDescription": "Vela uses HomeKit to watch for motion and door events that help detect wandering or sundowning.",
         "NSLocationWhenInUseUsageDescription": "Vela uses your location to let your care team know if you leave your safe zone.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vela uses your location in the background to alert your care team if you leave your safe zone.",
         "UIBackgroundModes": [
           "fetch"
         ],
-        "NSHealthShareUsageDescription": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing.",
+        "NSHealthShareUsageDescription": "Vela shares general wellness trends (steps, heart rate, sleep, activity) with your care team. Not for medical or diagnostic use.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIDesignRequiresCompatibility": true
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
       }
     },
     "android": {

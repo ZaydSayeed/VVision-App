@@ -1,47 +1,12 @@
-import { Router, Request, Response, NextFunction } from "express";
-import { ObjectId } from "mongodb";
+import { Router } from "express";
 import { z } from "zod";
 import { authMiddleware } from "../server-core/security";
+import { requirePatientAccess } from "../server-core/seatResolver";
 import { addMemory, searchMemory } from "../server-core/memory";
 import { getDb } from "../server-core/database";
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../server-core/config";
-
-// Accepts caregivers linked via seats OR via the legacy caregiver_ids link system
-async function requirePatientAccess(req: Request, res: Response, next: NextFunction) {
-  const userId = (req as any).auth?.userId;
-  const patientId = String(req.params.patientId);
-  if (!userId || !patientId) { res.status(401).json({ detail: "Unauthorized" }); return; }
-  const db = getDb();
-
-  // Check seats first (Plan A invite system)
-  const seat = await db.collection("seats").findOne({ userId, patientId });
-  if (seat) {
-    req.seat = { userId: seat.userId, patientId: seat.patientId, role: seat.role };
-    next(); return;
-  }
-
-  // Fall back to legacy caregiver_ids link
-  if (ObjectId.isValid(patientId)) {
-    const patient = await db.collection("patients").findOne({ _id: new ObjectId(patientId) });
-    if (patient) {
-      const ids: string[] = patient.caregiver_ids ?? [];
-      if (ids.includes(userId)) {
-        req.seat = { userId, patientId, role: "primary_caregiver" };
-        next(); return;
-      }
-    }
-  }
-
-  // Fall back to users.patient_id link (same mechanism /api/patients/linked uses)
-  const user = await db.collection("users").findOne({ supabase_uid: userId });
-  if (user && String(user.patient_id) === patientId) {
-    req.seat = { userId, patientId, role: "primary_caregiver" };
-    next(); return;
-  }
-
-  res.status(403).json({ detail: "No access to this profile" });
-}
+import { getConsent, hasConsent } from "../server-core/consent";
 
 export const memoryAddSchema = z.object({
   content: z.string().min(1).max(5000),
@@ -76,12 +41,16 @@ router.post("/:patientId/memory", authMiddleware, requirePatientAccess, async (r
       });
     }
 
-    // Best-effort Mem0 write for semantic memory; don't fail the request if it errors
+    // Best-effort Mem0 (third-party AI) write — only with AI consent (SEC-02).
+    // The local checkin_logs record above is the user's own data and always kept.
     let result: unknown = null;
-    try {
-      result = await addMemory({ patientId: String(req.params.patientId), content: parsed.data.content, metadata });
-    } catch (memErr: any) {
-      console.warn("mem0 add skipped:", memErr.message);
+    const aiConsented = hasConsent(await getConsent(getDb(), String(req.params.patientId)), "aiAssistant");
+    if (aiConsented) {
+      try {
+        result = await addMemory({ patientId: String(req.params.patientId), content: parsed.data.content, metadata });
+      } catch (memErr: any) {
+        console.warn("mem0 add skipped:", memErr.message);
+      }
     }
 
     res.status(201).json({ ok: true, result });
@@ -120,6 +89,10 @@ router.post("/:patientId/memory/logs/summarize", authMiddleware, requirePatientA
   if (!config.geminiApiKey) { res.status(503).json({ detail: "Gemini API key not configured" }); return; }
   try {
     const db = getDb();
+    if (!hasConsent(await getConsent(db, String(req.params.patientId)), "aiAssistant")) {
+      res.status(403).json({ detail: "AI features are turned off for this profile." });
+      return;
+    }
     // Get up to 30 recent logs (excluding the current one) for trend context
     const recentLogs = await db.collection("checkin_logs")
       .find({ patientId: String(req.params.patientId), capturedAt: { $lt: parsed.data.capturedAt } })
@@ -177,6 +150,10 @@ router.get("/:patientId/memory/search", authMiddleware, requirePatientAccess, as
   const parsed = memorySearchSchema.safeParse(req.query);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
   try {
+    if (!hasConsent(await getConsent(getDb(), String(req.params.patientId)), "aiAssistant")) {
+      res.json({ results: [] });
+      return;
+    }
     const result = await searchMemory({
       patientId: String(req.params.patientId),
       query: parsed.data.q,

@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      # Typecheck the whole tree — the build (Metro/Babel) strips types without
+      # checking them, so this is the only gate against type regressions (CQ-1).
+      - run: npm run typecheck
+      # Backend + pure-logic tests. The suite falls back to mongodb-memory-server
+      # when TEST_MONGODB_URI is unset, so no external Mongo is needed in CI.
+      - run: npm test

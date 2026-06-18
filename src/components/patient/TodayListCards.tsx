@@ -14,6 +14,7 @@ function useFullCardStyles() {
       marginBottom: spacing.lg,
       backgroundColor: colors.bg,
       borderRadius: radius.xl,
+      overflow: "hidden",
       padding: spacing.lg,
       paddingLeft: spacing.lg + 4,
       ...shadow.md,

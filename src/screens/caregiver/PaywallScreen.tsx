@@ -381,8 +381,8 @@ export default function PaywallScreen({ navigation }: any) {
     );
   }
 
-  const starter = packages.find((p) => p.product.identifier.includes("starter"));
-  const unlimited = packages.find((p) => p.product.identifier.includes("unlimited"));
+  const starter = packages.find((p) => p.product.identifier.toLowerCase().includes("starter"));
+  const unlimited = packages.find((p) => p.product.identifier.toLowerCase().includes("unlimited"));
 
   return (
     <ScrollView

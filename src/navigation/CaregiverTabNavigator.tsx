@@ -3,20 +3,15 @@ import { StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { TimelineScreen } from "../screens/TimelineScreen";
-import { PeopleScreen } from "../screens/PeopleScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
 import { PatientsTab } from "../screens/caregiver/PatientsTab";
 import { AddCaregiverScreen } from "../screens/caregiver/AddCaregiverScreen";
-import { useDashboardData } from "../hooks/useDashboardData";
 import { fonts } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 
 const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
-  Timeline: "list",
-  People: "people",
   Alerts: "notifications",
   Patients: "pulse",
   "Care Team": "person-add",
@@ -29,7 +24,6 @@ interface CaregiverTabNavigatorProps {
 export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigatorProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { people, alerts, stats, timeline, loading, refresh } = useDashboardData();
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
@@ -76,31 +70,14 @@ export function CaregiverTabNavigator({ helpPendingCount }: CaregiverTabNavigato
           <Ionicons name={iconNames[route.name]} size={26} color={color} />
         ),
         tabBarBadge:
-          route.name === "Alerts" && (alerts.length + helpPendingCount) > 0
-            ? alerts.length + helpPendingCount
+          route.name === "Alerts" && helpPendingCount > 0
+            ? helpPendingCount
             : undefined,
         tabBarBadgeStyle: styles.tabBadge,
       })}
     >
-      <Tab.Screen name="Timeline">
-        {() => (
-          <TimelineScreen
-            stats={stats}
-            timeline={timeline}
-            loading={loading}
-            onRefresh={refresh}
-          />
-        )}
-      </Tab.Screen>
-      <Tab.Screen name="People">
-        {() => (
-          <PeopleScreen people={people} loading={loading} onRefresh={refresh} />
-        )}
-      </Tab.Screen>
       <Tab.Screen name="Alerts">
-        {() => (
-          <AlertsScreen alerts={alerts} loading={loading} onRefresh={refresh} />
-        )}
+        {() => <AlertsScreen />}
       </Tab.Screen>
       <Tab.Screen name="Patients" component={PatientsTab} />
       <Tab.Screen name="Care Team" component={AddCaregiverScreen} />

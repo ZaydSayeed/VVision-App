@@ -8,7 +8,7 @@ import { useHealthTrends } from "../../hooks/useHealthTrends";
 import { MetricCard } from "../../components/health/MetricCard";
 import { RangeToggle, Range } from "../../components/health/RangeToggle";
 
-const EMPTY_HINT = "No data yet — patient hasn't connected a wearable.";
+const EMPTY_HINT = "No data yet — patient hasn't connected Apple Health.";
 
 export function CaregiverHealthScreen() {
   const { colors } = useTheme();

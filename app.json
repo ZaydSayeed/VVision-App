@@ -21,8 +21,6 @@
       ],
       "buildNumber": "12",
       "infoPlist": {
-        "NSCameraUsageDescription": "Vela Vision needs camera access to add face photos for recognition.",
-        "NSPhotoLibraryUsageDescription": "Vela Vision needs photo library access to select face photos.",
         "NSMicrophoneUsageDescription": "Vela Vision uses the microphone for voice check-ins with your care team.",
         "NSMotionUsageDescription": "Vela uses motion data to detect activity patterns for your care team.",
         "NSLocationWhenInUseUsageDescription": "Vela uses your location to let your care team know if you leave your safe zone.",
@@ -50,10 +48,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0e1a"
       },
-      "package": "com.velavision.caregiver",
-      "permissions": [
-        "android.permission.CAMERA"
-      ]
+      "package": "com.velavision.caregiver"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vela Vision — iPad App Store Slides</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F4EEFC;
+    --surface: #F7F5FF;
+    --violet: #7B5CE7;
+    --lavender: #A695F5;
+    --violet50: #F0EEFF;
+    --violet100: #D8D0FF;
+    --text: #1E1B3A;
+    --subtext: #3D3560;
+    --muted: #9590B0;
+    --border: #E8E4F5;
+    --warm: #FDF8F3;
+    --warm-surface: #F5EFE6;
+    --sage: #5C8E7A;
+    --sage-soft: #EAF4EF;
+    --amber: #E8934A;
+    --amber-soft: #FEF3E8;
+    --coral: #D95F5F;
+    --coral-soft: #FDEAEA;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #1A1630;
+    padding: 48px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+  }
+
+  h1.page-title {
+    color: #C4B8FF;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .slides-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 60px;
+    justify-content: center;
+  }
+
+  .slide-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .slide-label {
+    color: #9B90B8;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* ── iPad shell ── */
+  .ipad {
+    width: 520px;
+    height: 700px;
+    border-radius: 28px;
+    background: #1C1C1E;
+    position: relative;
+    box-shadow:
+      0 0 0 1px #3A3A3C,
+      0 0 0 2px #2C2C2E,
+      0 50px 100px rgba(0,0,0,0.7),
+      0 10px 30px rgba(123,92,231,0.2);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Side buttons */
+  .ipad::before {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 100px;
+    width: 3px;
+    height: 60px;
+    background: #3A3A3C;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .ipad-screen {
+    position: absolute;
+    inset: 10px;
+    border-radius: 20px;
+    background: var(--bg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Camera pill at top */
+  .ipad-camera {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2C2C2E;
+    z-index: 30;
+  }
+
+  /* ── Status bar ── */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 8px;
+    flex-shrink: 0;
+  }
+
+  .status-bar .time {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .status-icons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  /* ── App header ── */
+  .app-header {
+    background: linear-gradient(90deg, #7B5CE7, #A695F5);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .app-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  .app-header-logo img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+
+  .app-header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    background: var(--warm);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    padding-top: 10px;
+    flex-shrink: 0;
+  }
+
+  .tab-bar.light-bg { background: var(--bg); border-top-color: var(--border); }
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .tab-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  .tab-label { font-size: 10px; font-weight: 500; color: var(--muted); }
+  .tab-label.active { color: var(--violet); }
+
+  .tab-fab {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #D95F5F, #E87878);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(217,95,95,0.45);
+    z-index: 10;
+  }
+
+  .badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 15px; height: 15px;
+    border-radius: 8px;
+    background: var(--coral);
+    border: 2px solid var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: #fff; font-weight: 600;
+  }
+
+  /* ── Slide 1: Patient Today ── */
+  .s1-greeting {
+    padding: 12px 20px 10px;
+    background: var(--warm);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .s1-greeting-left { display: flex; align-items: center; gap: 10px; }
+  .s1-greeting-sub { font-size: 13px; color: var(--muted); }
+  .s1-greeting-name { font-size: 26px; color: var(--violet); font-weight: 500; line-height: 1.1; }
+
+  .s1-notif-btn {
+    width: 40px; height: 40px; border-radius: 20px;
+    background: var(--warm-surface);
+    display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;
+  }
+
+  .hero-card {
+    margin: 4px 16px 10px;
+    background: linear-gradient(135deg, #7B5CE7 0%, #A695F5 100%);
+    border-radius: 20px;
+    padding: 14px;
+    box-shadow: 0 8px 24px rgba(123,92,231,0.28);
+  }
+
+  .hero-card-top { display: flex; gap: 10px; margin-bottom: 12px; }
+
+  .hero-stat {
+    flex: 1;
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 9px 11px;
+  }
+
+  .hero-stat-label {
+    font-size: 9px; color: rgba(255,255,255,0.7);
+    font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .hero-stat-value { font-size: 18px; color: #fff; font-weight: 500; }
+
+  .hero-card-cta {
+    background: rgba(255,255,255,0.2);
+    border-radius: 999px;
+    padding: 7px 14px;
+    text-align: center;
+    font-size: 12px; color: #fff; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+
+  .mood-card {
+    margin: 0 16px 8px;
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 12px;
+  }
+
+  .mood-q { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 8px; }
+  .mood-row { display: flex; justify-content: space-around; }
+  .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .mood-emoji { font-size: 22px; }
+  .mood-label { font-size: 9px; color: var(--muted); }
+
+  .full-card {
+    margin: 0 16px 8px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 12px 12px 12px 16px;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(123,92,231,0.10);
+    overflow: hidden;
+  }
+
+  .full-card-accent {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    border-radius: 18px 0 0 18px;
+  }
+
+  .full-card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .full-card-title { font-size: 9px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; flex: 1; }
+  .full-card-pill { padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 500; }
+  .full-card-plus { width: 22px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #fff; font-weight: 400; line-height: 1; }
+
+  .full-card-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+
+  .checkbox { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .checkbox.unchecked { border: 1.5px solid; }
+
+  .item-text { font-size: 12px; color: var(--text); }
+  .item-text.done { color: var(--muted); text-decoration: line-through; }
+
+  .progress-track { height: 4px; border-radius: 999px; background: var(--surface); margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 999px; }
+  .progress-text { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Slide 2: Caregiver Timeline ── */
+  .timeline-header { padding: 12px 20px 8px; background: var(--bg); }
+  .timeline-title { font-size: 20px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+  .timeline-date { font-size: 12px; color: var(--muted); }
+
+  .stat-strip {
+    display: flex;
+    margin: 0 16px 12px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 0;
+    box-shadow: 0 4px 14px rgba(123,92,231,0.10);
+  }
+
+  .stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .stat-item + .stat-item { border-left: 1px solid var(--border); }
+  .stat-num { font-size: 22px; color: var(--text); font-weight: 500; }
+  .stat-lbl { font-size: 9px; color: var(--muted); letter-spacing: 0.3px; }
+
+  .tl-section-label {
+    font-size: 9px; color: var(--violet); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.6px;
+    margin: 0 0 6px 20px;
+    border-left: 2px solid var(--violet);
+    padding-left: 8px;
+  }
+
+  .tl-event {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 16px 6px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 10px 12px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 3px 12px rgba(123,92,231,0.08);
+  }
+
+  .tl-event-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .tl-icon-ring { width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .tl-event-body { flex: 1; }
+  .tl-event-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 1px; }
+  .tl-event-sub { font-size: 10px; color: var(--muted); }
+  .tl-event-time { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+
+  /* ── Slide 3: Alerts ── */
+  .alerts-header {
+    padding: 12px 20px 8px; background: var(--bg);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .alerts-title { font-size: 20px; color: var(--text); font-weight: 500; }
+
+  .alert-card-help {
+    margin: 0 16px 8px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 12px 12px 12px 16px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 3px 14px rgba(217,95,95,0.12);
+  }
+
+  .alert-card-ai {
+    margin: 0 16px 8px;
+    background: #1A1630;
+    border-radius: 18px;
+    padding: 12px 12px 12px 16px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 4px 22px rgba(123,92,231,0.25), 0 0 0 1px rgba(155,139,255,0.15);
+  }
+
+  .alert-card-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+
+  .alert-card-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .alert-icon-ring { width: 34px; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .alert-body { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .alert-title.light { color: var(--text); }
+  .alert-title.dark-text { color: #F5F0E8; }
+  .alert-sub { font-size: 10px; color: var(--muted); }
+  .alert-sub.dark-sub { color: #9B90B8; }
+
+  .alert-badge { padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 500; }
+
+  .alert-action-btn {
+    border-radius: 999px; padding: 7px 0;
+    text-align: center; font-size: 12px; font-weight: 500; margin-top: 2px;
+  }
+
+  .section-label-row {
+    font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.4px;
+    padding: 6px 0 6px;
+    border-left: 2px solid;
+    margin: 0 0 0 20px;
+    padding-left: 8px;
+  }
+
+  /* slide text */
+  .slide-text-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .slide-headline { font-size: 13px; font-weight: 600; color: #E8E4F5; text-align: center; max-width: 420px; line-height: 1.4; }
+  .slide-sub { font-size: 11px; color: #6B6490; text-align: center; max-width: 380px; line-height: 1.5; margin-top: 2px; }
+
+  svg { display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Vela Vision · iPad App Store Preview Slides</h1>
+
+<div class="slides-grid">
+
+  <!-- ═══ SLIDE 1 — Patient Today ═══ -->
+  <div class="slide-wrap">
+    <span class="slide-label">Slide 1 · Patient — Today</span>
+    <div class="ipad">
+      <div class="ipad-camera"></div>
+      <div class="ipad-screen">
+
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="#1E1B3A"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="#1E1B3A"/><rect x="9" y="0" width="3" height="12" rx="1" fill="#1E1B3A"/><rect x="13.5" y="0" width="2.5" height="12" rx="1" fill="#1E1B3A" opacity=".3"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#1E1B3A" stroke-opacity=".35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#1E1B3A"/></svg>
+          </div>
+        </div>
+
+        <div class="app-header">
+          <span class="app-header-logo">
+            <img src="file:///Users/haadisiddiqui/Desktop/VelaVision_BrandPackage/01_Icon/VelaVision_Icon_White.svg" alt="">
+            Vela Vision
+          </span>
+          <div class="app-header-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="s1-greeting">
+          <div class="s1-greeting-left">
+            <svg width="44" height="44" viewBox="0 0 40 40" fill="none">
+              <ellipse cx="20" cy="10" rx="5" ry="8" fill="#D8D0FF"/>
+              <ellipse cx="20" cy="30" rx="5" ry="8" fill="#D8D0FF"/>
+              <ellipse cx="10" cy="20" rx="8" ry="5" fill="#D8D0FF"/>
+              <ellipse cx="30" cy="20" rx="8" ry="5" fill="#D8D0FF"/>
+              <ellipse cx="13" cy="13" rx="5" ry="8" fill="#A695F5" transform="rotate(-45 13 13)"/>
+              <ellipse cx="27" cy="13" rx="5" ry="8" fill="#A695F5" transform="rotate(45 27 13)"/>
+              <ellipse cx="13" cy="27" rx="5" ry="8" fill="#A695F5" transform="rotate(45 13 27)"/>
+              <ellipse cx="27" cy="27" rx="5" ry="8" fill="#A695F5" transform="rotate(-45 27 27)"/>
+              <circle cx="20" cy="20" r="6" fill="#7B5CE7"/>
+            </svg>
+            <div>
+              <div class="s1-greeting-sub">Good morning,</div>
+              <div class="s1-greeting-name">Margaret</div>
+            </div>
+          </div>
+          <div class="s1-notif-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#7B5CE7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div class="badge" style="top:6px;right:6px;">3</div>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-card-top">
+            <div class="hero-stat">
+              <div class="hero-stat-label">Routine</div>
+              <div class="hero-stat-value">2 of 4</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-label">Meds</div>
+              <div class="hero-stat-value">1 of 3</div>
+            </div>
+          </div>
+          <div class="hero-card-cta">See today's schedule</div>
+        </div>
+
+        <div class="mood-card">
+          <div class="mood-q">How are you feeling today?</div>
+          <div class="mood-row">
+            <div class="mood-btn"><span class="mood-emoji">😊</span><span class="mood-label">Happy</span></div>
+            <div class="mood-btn"><span class="mood-emoji">😴</span><span class="mood-label">Tired</span></div>
+            <div class="mood-btn"><span class="mood-emoji">😕</span><span class="mood-label">Confused</span></div>
+            <div class="mood-btn"><span class="mood-emoji">😢</span><span class="mood-label">Sad</span></div>
+          </div>
+        </div>
+
+        <div class="full-card">
+          <div class="full-card-accent" style="background:var(--amber);"></div>
+          <div class="full-card-header">
+            <span class="full-card-title" style="color:var(--amber);">Medications</span>
+            <span class="full-card-pill" style="background:var(--amber-soft);color:var(--amber);">1 of 3 taken</span>
+            <div class="full-card-plus" style="background:var(--amber);">+</div>
+          </div>
+          <div class="full-card-item">
+            <div class="checkbox" style="background:var(--amber);"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="item-text done">Donepezil · 10mg</span>
+          </div>
+          <div class="full-card-item">
+            <div class="checkbox unchecked" style="border-color:var(--amber);"></div>
+            <span class="item-text">Memantine · 5mg</span>
+          </div>
+          <div class="full-card-item">
+            <div class="checkbox unchecked" style="border-color:var(--amber);"></div>
+            <span class="item-text">Vitamin D · 1 capsule</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="background:var(--amber);width:33%;"></div></div>
+          <div class="progress-text">1 of 3 taken</div>
+        </div>
+
+        <div class="full-card">
+          <div class="full-card-accent" style="background:var(--sage);"></div>
+          <div class="full-card-header">
+            <span class="full-card-title" style="color:var(--sage);">Tasks</span>
+            <span class="full-card-pill" style="background:var(--sage-soft);color:var(--sage);">2 of 4 done</span>
+            <div class="full-card-plus" style="background:var(--sage);">+</div>
+          </div>
+          <div class="full-card-item">
+            <div class="checkbox" style="background:var(--sage);"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="item-text done">Morning walk</span>
+          </div>
+          <div class="full-card-item">
+            <div class="checkbox unchecked" style="border-color:var(--sage);"></div>
+            <span class="item-text">Call daughter</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="background:var(--sage);width:50%;"></div></div>
+          <div class="progress-text">2 of 4 done</div>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#7B5CE7"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <span class="tab-label active">Today</span>
+          </div>
+          <div class="tab-item" style="position:relative;">
+            <div class="tab-fab">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM3 20a6 6 0 0 1 12 0v1H3v-1z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0" stroke-linecap="round"/></svg></div>
+            <span class="tab-label">Faces</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-text-wrap">
+      <div class="slide-headline">Your daily routine, beautifully organized</div>
+      <div class="slide-sub">Track tasks and medications at a glance</div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 2 — Caregiver Timeline ═══ -->
+  <div class="slide-wrap">
+    <span class="slide-label">Slide 2 · Caregiver — Timeline</span>
+    <div class="ipad">
+      <div class="ipad-camera"></div>
+      <div class="ipad-screen" style="background:var(--bg);">
+
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#1E1B3A" stroke-opacity=".35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#1E1B3A"/></svg>
+          </div>
+        </div>
+
+        <div class="app-header">
+          <span class="app-header-logo">
+            <img src="file:///Users/haadisiddiqui/Desktop/VelaVision_BrandPackage/01_Icon/VelaVision_Icon_White.svg" alt="">
+            Vela Vision
+          </span>
+          <div class="app-header-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="timeline-header">
+          <div class="timeline-title">Today at a Glance</div>
+          <div class="timeline-date">Sunday, May 11</div>
+        </div>
+
+        <div class="stat-strip">
+          <div class="stat-item"><div class="stat-num" style="color:var(--sage);">4</div><div class="stat-lbl">Seen Today</div></div>
+          <div class="stat-item"><div class="stat-num" style="color:var(--coral);">1</div><div class="stat-lbl">Alerts</div></div>
+          <div class="stat-item"><div class="stat-num" style="color:var(--violet);">7</div><div class="stat-lbl">Most Visits</div></div>
+        </div>
+
+        <div class="tl-section-label">Activity Feed</div>
+
+        <div class="tl-event">
+          <div class="tl-event-accent" style="background:var(--sage);"></div>
+          <div class="tl-icon-ring" style="background:var(--sage-soft);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#5C8E7A" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="#5C8E7A" stroke-width="2"/></svg>
+          </div>
+          <div class="tl-event-body">
+            <div class="tl-event-title">Sarah seen</div>
+            <div class="tl-event-sub">Daughter · Seen 3× today</div>
+          </div>
+          <div class="tl-event-time">9:14 AM</div>
+        </div>
+
+        <div class="tl-event">
+          <div class="tl-event-accent" style="background:var(--violet);"></div>
+          <div class="tl-icon-ring" style="background:var(--violet50);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#7B5CE7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="tl-event-body">
+            <div class="tl-event-title">Medication reminder</div>
+            <div class="tl-event-sub">Interaction recorded via app</div>
+          </div>
+          <div class="tl-event-time">8:30 AM</div>
+        </div>
+
+        <div class="tl-event">
+          <div class="tl-event-accent" style="background:var(--coral);"></div>
+          <div class="tl-icon-ring" style="background:var(--coral-soft);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#D95F5F" stroke-width="2"/><path d="M12 8v4M12 16h.01" stroke="#D95F5F" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <div class="tl-event-body">
+            <div class="tl-event-title">Unrecognized face</div>
+            <div class="tl-event-sub">AI alert · via glasses</div>
+          </div>
+          <div class="tl-event-time">7:52 AM</div>
+        </div>
+
+        <div class="tl-event">
+          <div class="tl-event-accent" style="background:var(--sage);"></div>
+          <div class="tl-icon-ring" style="background:var(--sage-soft);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#5C8E7A" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="#5C8E7A" stroke-width="2"/></svg>
+          </div>
+          <div class="tl-event-body">
+            <div class="tl-event-title">James seen</div>
+            <div class="tl-event-sub">Son · Seen 1× today</div>
+          </div>
+          <div class="tl-event-time">7:10 AM</div>
+        </div>
+
+        <div class="tab-bar light-bg">
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#7B5CE7"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="#7B5CE7" stroke-width="2"/><path d="M3 9h18" stroke="#7B5CE7" stroke-width="2"/></svg></div>
+            <span class="tab-label active">Timeline</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <span class="tab-label">People</span>
+          </div>
+          <div class="tab-item" style="position:relative;">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+            <div class="badge" style="border-color:var(--bg);">1</div>
+            <span class="tab-label">Alerts</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0" stroke-linecap="round"/></svg></div>
+            <span class="tab-label">Patients</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg></div>
+            <span class="tab-label">Care Team</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-text-wrap">
+      <div class="slide-headline">See everything happening in real time</div>
+      <div class="slide-sub">Face recognition events, meds, and activity — all in one feed</div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 3 — Caregiver Alerts ═══ -->
+  <div class="slide-wrap">
+    <span class="slide-label">Slide 3 · Caregiver — Alerts</span>
+    <div class="ipad">
+      <div class="ipad-camera"></div>
+      <div class="ipad-screen" style="background:var(--bg);">
+
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <div class="status-icons">
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#1E1B3A" stroke-opacity=".35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="#1E1B3A"/></svg>
+          </div>
+        </div>
+
+        <div class="app-header">
+          <span class="app-header-logo">
+            <img src="file:///Users/haadisiddiqui/Desktop/VelaVision_BrandPackage/01_Icon/VelaVision_Icon_White.svg" alt="">
+            Vela Vision
+          </span>
+          <div class="app-header-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="alerts-header">
+          <div>
+            <div class="alerts-title">Alerts</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">2 need attention</div>
+          </div>
+          <div style="background:var(--coral-soft);border-radius:999px;padding:4px 12px;font-size:11px;color:var(--coral);font-weight:500;">2 new</div>
+        </div>
+
+        <div class="section-label-row" style="color:var(--coral);border-color:var(--coral);">Help Requests</div>
+
+        <div class="alert-card-help">
+          <div class="alert-card-accent" style="background:var(--coral);"></div>
+          <div class="alert-card-top">
+            <div class="alert-icon-ring" style="background:var(--coral-soft);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM3 20a6 6 0 0 1 12 0v1H3v-1z" stroke="#D95F5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="alert-body">
+              <div class="alert-title light">Margaret needs help</div>
+              <div class="alert-sub">Today · 9:32 AM · via app</div>
+            </div>
+            <div class="alert-badge" style="background:var(--coral-soft);color:var(--coral);">Pending</div>
+          </div>
+          <div class="alert-action-btn" style="background:var(--coral);color:#fff;">Mark as Handled</div>
+        </div>
+
+        <div class="section-label-row" style="color:#9B8BFF;border-color:#9B8BFF;margin-top:4px;">AI Face Detection</div>
+
+        <div class="alert-card-ai">
+          <div class="alert-card-accent" style="background:linear-gradient(180deg,#9B8BFF,#7B5CE7);"></div>
+          <div class="alert-card-top">
+            <div class="alert-icon-ring" style="background:rgba(123,92,231,0.2);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9B8BFF" stroke-width="1.5"/><circle cx="12" cy="12" r="5" stroke="#9B8BFF" stroke-width="1.5"/><circle cx="12" cy="12" r="1.5" fill="#9B8BFF"/></svg>
+            </div>
+            <div class="alert-body">
+              <div class="alert-title dark-text">Unrecognized face</div>
+              <div class="alert-sub dark-sub">AI Alert · 7:52 AM · via glasses</div>
+            </div>
+            <div class="alert-badge" style="background:rgba(155,139,255,0.15);color:#9B8BFF;border:1px solid rgba(155,139,255,0.3);">AI Alert</div>
+          </div>
+          <div class="alert-action-btn" style="background:rgba(123,92,231,0.25);color:#C4B8FF;border:1px solid rgba(155,139,255,0.2);">Dismiss</div>
+        </div>
+
+        <div class="alert-card-ai" style="opacity:0.6;">
+          <div class="alert-card-accent" style="background:linear-gradient(180deg,#9B8BFF,#7B5CE7);"></div>
+          <div class="alert-card-top">
+            <div class="alert-icon-ring" style="background:rgba(123,92,231,0.2);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9B8BFF" stroke-width="1.5"/><circle cx="12" cy="12" r="5" stroke="#9B8BFF" stroke-width="1.5"/><circle cx="12" cy="12" r="1.5" fill="#9B8BFF"/></svg>
+            </div>
+            <div class="alert-body">
+              <div class="alert-title dark-text">Unrecognized face</div>
+              <div class="alert-sub dark-sub">AI Alert · 6:15 AM · via glasses</div>
+            </div>
+            <div class="alert-badge" style="background:rgba(155,139,255,0.15);color:#9B8BFF;border:1px solid rgba(155,139,255,0.3);">AI Alert</div>
+          </div>
+        </div>
+
+        <div class="tab-bar light-bg">
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></div>
+            <span class="tab-label">Timeline</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <span class="tab-label">People</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#7B5CE7"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="#7B5CE7" stroke-width="1"/></svg></div>
+            <span class="tab-label active">Alerts</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0" stroke-linecap="round"/></svg></div>
+            <span class="tab-label">Patients</span>
+          </div>
+          <div class="tab-item">
+            <div class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9590B0" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg></div>
+            <span class="tab-label">Care Team</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-text-wrap">
+      <div class="slide-headline">Never miss a moment that matters</div>
+      <div class="slide-sub">AI-powered alerts when your loved one needs you</div>
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center;margin-top:40px;margin-bottom:32px;">
+  <div style="font-size:11px;color:#4A4268;letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Sans',sans-serif;">Vela Vision · 3 iPad App Store Preview Slides</div>
+</div>
+
+</body>
+</html>

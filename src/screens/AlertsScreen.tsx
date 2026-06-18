@@ -10,23 +10,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
-import { dismissAlert } from "../api/client";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { EmptyState } from "../components/shared/EmptyState";
 import { spacing, fonts, radius } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
-import { Alert as AlertType } from "../types";
-import { formatRelativeTime, formatTimeShort } from "../hooks/useDashboardData";
+import { formatRelativeTime } from "../hooks/useDashboardData";
 import { useNavigation } from "@react-navigation/native";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 
-interface AlertsScreenProps {
-  alerts: AlertType[];
-  loading: boolean;
-  onRefresh: () => void;
-}
-
-export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) {
+export function AlertsScreen() {
   const { colors } = useTheme();
   const { alerts: helpAlerts, dismissAlert: dismissHelp, resolveAlert, reload: reloadHelp } = useHelpAlert();
   // Acknowledged ("someone is responding") alerts drop out of the active list;
@@ -34,23 +26,12 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
   const pendingHelp = helpAlerts.filter((a) => !a.dismissed && !a.acknowledged);
   const navigation = useNavigation();
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(() => {
-    onRefresh();
-    reloadHelp();
-  }, [onRefresh, reloadHelp]);
-
-  async function handleDismissApiAlert(id: string) {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      await dismissAlert(id);
-      onRefresh();
-    } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      // Refresh anyway — the next poll will reconcile state
-      onRefresh();
-    }
-  }
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await reloadHelp(); } finally { setRefreshing(false); }
+  }, [reloadHelp]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -147,85 +128,6 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
       ...fonts.medium,
     },
 
-    // ── Face Recognition Card (AI identity) ─────────────────
-    faceCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.xl,
-      padding: spacing.xl,
-      marginBottom: spacing.sm,
-      borderWidth: 1,
-      borderColor: colors.violet100,
-      shadowColor: colors.violet,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.10,
-      shadowRadius: 24,
-      elevation: 5,
-    },
-    faceTop: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: spacing.md,
-      marginBottom: spacing.md,
-    },
-    faceIconWrap: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: colors.violet50,
-      borderWidth: 1.5,
-      borderColor: colors.violet300,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    faceInfo: { flex: 1 },
-    faceTitle: {
-      fontSize: 16,
-      color: colors.text,
-      ...fonts.medium,
-    },
-    faceBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      marginTop: 4,
-    },
-    faceBadgeDot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors.violet,
-    },
-    faceBadgeText: {
-      fontSize: 11,
-      color: colors.violet,
-      ...fonts.medium,
-      letterSpacing: 0.5,
-      textTransform: "uppercase",
-    },
-    faceTime: {
-      fontSize: 13,
-      color: colors.muted,
-      ...fonts.regular,
-    },
-    faceDivider: {
-      height: 1,
-      backgroundColor: colors.border,
-      marginBottom: spacing.md,
-    },
-    faceDismissBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: spacing.sm,
-      backgroundColor: colors.violet50,
-      borderRadius: radius.pill,
-      paddingVertical: 10,
-    },
-    faceDismissText: {
-      fontSize: 13,
-      color: colors.violet,
-      ...fonts.medium,
-    },
     historyCard: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -285,7 +187,7 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
     },
   }), [colors]);
 
-  const totalAlerts = alerts.length + pendingHelp.length;
+  const totalAlerts = pendingHelp.length;
 
   return (
     <View style={styles.container}>
@@ -301,7 +203,7 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={colors.violet} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.violet} />
         }
       >
         {/* ── Help Requests ── */}
@@ -384,46 +286,6 @@ export function AlertsScreen({ alerts, loading, onRefresh }: AlertsScreenProps) 
             </View>
           );
         })()}
-
-        {/* ── Face Recognition Alerts ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionLabelRow}>
-            <View style={[styles.sectionDot, { backgroundColor: colors.violet }]} />
-            <Text style={[styles.sectionLabel, { color: colors.violet }]}>AI Detection</Text>
-          </View>
-          {alerts.length === 0 ? (
-            <EmptyState icon="scan-circle" title="No alerts" subtitle="All detected faces are recognized" />
-          ) : (
-            alerts.map((alert) => (
-              <View key={alert.id ?? alert._id} style={styles.faceCard}>
-                <View style={styles.faceTop}>
-                  <View style={styles.faceIconWrap}>
-                    <Ionicons name="scan-circle" size={26} color={colors.violet} />
-                  </View>
-                  <View style={styles.faceInfo}>
-                    <Text style={styles.faceTitle}>Unrecognized person detected</Text>
-                    <View style={styles.faceBadge}>
-                      <View style={styles.faceBadgeDot} />
-                      <Text style={styles.faceBadgeText}>AI Alert</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.faceTime}>{formatTimeShort(alert.timestamp)}</Text>
-                </View>
-                <View style={styles.faceDivider} />
-                <TouchableOpacity
-                  style={styles.faceDismissBtn}
-                  onPress={() => handleDismissApiAlert(alert.id ?? alert._id ?? "")}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityLabel="Dismiss AI face detection alert"
-                >
-                  <Ionicons name="checkmark-circle" size={15} color={colors.violet} />
-                  <Text style={styles.faceDismissText}>Dismiss</Text>
-                </TouchableOpacity>
-              </View>
-            ))
-          )}
-        </View>
       </ScrollView>
       <ResolveSheet
         visible={resolvingId !== null}

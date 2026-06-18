@@ -1,10 +1,10 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { TodayScreen } from "../screens/patient/TodayScreen";
-import { FacesScreen } from "../screens/patient/FacesScreen";
 import { HelpScreen } from "../screens/patient/HelpScreen";
 import { HealthScreen } from "../screens/patient/HealthScreen";
 import { RoutineScreen } from "../screens/patient/RoutineScreen";
@@ -19,7 +19,6 @@ const Tab = createBottomTabNavigator();
 
 const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
   Home: "home",
-  Faces: "people",
   Help: "hand-left",
   Routine: "list-outline",
   Health: "pulse",
@@ -27,13 +26,14 @@ const iconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const styles = useMemo(() => StyleSheet.create({
     tabBar: {
       position: "absolute",
-      left: 16,
-      right: 16,
-      bottom: 14,
+      left: 20,
+      right: 20,
+      bottom: Math.max(insets.bottom, 14),
       backgroundColor: colors.warm,
       borderTopWidth: 0,
       borderWidth: 1,
@@ -58,7 +58,7 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       justifyContent: "center",
     },
     fabButton: {
-      top: -20,
+      top: -34,
       width: 64,
       height: 64,
       borderRadius: 32,
@@ -81,7 +81,8 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
     fabLabel: {
       fontSize: 13,
       ...fonts.medium,
-      marginTop: 2,
+      position: "absolute",
+      bottom: 3,
     },
   }), [colors]);
 
@@ -101,7 +102,6 @@ export function PatientTabNavigator({ patientName }: PatientTabNavigatorProps) {
       })}
     >
       <Tab.Screen name="Home" component={TodayScreen} />
-      <Tab.Screen name="Faces" component={FacesScreen} />
       <Tab.Screen
         name="Help"
         options={{

@@ -1,6 +1,7 @@
 import { Db } from "mongodb";
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../server-core/config";
+import { rulebookFor, CAREGIVER_APP } from "../server-core/rulebook";
 
 interface SummaryInput {
   patientName: string;
@@ -27,6 +28,7 @@ async function generateOneLiner(context: string): Promise<string> {
   const result = await genai.models.generateContent({
     model: "gemini-2.0-flash",
     contents: `You are writing a one-line morning summary for a family caregiver about their loved one with dementia. Be warm, concise (under 20 words), and factual. No emojis. Data: ${context}`,
+    config: { systemInstruction: rulebookFor(CAREGIVER_APP) },
   });
   return (result.text ?? context).trim().replace(/\.$/, "");
 }

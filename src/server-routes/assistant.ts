@@ -5,6 +5,7 @@ import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
 import { config } from "../server-core/config";
+import { rulebookFor, PATIENT_APP } from "../server-core/rulebook";
 import rateLimit from "express-rate-limit";
 
 const router = Router();
@@ -63,7 +64,9 @@ router.post("/chat", chatLimiter, authMiddleware, resolvePatientId, async (req, 
       .map((c) => `${c.role === "user" ? firstName : "Vision"}: ${c.content}`)
       .join("\n");
 
-    const systemPrompt = `You are Vision, a warm and patient AI assistant built into smart glasses and a companion app for someone who needs help remembering things.
+    const systemPrompt = `${rulebookFor(PATIENT_APP)}
+
+You are Vision, a warm and patient AI assistant built into smart glasses and a companion app for someone who needs help remembering things.
 
 Keep responses to 1-3 short sentences. Use a warm, reassuring tone.
 Never give medical advice. Never mention that you are AI.

@@ -6,6 +6,7 @@ import { addMemory, searchMemory } from "../server-core/memory";
 import { getDb } from "../server-core/database";
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../server-core/config";
+import { rulebookFor, CAREGIVER_APP } from "../server-core/rulebook";
 
 // Accepts caregivers linked via seats OR via the legacy caregiver_ids link system
 async function requirePatientAccess(req: Request, res: Response, next: NextFunction) {
@@ -154,6 +155,7 @@ Return ONLY the JSON object, no markdown or other text.`;
     const response = await genai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { systemInstruction: rulebookFor(CAREGIVER_APP) },
     });
 
     const raw = response.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";

@@ -11,6 +11,7 @@ import { buildReportBuffer, ReportInput, ReportBiomarker, ReportCheckInLog } fro
 import { sendReportEmail } from "../server-core/reportEmail";
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../server-core/config";
+import { rulebookFor, CAREGIVER_APP } from "../server-core/rulebook";
 
 const reportSchema = z.object({
   startDate: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
@@ -77,6 +78,7 @@ async function gatherAndBuild(patientId: string, startDate: string, endDate: str
       const response = await genai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: { systemInstruction: rulebookFor(CAREGIVER_APP) },
       });
       aiSummary = response.candidates?.[0]?.content?.parts?.[0]?.text ?? aiSummary;
     } catch (e: any) {

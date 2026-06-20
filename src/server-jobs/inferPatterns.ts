@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Db } from "mongodb";
 import { config } from "../server-core/config";
 import { patternSchema } from "../server-routes/patterns";
+import { rulebookFor, CAREGIVER_APP } from "../server-core/rulebook";
 
 export function parseGeminiResponse(raw: string) {
   const cleaned = raw.replace(/^```json\n?/, "").replace(/\n?```$/, "").trim();
@@ -39,6 +40,7 @@ export async function inferPatternsForPatient(db: Db, patientId: string) {
   const result = await genai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: prompt,
+    config: { systemInstruction: rulebookFor(CAREGIVER_APP) },
   });
   const text = result.text ?? "";
   return parseGeminiResponse(text);

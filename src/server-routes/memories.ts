@@ -7,6 +7,7 @@ import { getDb } from "../server-core/database";
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../server-core/config";
 import { getConsent, hasConsent } from "../server-core/consent";
+import { rulebookFor, CAREGIVER_APP } from "../server-core/rulebook";
 
 export const memoryAddSchema = z.object({
   content: z.string().min(1).max(5000),
@@ -127,6 +128,7 @@ Return ONLY the JSON object, no markdown or other text.`;
     const response = await genai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { systemInstruction: rulebookFor(CAREGIVER_APP) },
     });
 
     const raw = response.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { requireSeat } from "../server-core/seatResolver";
@@ -40,27 +39,10 @@ router.get("/:patientId/subscription", authMiddleware, requireSeat, async (req, 
   }
 });
 
-const statusUpdateSchema = z.object({
-  tier: z.enum(["free", "starter", "unlimited"]),
-  status: z.enum(["active", "expired", "past_due", "canceled"]),
-  expiresAt: z.string().optional(),
-});
-
-router.post("/:patientId/subscription", authMiddleware, requireSeat, async (req, res) => {
-  const parsed = statusUpdateSchema.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
-  try {
-    const db = getDb();
-    await db.collection("subscriptions").updateOne(
-      { patientId: req.params.patientId as string },
-      { $set: { ...parsed.data, patientId: req.params.patientId as string, updatedAt: new Date().toISOString() } },
-      { upsert: true }
-    );
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("sub update error:", err);
-    res.status(500).json({ detail: "Internal server error" });
-  }
-});
+// NOTE: there is intentionally NO client-writable subscription endpoint.
+// Entitlement state (tier/status) is the source of truth for the paywall and the
+// seat-invite gate, so it is written ONLY by the signature-verified RevenueCat
+// webhook (src/server-routes/revenueCatWebhook.ts). A client-facing write here
+// would let any seat holder self-grant "unlimited" and bypass billing.
 
 export default router;

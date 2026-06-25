@@ -26,29 +26,43 @@ export async function resolveSeatForRequest(
   return { userId: seat.userId, patientId: seat.patientId, role: seat.role };
 }
 
+// Resolves whether `userId` may access `patientId` via any of the supported
+// mechanisms — a seat, the legacy caregiver_ids array, or the user's own
+// patient_id — returning the effective role, or null if there is no access.
+// Use this anywhere a route authorizes against a patientId that does NOT come
+// from a requireSeat/requirePatientAccess-guarded :patientId path param.
+export async function userHasPatientAccess(
+  db: Db,
+  userId: string,
+  patientId: string
+): Promise<SeatRole | null> {
+  const seat = await db.collection("seats").findOne({ userId, patientId });
+  if (seat) return seat.role as SeatRole;
+
+  if (ObjectId.isValid(patientId)) {
+    const patient = await db.collection("patients").findOne({ _id: new ObjectId(patientId) });
+    const ids: string[] = patient?.caregiver_ids ?? [];
+    if (ids.includes(userId)) return "primary_caregiver";
+  }
+
+  const user = await db.collection("users").findOne({ supabase_uid: userId });
+  if (user && String(user.patient_id) === patientId) return "primary_caregiver";
+
+  return null;
+}
+
 // Like requireSeat but also accepts caregivers linked via the legacy caregiver_ids system
 export function requirePatientAccess(req: Request, res: Response, next: NextFunction): void {
   const run = async () => {
     const userId = (req as any).auth?.userId;
     const patientId = String(req.params.patientId);
     if (!userId || !patientId) { res.status(401).json({ detail: "Unauthorized" }); return; }
-    const db = getDb();
 
-    const seat = await db.collection("seats").findOne({ userId, patientId });
-    if (seat) { req.seat = { userId: seat.userId, patientId: seat.patientId, role: seat.role }; next(); return; }
+    const role = await userHasPatientAccess(getDb(), userId, patientId);
+    if (!role) { res.status(403).json({ detail: "No seat on this profile" }); return; }
 
-    if (ObjectId.isValid(patientId)) {
-      const patient = await db.collection("patients").findOne({ _id: new ObjectId(patientId) });
-      if (patient) {
-        const ids: string[] = patient.caregiver_ids ?? [];
-        if (ids.includes(userId)) { req.seat = { userId, patientId, role: "primary_caregiver" }; next(); return; }
-      }
-    }
-
-    const user = await db.collection("users").findOne({ supabase_uid: userId });
-    if (user && String(user.patient_id) === patientId) { req.seat = { userId, patientId, role: "primary_caregiver" }; next(); return; }
-
-    res.status(403).json({ detail: "No seat on this profile" });
+    req.seat = { userId, patientId, role };
+    next();
   };
   run().catch(next);
 }

@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
+import { userHasPatientAccess } from "../server-core/seatResolver";
 
 const router = Router();
 
@@ -74,8 +75,14 @@ router.post("/", authMiddleware, async (req, res) => {
   if (!user) return;
   if (user.role !== "caregiver") return res.status(403).json({ detail: "Only caregivers can create notes" });
 
+  const db = getDb();
+  // Verify the caller is actually linked to this patient before writing/mutating
+  // their care notes — otherwise any caregiver could forge or unpin notes on any
+  // patient by supplying an arbitrary patientId.
+  const access = await userHasPatientAccess(db, user.supabaseUid, patientId);
+  if (!access) return res.status(403).json({ detail: "Not authorized to add notes for this patient" });
+
   try {
-    const db = getDb();
     if (pinned) {
       await db.collection("caregiver_notes").updateMany(
         { patientId },

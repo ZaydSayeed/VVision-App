@@ -40,7 +40,24 @@ router.patch("/:patientId/consent", authMiddleware, requirePatientAccess, async 
     const db = getDb();
     const patientId = String(req.params.patientId);
     const requester = await db.collection("users").findOne({ supabase_uid: req.auth!.userId });
-    const role = requester?.role === "patient" ? "patient" : req.seat?.role ?? "caregiver";
+    const isPatient = requester?.role === "patient" && String(requester?.patient_id) === patientId;
+
+    // Changing consent is a regulated PHI data-sharing decision: these flags gate
+    // HealthKit collection (health.ts), behavioral-biomarker storage (events.ts),
+    // and third-party Mem0 sharing (memories.ts). Restrict the WRITE to the patient
+    // or their PRIMARY caregiver — not sibling/paid_aide/clinician seats or stale
+    // caregiver_ids links. (GET stays open to anyone with access.)
+    const primarySeat = await db.collection("seats").findOne({
+      userId: req.auth!.userId,
+      patientId,
+      role: "primary_caregiver",
+    });
+    if (!isPatient && !primarySeat) {
+      res.status(403).json({ detail: "Only the patient or primary caregiver can change consent" });
+      return;
+    }
+
+    const role = isPatient ? "patient" : "primary_caregiver";
 
     const current = await getConsent(db, patientId);
     const next = applyConsentUpdate(

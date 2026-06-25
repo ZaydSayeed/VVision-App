@@ -119,6 +119,14 @@ router.patch("/:id/pin", authMiddleware, async (req, res) => {
     const note = await db.collection("caregiver_notes").findOne({ _id: noteId });
     if (!note) return res.status(404).json({ detail: "Note not found" });
 
+    // Authorize BEFORE any mutation — otherwise the unpin updateMany below runs
+    // against the note's patient even when the caller doesn't own it, letting a
+    // caregiver clear another family's pinned notes cross-tenant. Pin is
+    // author-only (matches the scoped updateOne and the DELETE handler).
+    if (String(note.caregiverId) !== user.supabaseUid) {
+      return res.status(403).json({ detail: "Not authorized to pin this note" });
+    }
+
     const newPinned = !note.pinned;
     if (newPinned) {
       await db.collection("caregiver_notes").updateMany(

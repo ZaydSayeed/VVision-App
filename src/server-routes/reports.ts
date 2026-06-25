@@ -37,10 +37,11 @@ async function gatherAndBuild(patientId: string, startDate: string, endDate: str
   const patientName = patient?.name ?? "Unknown Patient";
   const stage = patient?.stage ?? null;
 
-  // Fetch visit if provided
+  // Fetch visit if provided — scoped to this patient so a caller can't pull
+  // another patient's visit metadata into the report via an arbitrary visitId.
   let visit: ReportInput["visit"] = null;
   if (visitId && ObjectId.isValid(visitId)) {
-    const v = await db.collection("visits").findOne({ _id: new ObjectId(visitId) });
+    const v = await db.collection("visits").findOne({ _id: new ObjectId(visitId), patientId });
     if (v) visit = { providerName: v.providerName, scheduledFor: v.scheduledFor };
   }
 
@@ -194,7 +195,12 @@ router.post("/:patientId/report/email", authMiddleware, requirePatientAccess, as
   if (!ObjectId.isValid(parsed.data.doctorId)) { res.status(400).json({ detail: "Invalid doctor id" }); return; }
   try {
     const db = getDb();
-    const doctor = await db.collection("doctors").findOne({ _id: new ObjectId(parsed.data.doctorId) });
+    // Scope the recipient to this patient's own doctors — prevents emailing the
+    // report to (or enumerating) another family's doctor record.
+    const doctor = await db.collection("doctors").findOne({
+      _id: new ObjectId(parsed.data.doctorId),
+      patientId: String(req.params.patientId),
+    });
     if (!doctor) { res.status(404).json({ detail: "Doctor not found" }); return; }
 
     const { buffer, input } = await gatherAndBuild(

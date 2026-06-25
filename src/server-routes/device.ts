@@ -1,22 +1,12 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { requirePatientAccess } from "../server-core/seatResolver";
-
-function deviceTokenAuth(req: Request, res: Response, next: NextFunction): void {
-  const expected = process.env.DVISION_PATIENT_TOKEN;
-  const provided = req.headers.authorization?.replace("Bearer ", "");
-  if (!expected || provided !== expected) {
-    res.status(401).json({ detail: "Invalid device token" });
-    return;
-  }
-  next();
-}
+import { deviceTokenAuth } from "../server-core/deviceAuth";
 
 const alertSchema = z.object({
-  patient_id: z.string().min(1),
   type: z.string().min(1),
   message: z.string().min(1),
   priority: z.number().int().min(1).max(4),
@@ -118,7 +108,10 @@ router.post("/alert", deviceTokenAuth, async (req: Request, res: Response) => {
     return;
   }
 
-  const { patient_id, type, message, priority } = parsed.data;
+  const { type, message, priority } = parsed.data;
+  // Patient is bound to the authenticated device via device_links — never taken
+  // from the request body (prevents forging alerts for arbitrary patients).
+  const patient_id = req.patientId!;
 
   try {
     const db = getDb();

@@ -5,34 +5,16 @@ import { Router, Request, Response, NextFunction } from "express";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
+import { deviceTokenAuth, isDeviceTokenRequest } from "../server-core/deviceAuth";
 
 const router = Router();
 
-// ── Patient device token auth ─────────────────────────────────────────────
-// Used by glasses (no Supabase). DVISION_PATIENT_TOKEN must match .env on glasses.
-function deviceTokenAuth(req: Request, res: Response, next: NextFunction): void {
-  const expected = process.env.DVISION_PATIENT_TOKEN;
-  const provided = req.headers.authorization?.replace("Bearer ", "");
-  if (!expected || provided !== expected) {
-    res.status(401).json({ detail: "Invalid device token" });
-    return;
-  }
-  req.patientId = (req.params?.patientId ?? req.query.patientId ?? req.body?.patientId) as string;
-  if (!req.patientId) {
-    res.status(400).json({ detail: "patientId required" });
-    return;
-  }
-  next();
-}
-
 // ── Either auth (caregiver JWT or glasses device token) ───────────────────
+// Device callers are scoped to the patient bound to their device_code; caregiver
+// callers are scoped to their own linked patient. Neither path trusts a
+// request-supplied patientId.
 function eitherAuth(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization ?? "";
-  const expectedDevice = process.env.DVISION_PATIENT_TOKEN;
-  const isDeviceToken =
-    expectedDevice && authHeader === `Bearer ${expectedDevice}`;
-
-  if (isDeviceToken) {
+  if (isDeviceTokenRequest(req)) {
     deviceTokenAuth(req, res, next);
     return;
   }
@@ -274,7 +256,7 @@ router.get("/status/:patientId", eitherAuth, async (req, res) => {
       res.json({ status: null });
       return;
     }
-    const isDeviceCaller = req.headers.authorization === `Bearer ${process.env.DVISION_PATIENT_TOKEN}`;
+    const isDeviceCaller = isDeviceTokenRequest(req);
     const response: Record<string, unknown> = {
       status: session.status,
       initiatedBy: session.initiatedBy,

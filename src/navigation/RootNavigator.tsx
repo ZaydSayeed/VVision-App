@@ -40,6 +40,8 @@ import { UrgentAlertOverlay } from "../components/UrgentAlertOverlay";
 import { useHelpAlert } from "../hooks/useHelpAlert";
 import { usePushRegistration } from "../hooks/usePushRegistration";
 import { useInviteDeepLink } from "../hooks/useInviteDeepLink";
+import { usePasswordResetDeepLink } from "../hooks/usePasswordResetDeepLink";
+import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
@@ -70,7 +72,7 @@ const SCREEN_H = Dimensions.get("window").height;
 const PANEL_W = SCREEN_W * 0.85;
 
 export function RootNavigator() {
-  const { user, loading, pendingInviteToken, clearPendingInviteToken } = useAuth();
+  const { user, loading, pendingInviteToken, clearPendingInviteToken, recoveryMode, startRecovery } = useAuth();
   const { colors, isDark } = useTheme();
   const { setOffline } = useNetwork();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -105,6 +107,9 @@ export function RootNavigator() {
 
   // Invite deep links (cold start / foreground / post-login) — see hook.
   useInviteDeepLink(user, pendingInviteToken, clearPendingInviteToken, onboardingDone);
+
+  // Password-reset deep links — opens ResetPasswordScreen via recoveryMode.
+  usePasswordResetDeepLink(startRecovery);
 
   // Expo push-token registration (caregiver livestream + patient reminders).
   usePushRegistration(user);
@@ -153,6 +158,8 @@ export function RootNavigator() {
       </View>
     );
   }
+
+  if (recoveryMode) return <ResetPasswordScreen />;
 
   if (!user) return <LoginScreen />;
 

@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from "react";
 import { AppState, AppStateStatus, Alert } from "react-native";
+import * as Linking from "expo-linking";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../config/supabase";
 import { AppUser, UserRole } from "../types";
@@ -30,6 +31,9 @@ interface AuthContextValue {
   resetPassword: (email: string) => Promise<void>;
   pendingInviteToken: string | null;
   clearPendingInviteToken: () => void;
+  recoveryMode: boolean;
+  startRecovery: (accessToken: string, refreshToken: string) => Promise<void>;
+  endRecovery: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -54,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingInviteToken, setPendingInviteToken] = useState<string | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef<AppUser | null>(null);
 
@@ -78,6 +83,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearPendingInviteToken = useCallback(() => {
     setPendingInviteToken(null);
+  }, []);
+
+  // Password-recovery deep link: establish the temporary recovery session and
+  // flag recovery mode so the navigator shows ResetPasswordScreen instead of
+  // dropping the user into the app on a half-initialized session.
+  const startRecovery = useCallback(async (accessToken: string, refreshToken: string) => {
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error) throw new Error(error.message);
+    setRecoveryMode(true);
+  }, []);
+
+  // Leave recovery mode and sign out so the user logs in fresh with the new
+  // password (a clean login runs the full profile sync that recovery skips).
+  const endRecovery = useCallback(async () => {
+    setRecoveryMode(false);
+    await supabase.auth.signOut();
+    setAuthToken(null); setAuthFetchToken(null);
+    setUser(null);
   }, []);
 
   // Track app foreground/background to manage session timeout
@@ -264,13 +290,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Account recovery — removes the permanent-lockout path for caregivers (FAIL-3).
   const resetPassword = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const redirectTo = Linking.createURL("reset-password");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     if (error) throw new Error(error.message);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken }),
-    [user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken]
+    () => ({ user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken, recoveryMode, startRecovery, endRecovery }),
+    [user, loading, login, signup, logout, updateUser, resetPassword, pendingInviteToken, clearPendingInviteToken, recoveryMode, startRecovery, endRecovery]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

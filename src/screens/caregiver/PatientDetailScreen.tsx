@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Animated,
   Alert,
-  Modal,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +19,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { SectionHeader } from "../../components/shared/SectionHeader";
 import { EmptyState } from "../../components/shared/EmptyState";
 import { ExportFlowSheet } from "../../components/ExportFlowSheet";
+import { SafeZoneMapEditor } from "../../components/SafeZoneMapEditor";
 import { fonts, spacing, radius } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { API_BASE_URL } from "../../config/api";
@@ -68,10 +69,33 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const [exportOpen, setExportOpen] = useState(false);
-  const { tasks, isCompletedToday } = useRoutine(patientId);
-  const { meds, isTakenToday } = useMeds(patientId);
-  const { alerts, dismissAlert } = useHelpAlert();
+  const { tasks, isCompletedToday, reload: reloadTasks } = useRoutine(patientId);
+  const { meds, isTakenToday, reload: reloadMeds } = useMeds(patientId);
+  const { alerts, dismissAlert, reload: reloadAlerts } = useHelpAlert();
   const [liveLoading, setLiveLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // The caregiver's view of a patient must reflect what the patient just added.
+  // Re-pull meds/tasks/alerts on open, on pull-to-refresh, and every 15s while the
+  // screen is open — otherwise a single stale first load (e.g. a Render cold-start
+  // timeout that serves cached data) would stick and new patient items never show.
+  const refreshData = React.useCallback(async () => {
+    await Promise.allSettled([reloadTasks(), reloadMeds(), reloadAlerts()]);
+  }, [reloadTasks, reloadMeds, reloadAlerts]);
+
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshData();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshData]);
+
+  useEffect(() => {
+    const interval = setInterval(refreshData, 15000);
+    return () => clearInterval(interval);
+  }, [refreshData]);
   const [moodHistory, setMoodHistory] = useState<Array<{ date: string; mood: string }>>([]);
   const [geofence, setGeofence] = useState<{ lat: number; lng: number; radiusMeters: number; name: string } | null>(null);
   const [geofenceSheetOpen, setGeofenceSheetOpen] = useState(false);
@@ -353,25 +377,6 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       backgroundColor: colors.border,
       marginVertical: 6,
     },
-    geofenceOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      justifyContent: "flex-end",
-    },
-    geofenceSheet: {
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.xl,
-      padding: spacing.xl,
-      gap: spacing.md,
-    },
-    geofenceTitle: { fontSize: 18, ...fonts.medium, color: colors.text },
-    geofenceSub: { fontSize: 13, ...fonts.regular, color: colors.muted },
-    geofenceBtn: {
-      borderRadius: radius.pill,
-      paddingVertical: spacing.md,
-      alignItems: "center" as const,
-    },
-    geofenceBtnText: { fontSize: 15, ...fonts.medium, color: "#fff" },
     actionBtn: {
       flexDirection: "row" as const,
       alignItems: "center" as const,
@@ -391,7 +396,12 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
         <Text style={styles.patientTitle}>{patientName}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.violet} />
+        }
+      >
         {/* Safe Zone card */}
         <View style={styles.liveCard}>
           <View style={{ flexDirection: "row" }}>
@@ -546,38 +556,14 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
         <ExportFlowSheet visible={exportOpen} patientId={patientId} onClose={() => setExportOpen(false)} />
       </ScrollView>
 
-      <Modal
+      <SafeZoneMapEditor
         visible={geofenceSheetOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setGeofenceSheetOpen(false)}
-      >
-        <View style={styles.geofenceOverlay}>
-          <View style={[styles.geofenceSheet, { backgroundColor: colors.surface }]}>
-            <Text style={styles.geofenceTitle}>Set Safe Zone</Text>
-            <Text style={styles.geofenceSub}>
-              {geofence
-                ? `Current: ${geofence.name} (${geofence.radiusMeters}m radius)`
-                : "No safe zone set yet"}
-            </Text>
-            <TouchableOpacity
-              style={[styles.geofenceBtn, { backgroundColor: colors.violet }]}
-              onPress={() => {
-                Alert.alert(
-                  "Set Safe Zone",
-                  "To set the safe zone, enter the patient's home coordinates. Contact support for full address search.",
-                  [{ text: "OK" }]
-                );
-              }}
-            >
-              <Text style={styles.geofenceBtnText}>Use Current Approach</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setGeofenceSheetOpen(false)}>
-              <Text style={[styles.geofenceSub, { textAlign: "center", marginTop: spacing.md }]}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        patientId={patientId}
+        patientName={patientName}
+        initial={geofence}
+        onClose={() => setGeofenceSheetOpen(false)}
+        onSaved={(g) => setGeofence(g)}
+      />
     </View>
   );
 }

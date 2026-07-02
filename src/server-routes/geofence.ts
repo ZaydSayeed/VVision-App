@@ -3,7 +3,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
-import { requireSeat } from "../server-core/seatResolver";
+import { requirePatientAccess } from "../server-core/seatResolver";
 import { resolvePatientId } from "../server-core/patientResolver";
 
 const router = Router({ mergeParams: true });

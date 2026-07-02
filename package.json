@@ -67,6 +67,7 @@
     "react-native-get-random-values": "^2.0.0",
     "react-native-gifted-charts": "^1.4.76",
     "react-native-health": "^1.19.0",
+    "react-native-maps": "1.20.1",
     "react-native-purchases": "^10.0.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",

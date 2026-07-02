@@ -151,20 +151,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.access_token) {
         setAuthToken(session.access_token); setAuthFetchToken(session.access_token);
         const appUser = sessionToUser(session);
-        // Sync with backend to ensure patient_id is resolved
+        // Try to refresh patient_id from the backend, but NEVER sign the user
+        // out if this fails. A persisted session is already valid — a cold or
+        // offline backend must not destroy it, or the user gets logged out
+        // every time they reopen the app. patient_id re-syncs on next foreground.
         if (appUser) {
           try {
             const sync = await syncProfile(appUser.name, (appUser.role as UserRole) ?? "caregiver");
             if (sync?.patient_id) appUser.patient_id = sync.patient_id;
           } catch (e) {
-            console.error("[auth] syncProfile failed:", e);
-            Alert.alert(
-              "Sign in error",
-              "We couldn't set up your account. Please sign in again.",
-              [{ text: "OK", onPress: () => supabase.auth.signOut() }]
-            );
-            setLoading(false);
-            return;
+            console.warn("[auth] syncProfile failed on restore — keeping session:", e);
           }
         }
         setUser(appUser);

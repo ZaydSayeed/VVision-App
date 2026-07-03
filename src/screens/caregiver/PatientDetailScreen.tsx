@@ -219,7 +219,7 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       ...fonts.medium,
       flex: 1,
     },
-    content: { padding: spacing.xl, paddingBottom: 100 },
+    content: { padding: spacing.xl, paddingBottom: 170 },
     liveCard: {
       backgroundColor: colors.bg,
       borderRadius: radius.lg,
@@ -337,13 +337,13 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
       marginBottom: spacing.md,
     },
     reportBtn: {
-      flex: 1, backgroundColor: colors.violet, borderRadius: radius.pill,
+      backgroundColor: colors.violet, borderRadius: radius.pill,
       paddingVertical: spacing.md, flexDirection: "row", alignItems: "center",
       justifyContent: "center", gap: spacing.xs,
     },
     reportBtnText: { fontSize: 13, color: "#FFFFFF", ...fonts.medium },
     reportBtnAlt: {
-      flex: 1, borderWidth: 1.5, borderColor: colors.violet, borderRadius: radius.pill,
+      borderWidth: 1.5, borderColor: colors.violet, borderRadius: radius.pill,
       paddingVertical: spacing.md, flexDirection: "row", alignItems: "center",
       justifyContent: "center", gap: spacing.xs,
     },
@@ -525,7 +525,7 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
         {/* Doctor Reports */}
         <View style={styles.reportsCard}>
           <Text style={styles.reportsLabel}>DOCTOR REPORTS</Text>
-          <View style={{ flexDirection: "row", gap: spacing.sm }}>
+          <View style={{ gap: spacing.sm }}>
             <TouchableOpacity
               style={styles.reportBtn}
               onPress={() => setExportOpen(true)}

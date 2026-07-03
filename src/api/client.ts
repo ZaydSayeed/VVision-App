@@ -182,6 +182,23 @@ export async function unlinkPatient(): Promise<{ success: boolean }> {
   return request("/api/patients/mine/unlink", { method: "DELETE" });
 }
 
+// ── Geofence (safe zone) ──────────────────────────────────
+export interface GeofenceData {
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  name: string;
+}
+export async function saveGeofence(
+  patientId: string,
+  data: GeofenceData
+): Promise<GeofenceData> {
+  return request(`/api/profiles/${patientId}/geofence`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function getMyLinkCode(): Promise<{ link_code: string }> {
   return request("/api/patients/mine/link-code");
 }

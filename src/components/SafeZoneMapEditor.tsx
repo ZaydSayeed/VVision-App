@@ -15,8 +15,7 @@ import MapView, { Marker, Circle, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import { useTheme } from "../context/ThemeContext";
 import { fonts, spacing, radius } from "../config/theme";
-import { API_BASE_URL } from "../config/api";
-import { authHeaders } from "../api/client";
+import { saveGeofence } from "../api/client";
 
 // Backend accepts a circular geofence: center lat/lng + radiusMeters (50–50000).
 type LatLng = { lat: number; lng: number };
@@ -170,18 +169,12 @@ export function SafeZoneMapEditor({
     if (saving) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/profiles/${patientId}/geofence`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({
-          lat: center.lat,
-          lng: center.lng,
-          radiusMeters: clampRadius(radiusMeters),
-          name: (name || "Home").trim().slice(0, 100),
-        }),
+      const data = await saveGeofence(patientId, {
+        lat: center.lat,
+        lng: center.lng,
+        radiusMeters: clampRadius(radiusMeters),
+        name: (name || "Home").trim().slice(0, 100),
       });
-      if (!res.ok) throw new Error("save failed");
-      const data = await res.json();
       onSaved({
         lat: data.lat,
         lng: data.lng,
@@ -189,8 +182,13 @@ export function SafeZoneMapEditor({
         name: data.name,
       });
       onClose();
-    } catch {
-      Alert.alert("Safe Zone", "Could not save the safe zone. Check your connection and try again.");
+    } catch (err: any) {
+      Alert.alert(
+        "Safe Zone",
+        err?.message?.trim()
+          ? `Could not save the safe zone: ${err.message}`
+          : "Could not save the safe zone. The server may be waking up — please try again in a moment."
+      );
     } finally {
       setSaving(false);
     }

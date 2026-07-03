@@ -21,7 +21,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { usePatients } from "../hooks/usePatients";
 import { useConsent } from "../hooks/useConsent";
-import { getMyLinkCode, deleteAccount } from "../api/client";
+import { getMyLinkCode, deleteAccount, unlinkPatient } from "../api/client";
 import { fonts, spacing, radius, colors } from "../config/theme";
 import { triggerOnboardingReset } from "../utils/reminderEvents";
 
@@ -35,7 +35,7 @@ interface SideDrawerProps {
 }
 
 export function SideDrawer({ visible, onClose }: SideDrawerProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { colors, toggleTheme, isDark } = useTheme();
   const navigation = useNavigation<any>();
   const { patients } = usePatients();
@@ -49,6 +49,11 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showUnlinkModal, setShowUnlinkModal] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
+  const [unlinkError, setUnlinkError] = useState<string | null>(null);
+
+  const linkedPatientName = patients[0]?.name ?? "your patient";
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -147,6 +152,30 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 />
               </View>
             </View>
+
+            {/* Linked patient (caregiver only) */}
+            {user?.role === "caregiver" && user?.patient_id && (
+              <View style={[styles.section, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.sectionLabel, { color: colors.text }]}>Linked Patient</Text>
+                <View style={styles.row}>
+                  <View style={styles.rowLeft}>
+                    <Ionicons name="person-circle-outline" size={20} color={colors.violet} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>{linkedPatientName}</Text>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Unlink patient"
+                    onPress={() => { setUnlinkError(null); setShowUnlinkModal(true); }}
+                  >
+                    <Text style={[styles.unlinkText, { color: "#D95F5F" }]}>Unlink</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.codeHint, { color: colors.muted, marginTop: spacing.sm }]}>
+                  Unlink to connect a different patient using their link code.
+                </Text>
+              </View>
+            )}
 
             {/* Visit Reports (caregiver only) */}
             {user?.role === "caregiver" && (
@@ -397,6 +426,74 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </View>
             </Modal>
 
+            {/* Unlink patient confirmation */}
+            <Modal
+              visible={showUnlinkModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => !unlinking && setShowUnlinkModal(false)}
+            >
+              <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center", padding: 24 }}>
+                <View style={{ backgroundColor: colors.bg, borderRadius: 20, padding: 24, width: "100%", maxWidth: 400 }}>
+                  <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "rgba(217,95,95,0.12)", alignItems: "center", justifyContent: "center", marginBottom: spacing.md }}>
+                      <Ionicons name="unlink-outline" size={24} color="#D95F5F" />
+                    </View>
+                    <Text style={{ fontSize: 18, ...fonts.medium, color: colors.text, textAlign: "center" }}>
+                      Unlink {linkedPatientName}?
+                    </Text>
+                  </View>
+
+                  <Text style={{ fontSize: 14, lineHeight: 20, ...fonts.regular, color: colors.muted, marginBottom: spacing.lg, textAlign: "center" }}>
+                    You'll stop seeing their routines, medications, and alerts. Nothing is deleted — you can reconnect anytime with their link code.
+                  </Text>
+
+                  {unlinkError && (
+                    <Text style={{ fontSize: 13, color: "#D95F5F", marginBottom: spacing.md, textAlign: "center" }}>
+                      {unlinkError}
+                    </Text>
+                  )}
+
+                  <View style={{ flexDirection: "row", gap: spacing.md }}>
+                    <TouchableOpacity
+                      style={{ flex: 1, height: 48, borderRadius: radius.pill, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center", opacity: unlinking ? 0.5 : 1 }}
+                      onPress={() => setShowUnlinkModal(false)}
+                      disabled={unlinking}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={{ fontSize: 15, ...fonts.medium, color: colors.text }}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{ flex: 1, height: 48, borderRadius: radius.pill, backgroundColor: "#D95F5F", alignItems: "center", justifyContent: "center", opacity: unlinking ? 0.7 : 1 }}
+                      onPress={async () => {
+                        if (unlinking) return;
+                        setUnlinking(true);
+                        setUnlinkError(null);
+                        try {
+                          await unlinkPatient();
+                          if (user) updateUser({ ...user, patient_id: null });
+                          setShowUnlinkModal(false);
+                          onClose();
+                        } catch (err: any) {
+                          setUnlinkError(err?.message || "Could not unlink. Please try again.");
+                        } finally {
+                          setUnlinking(false);
+                        }
+                      }}
+                      disabled={unlinking}
+                      activeOpacity={0.85}
+                    >
+                      {unlinking ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={{ fontSize: 15, ...fonts.medium, color: "#FFFFFF" }}>Unlink</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+
             {/* Patient picker modal for Visit Reports */}
             <Modal visible={showPatientPicker} transparent animationType="fade" onRequestClose={() => setShowPatientPicker(false)}>
               <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} activeOpacity={1} onPress={() => setShowPatientPicker(false)}>
@@ -589,6 +686,10 @@ const styles = StyleSheet.create({
   deleteText: {
     fontSize: 14,
     color: "#D95F5F",
+    ...fonts.medium,
+  },
+  unlinkText: {
+    fontSize: 15,
     ...fonts.medium,
   },
 });

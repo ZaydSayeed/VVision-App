@@ -178,6 +178,10 @@ export async function linkPatient(
   });
 }
 
+export async function unlinkPatient(): Promise<{ success: boolean }> {
+  return request("/api/patients/mine/unlink", { method: "DELETE" });
+}
+
 export async function getMyLinkCode(): Promise<{ link_code: string }> {
   return request("/api/patients/mine/link-code");
 }

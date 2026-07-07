@@ -44,7 +44,7 @@ New routes under `src/server-routes/calendarEvents.ts`, following the existing `
 
 - Uses `expo-calendar` (wraps Apple's EventKit). This is native code — requires a fresh EAS/dev-client build; won't work in an already-installed build until rebuilt.
 - Opt-in per user, per device, from Settings — Apple requires each device to grant its own calendar permission; this can't be delegated.
-- **One-way only**: EvaluVision → Apple Calendar. Creating/editing/deleting an event in the app pushes that change to the phone's default Apple Calendar via EventKit. Edits made directly in Apple Calendar do **not** flow back into EvaluVision — EvaluVision remains the single source of truth. This avoids two-way conflict resolution entirely.
+- **One-way only**: Vela Vision → Apple Calendar. Creating/editing/deleting an event in the app pushes that change to the phone's default Apple Calendar via EventKit. Edits made directly in Apple Calendar do **not** flow back into Vela Vision — Vela Vision remains the single source of truth. This avoids two-way conflict resolution entirely.
 - The EventKit event ID returned on creation is stored (client-side, per device) so later edits/deletes from the app can find and update the correct native calendar entry.
 - Recurring events map directly to EventKit's own recurrence rules since both use RRULE.
 

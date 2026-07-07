@@ -76,7 +76,8 @@
           "healthSharePermission": "Vela uses your health data (steps, heart rate, sleep, activity) to help your care team monitor your wellbeing."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@bacons/apple-targets"
     ],
     "owner": "haadi.siddiqui"
   }

@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.velavision.caregiver",
+      "appleTeamId": "AL6H52BYM2",
       "associatedDomains": [
         "applinks:velavision.org"
       ],

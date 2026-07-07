@@ -5,6 +5,15 @@ export interface CalendarEventOccurrence {
   id: string;
   title: string;
   category: CalendarCategory;
+  /**
+   * The recurring series' true, unexpanded start time (the document's own
+   * `startAt` field) — NOT the tapped occurrence's own datetime. For a
+   * non-recurring event this equals `occurrenceAt`. Always prefer this over
+   * `occurrenceAt` when prefilling an edit form or saving edits back, so
+   * editing a later occurrence of a recurring series doesn't rewrite the
+   * series' anchor date and silently drop earlier occurrences.
+   */
+  startAt: string;
   occurrenceAt: string;
   endAt: string;
   notes: string | null;

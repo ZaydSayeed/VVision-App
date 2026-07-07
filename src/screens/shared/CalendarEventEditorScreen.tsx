@@ -94,7 +94,11 @@ export function CalendarEventEditorScreen({ patientId: propPatientId }: Props) {
   const patientId = propPatientId ?? routePatientId ?? user?.patient_id ?? undefined;
   const isEditing = !!eventId;
 
-  const initialStart = existingEvent ? new Date(existingEvent.occurrenceAt) : new Date();
+  // Use the series' true anchor (startAt), not the tapped occurrence's own
+  // datetime (occurrenceAt) — editing a later occurrence of a recurring
+  // series must not rewrite the series' start date. For a non-recurring
+  // event these two are identical.
+  const initialStart = existingEvent ? new Date(existingEvent.startAt) : new Date();
   const initialEnd = existingEvent
     ? new Date(existingEvent.endAt)
     : new Date(initialStart.getTime() + 30 * 60 * 1000);

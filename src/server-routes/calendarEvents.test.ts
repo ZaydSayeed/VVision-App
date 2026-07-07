@@ -314,3 +314,97 @@ describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
     );
   });
 });
+
+describe("DELETE /api/profiles/:patientId/calendar-events/:id", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("deletes an event the caller created", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "user-caregiver" });
+    mockCol.deleteOne = vi.fn().mockResolvedValue({ deletedCount: 1 });
+
+    const res = await request(app).delete(`/api/profiles/patient-123/calendar-events/${id}`);
+    expect(res.status).toBe(200);
+    expect(mockCol.deleteOne).toHaveBeenCalled();
+  });
+
+  it("returns 403 when the caller did not create the event", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "someone-else" });
+
+    const res = await request(app).delete(`/api/profiles/patient-123/calendar-events/${id}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 when the event does not exist", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue(null);
+
+    const res = await request(app).delete(`/api/profiles/patient-123/calendar-events/${id}`);
+    expect(res.status).toBe(404);
+    expect(res.body.detail).toBe("Event not found");
+  });
+
+  it("returns 404 when the id is malformed", async () => {
+    const res = await request(app).delete("/api/profiles/patient-123/calendar-events/not-a-valid-id");
+    expect(res.status).toBe(404);
+    expect(res.body.detail).toBe("Event not found");
+  });
+});
+
+describe("POST /api/profiles/:patientId/calendar-events/:id/complete", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("marks an occurrence complete regardless of who created it", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "someone-else", completedDates: [] });
+    mockCol.updateOne = vi.fn().mockResolvedValue({ matchedCount: 1 });
+
+    const res = await request(app)
+      .post(`/api/profiles/patient-123/calendar-events/${id}/complete`)
+      .send({ date: "2026-07-10" });
+
+    expect(res.status).toBe(200);
+    expect(mockCol.updateOne).toHaveBeenCalledWith(
+      { _id: expect.anything() },
+      { $addToSet: { completedDates: "2026-07-10" } }
+    );
+  });
+
+  it("returns 404 when the event does not exist", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue(null);
+
+    const res = await request(app)
+      .post(`/api/profiles/patient-123/calendar-events/${id}/complete`)
+      .send({ date: "2026-07-10" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.detail).toBe("Event not found");
+  });
+
+  it("returns 404 when the id is malformed", async () => {
+    const res = await request(app)
+      .post("/api/profiles/patient-123/calendar-events/not-a-valid-id/complete")
+      .send({ date: "2026-07-10" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.detail).toBe("Event not found");
+  });
+
+  it("returns 400 when the date is malformed", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+
+    const res = await request(app)
+      .post(`/api/profiles/patient-123/calendar-events/${id}/complete`)
+      .send({ date: "invalid-date" });
+
+    expect(res.status).toBe(400);
+  });
+});

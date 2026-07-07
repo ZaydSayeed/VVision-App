@@ -106,4 +106,48 @@ router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAc
   }
 });
 
+router.delete("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
+  if (!ObjectId.isValid(req.params.id)) { res.status(404).json({ detail: "Event not found" }); return; }
+  try {
+    const db = getDb();
+    const doc = await db.collection("calendar_events").findOne({
+      _id: new ObjectId(String(req.params.id)),
+      patientId: req.params.patientId,
+    });
+    if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
+    if (doc.createdBy !== req.seat!.userId) { res.status(403).json({ detail: "Only the creator can delete this event" }); return; }
+
+    await db.collection("calendar_events").deleteOne({ _id: doc._id });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("calendar-events delete error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+const completeSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
+
+router.post("/:patientId/calendar-events/:id/complete", authMiddleware, requirePatientAccess, async (req, res) => {
+  const parsed = completeSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
+  if (!ObjectId.isValid(req.params.id)) { res.status(404).json({ detail: "Event not found" }); return; }
+  try {
+    const db = getDb();
+    const doc = await db.collection("calendar_events").findOne({
+      _id: new ObjectId(String(req.params.id)),
+      patientId: req.params.patientId,
+    });
+    if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
+
+    await db.collection("calendar_events").updateOne(
+      { _id: doc._id },
+      { $addToSet: { completedDates: parsed.data.date } }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("calendar-events complete error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 export default router;

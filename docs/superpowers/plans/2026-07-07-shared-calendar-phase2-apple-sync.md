@@ -35,7 +35,7 @@ In `app.json`, add `"expo-calendar"` to the existing `"plugins"` array (alongsid
 [
   "expo-calendar",
   {
-    "calendarPermission": "EvaluVision uses your calendar to add appointments and events you create in the app, so they also show up in your phone's Calendar app."
+    "calendarPermission": "Vela Vision uses your calendar to add appointments and events you create in the app, so they also show up in your phone's Calendar app."
   }
 ]
 ```
@@ -359,7 +359,7 @@ Run: `grep -rln "SettingsScreen" src/screens src/navigation` — read the matche
 
 - [ ] **Step 3: Add the "Sync to Apple Calendar" toggle**
 
-Add a toggle row that, when turned on, calls `requestAppleCalendarPermission()`; if it resolves `true`, calls `setAppleCalendarSyncEnabled(true)` and shows the toggle as on. If permission is denied, show a plain-language message ("Calendar access was denied. You can enable it in iPhone Settings > EvaluVision > Calendars.") and leave the toggle off. Turning it off calls `setAppleCalendarSyncEnabled(false)` with no permission call needed.
+Add a toggle row that, when turned on, calls `requestAppleCalendarPermission()`; if it resolves `true`, calls `setAppleCalendarSyncEnabled(true)` and shows the toggle as on. If permission is denied, show a plain-language message ("Calendar access was denied. You can enable it in iPhone Settings > Vela Vision > Calendars.") and leave the toggle off. Turning it off calls `setAppleCalendarSyncEnabled(false)` with no permission call needed.
 
 - [ ] **Step 4: Run the full test suite**
 

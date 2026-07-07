@@ -283,8 +283,9 @@ export async function deletePerson(personId: string): Promise<void> {
 }
 
 // ── Routines ──────────────────────────────────────────────
-export async function fetchRoutines(): Promise<RoutineTask[]> {
-  return request<RoutineTask[]>("/api/routines");
+export async function fetchRoutines(patientId?: string): Promise<RoutineTask[]> {
+  const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
+  return request<RoutineTask[]>(`/api/routines${query}`);
 }
 
 export async function createRoutine(
@@ -312,8 +313,9 @@ export async function deleteRoutine(id: string): Promise<void> {
 }
 
 // ── Medications ───────────────────────────────────────────
-export async function fetchMedications(): Promise<Medication[]> {
-  return request<Medication[]>("/api/medications");
+export async function fetchMedications(patientId?: string): Promise<Medication[]> {
+  const query = patientId ? `?patientId=${encodeURIComponent(patientId)}` : "";
+  return request<Medication[]>(`/api/medications${query}`);
 }
 
 export async function createMedication(

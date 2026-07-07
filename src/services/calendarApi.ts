@@ -85,8 +85,8 @@ export async function refreshWidgetForPatient(
 ): Promise<void> {
   const [events, tasks, medications] = await Promise.all([
     listCalendarEvents(patientId, startOfToday().toISOString(), endOfToday().toISOString()),
-    fetchRoutines().catch(() => []),
-    fetchMedications().catch(() => []),
+    fetchRoutines(patientId).catch(() => []),
+    fetchMedications(patientId).catch(() => []),
   ]);
 
   // The widget's checklist is fed by whatever this device's "today" tasks +

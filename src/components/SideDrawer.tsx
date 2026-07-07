@@ -24,6 +24,8 @@ import { useConsent } from "../hooks/useConsent";
 import { getMyLinkCode, deleteAccount, unlinkPatient } from "../api/client";
 import { fonts, spacing, radius, colors } from "../config/theme";
 import { triggerOnboardingReset } from "../utils/reminderEvents";
+import { isAppleCalendarSyncEnabled, setAppleCalendarSyncEnabled } from "../services/appleCalendarPrefs";
+import { requestAppleCalendarPermission } from "../services/appleCalendarSync";
 
 const PRIVACY_POLICY_URL = "https://velavision.org/privacy/";
 
@@ -52,6 +54,8 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const [showUnlinkModal, setShowUnlinkModal] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
+  const [appleSyncEnabled, setAppleSyncEnabled] = useState(false);
+  const [appleSyncMessage, setAppleSyncMessage] = useState<string | null>(null);
 
   const linkedPatientName = patients[0]?.name ?? "your patient";
 
@@ -73,6 +77,10 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
           .catch(() => {})
           .finally(() => setCodeLoading(false));
       }
+
+      isAppleCalendarSyncEnabled()
+        .then(setAppleSyncEnabled)
+        .catch(() => {});
     } else {
       Animated.timing(slideAnim, {
         toValue: -DRAWER_WIDTH,
@@ -81,6 +89,25 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
       }).start();
     }
   }, [visible]);
+
+  const handleToggleAppleSync = async (value: boolean) => {
+    setAppleSyncMessage(null);
+    if (value) {
+      const granted = await requestAppleCalendarPermission();
+      if (granted) {
+        await setAppleCalendarSyncEnabled(true);
+        setAppleSyncEnabled(true);
+      } else {
+        setAppleSyncMessage(
+          "Calendar access was denied. You can enable it in iPhone Settings > EvaluVision > Calendars."
+        );
+        setAppleSyncEnabled(false);
+      }
+    } else {
+      await setAppleCalendarSyncEnabled(false);
+      setAppleSyncEnabled(false);
+    }
+  };
 
   const initials = user?.name
     ?.split(" ")
@@ -151,6 +178,28 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                   thumbColor="#FFFFFF"
                 />
               </View>
+            </View>
+
+            {/* Apple Calendar sync */}
+            <View style={[styles.section, { borderBottomColor: colors.border }]}>
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <Ionicons name="calendar-outline" size={20} color={colors.violet} />
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Sync to Apple Calendar</Text>
+                </View>
+                <Switch
+                  value={appleSyncEnabled}
+                  onValueChange={(v) => { handleToggleAppleSync(v).catch(() => {}); }}
+                  trackColor={{ false: colors.border, true: colors.violet }}
+                  thumbColor="#FFFFFF"
+                  accessibilityLabel="Sync to Apple Calendar"
+                />
+              </View>
+              {appleSyncMessage && (
+                <Text style={[styles.codeHint, { color: colors.muted, marginTop: spacing.sm }]}>
+                  {appleSyncMessage}
+                </Text>
+              )}
             </View>
 
             {/* Linked patient (caregiver only) */}

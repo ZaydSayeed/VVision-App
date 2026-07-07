@@ -1,5 +1,6 @@
 import { authFetch } from "../api/authFetch";
 import { CalendarCategory } from "../config/calendarCategories";
+import { syncEventCreated, syncEventUpdated, syncEventDeleted } from "./appleCalendarSync";
 
 export interface CalendarEventOccurrence {
   id: string;
@@ -74,7 +75,20 @@ export async function createCalendarEvent(
     const detail = await res.text().catch(() => "");
     throw new Error(`Failed to create calendar event (${res.status}). ${detail}`);
   }
-  return res.json();
+  const created: { id: string } = await res.json();
+  syncEventCreated({
+    id: created.id,
+    title: input.title,
+    category: input.category,
+    startAt: input.startAt,
+    occurrenceAt: input.startAt,
+    endAt: input.endAt,
+    notes: input.notes ?? null,
+    recurrenceRule: input.recurrenceRule ?? null,
+    createdBy: "",
+    completed: false,
+  }).catch(() => {});
+  return created;
 }
 
 export async function updateCalendarEvent(
@@ -87,6 +101,18 @@ export async function updateCalendarEvent(
     body: JSON.stringify(input),
   });
   if (!res.ok) throw new Error(`Failed to update calendar event: ${res.status}`);
+  syncEventUpdated({
+    id,
+    title: input.title ?? "",
+    category: input.category ?? "personal",
+    startAt: input.startAt ?? "",
+    occurrenceAt: input.startAt ?? "",
+    endAt: input.endAt ?? "",
+    notes: input.notes ?? null,
+    recurrenceRule: input.recurrenceRule ?? null,
+    createdBy: "",
+    completed: false,
+  }).catch(() => {});
 }
 
 export async function deleteCalendarEvent(patientId: string, id: string): Promise<void> {
@@ -94,6 +120,7 @@ export async function deleteCalendarEvent(patientId: string, id: string): Promis
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Failed to delete calendar event: ${res.status}`);
+  syncEventDeleted(id).catch(() => {});
 }
 
 export async function completeCalendarEventOccurrence(

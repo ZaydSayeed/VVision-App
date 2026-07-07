@@ -59,6 +59,9 @@ router.post("/cron/tick", async (req, res) => {
 // Not part of the recurring cron cadence — hit this manually once against
 // production, confirm the count, then remove this route and its import.
 // Protected by the same CRON_SECRET shared secret as /cron/tick.
+// Idempotent: safe to call more than once (see migrateVisitsToCalendarEvents.ts).
+// Rollback if needed (manual, run directly against the DB):
+//   db.collection("calendar_events").deleteMany({ migratedFrom: { $exists: true } })
 router.post("/cron/migrate-visits", async (req, res) => {
   if (!config.cronSecret) {
     res.status(503).json({ detail: "Cron trigger not configured" });

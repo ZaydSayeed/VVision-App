@@ -761,6 +761,12 @@ git rm src/server-routes/visits.ts
 git commit -m "feat: mount calendar-events router, add visits migration job, retire visits route"
 ```
 
+**Post-implementation note (final whole-branch review fix pass, 2026-07-07):** the whole-branch review found two gaps this task's own review couldn't see in isolation:
+1. No task rebuilt the still-live "Schedule Visit"/"Visit Reports" caregiver UI on top of the new calendar API after `visits.ts` was deleted — it was still calling the now-404 `/visits` routes. Fixed by rewriting `VisitReportsScreen.tsx` to use `createCalendarEvent`/`listCalendarEvents` (`category: "medical"`) instead of `src/api/visits.ts`.
+2. `migrateVisitsToCalendarEvents` was not idempotent (plain `insertMany`, no dedup) and had no documented rollback. Fixed by adding a `migratedFrom: <original visit _id>` field to each migrated doc, skipping visit ids already present in `calendar_events.migratedFrom` on re-run. Rollback (manual, run directly against the DB if the migration needs to be undone): `db.collection("calendar_events").deleteMany({ migratedFrom: { $exists: true } })`.
+
+Also fixed as part of the same review: the `createdBy === "migrated"` sentinel was blocking edits/deletes for everyone (PATCH/DELETE now special-case it per this task's original stated intent), and the GET list route now also returns the document's true `startAt` so the app's editor stops corrupting recurring series when edited from a later occurrence.
+
 ---
 
 ### Task 7: Push reminder cron job for upcoming events

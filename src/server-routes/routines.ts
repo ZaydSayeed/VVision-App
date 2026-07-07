@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { resolvePatientId } from "../server-core/patientResolver";
+import { userHasPatientAccess } from "../server-core/seatResolver";
 
 const router = Router();
 
@@ -35,9 +36,22 @@ function routineOut(doc: any) {
 router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
   try {
     const db = getDb();
+    let patientId = req.patientId!;
+
+    const requestedPatientId = req.query.patientId;
+    if (typeof requestedPatientId === "string" && requestedPatientId.length > 0) {
+      const userId = req.auth!.userId;
+      const role = await userHasPatientAccess(db, userId, requestedPatientId);
+      if (!role) {
+        res.status(403).json({ detail: "No access to this profile" });
+        return;
+      }
+      patientId = requestedPatientId;
+    }
+
     const docs = await db
       .collection("routines")
-      .find({ patient_id: req.patientId! })
+      .find({ patient_id: patientId })
       .limit(200)
       .toArray();
     res.json(docs.map(routineOut));

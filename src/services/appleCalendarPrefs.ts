@@ -1,12 +1,12 @@
-import * as SecureStore from "expo-secure-store";
+import { secureStorage } from "../config/secureStorage";
 
 const KEY = "appleCalendarSyncEnabled";
 
 export async function isAppleCalendarSyncEnabled(): Promise<boolean> {
-  const value = await SecureStore.getItemAsync(KEY);
+  const value = await secureStorage.getItem(KEY);
   return value === "true";
 }
 
 export async function setAppleCalendarSyncEnabled(enabled: boolean): Promise<void> {
-  await SecureStore.setItemAsync(KEY, enabled ? "true" : "false");
+  await secureStorage.setItem(KEY, enabled ? "true" : "false");
 }

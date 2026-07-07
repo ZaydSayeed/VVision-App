@@ -28,7 +28,7 @@ describe("toExpoCalendarRecurrenceRule", () => {
     // 0=Sunday, 6=Saturday in this app's convention.
     const rrule = buildWeeklyRule([0, 6]);
     const result = toExpoCalendarRecurrenceRule(rrule);
-    // rrule's own numbering: SU=6, SA=5 (rrule sorts byweekday ascending: SA before SU).
+    // rrule's own numbering: SU=6, SA=5 (rrule preserves insertion order, so byweekday is [SA, SU] here).
     // expo-calendar's DayOfTheWeek: Saturday=7, Sunday=1.
     expect(result).toEqual({
       frequency: "weekly",

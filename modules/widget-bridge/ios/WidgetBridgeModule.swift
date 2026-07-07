@@ -1,6 +1,6 @@
 import ExpoModulesCore
 
-private let appGroupIdentifier = "group.com.velavision.app.widget"
+private let appGroupIdentifier = "group.com.velavision.caregiver.widget"
 
 internal final class AppGroupContainerNotFoundException: Exception {
   override var reason: String {

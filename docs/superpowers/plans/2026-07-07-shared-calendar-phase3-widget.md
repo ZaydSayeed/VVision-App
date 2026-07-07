@@ -200,13 +200,13 @@ Follow the interactive prompts (module name: `WidgetBridge`). This generates the
 
 - [ ] **Step 2: Add the App Group entitlement**
 
-In `app.json`, add the entitlement via the `"ios"` config (check current `expo-build-properties` or native entitlements plugin docs for SDK 54's supported way to set `com.apple.security.application-groups` — this changed across Expo SDK versions, confirm the current mechanism rather than assuming). The App Group identifier should follow Apple's required format, e.g. `group.com.evaluvision.app.widget` — must match exactly between the main app target and the widget extension target (Task 3 uses the same identifier).
+In `app.json`, add the entitlement via the `"ios"` config (check current `expo-build-properties` or native entitlements plugin docs for SDK 54's supported way to set `com.apple.security.application-groups` — this changed across Expo SDK versions, confirm the current mechanism rather than assuming). The App Group identifier should follow Apple's required format, e.g. `group.com.velavision.caregiver.widget` — must match exactly between the main app target and the widget extension target (Task 3 uses the same identifier).
 
 - [ ] **Step 3: Implement the Swift write method**
 
 In the generated `WidgetBridgeModule.swift`, add a method (exposed via Expo Modules' `AsyncFunction` API — confirm exact macro/API name against the scaffolded template from Step 1) that:
 1. Takes `(filename: String, jsonString: String)`.
-2. Resolves the App Group container URL via `FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.evaluvision.app.widget")`.
+2. Resolves the App Group container URL via `FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.velavision.caregiver.widget")`.
 3. Writes `jsonString` to `<container>/<filename>` using `String.write(to:atomically:encoding:)`.
 4. Throws/rejects if the container URL is nil (App Group misconfigured) so JS-side callers can log it rather than silently losing data.
 
@@ -250,7 +250,7 @@ git commit -m "feat: add native widget-bridge module to write shared App Group s
 Adding a full native widget extension target via a config plugin is one of the more involved things Expo's config-plugin system supports — fetch current Expo docs on "config plugins" and "adding a native target" (or a widely-used community example like `@bacons/apple-targets`, which exists specifically to simplify this) before hand-rolling the Xcode project mutation logic. Using an established community plugin for the mechanical "add a target to the Xcode project" part is reasonable here (YAGNI — don't reinvent Xcode project-file surgery), while the actual widget UI code (`EvaluVisionWidget.swift`) is bespoke to this app's design.
 
 **Interfaces:**
-- Consumes: the JSON file written by Task 2, read via the same App Group container URL (`group.com.evaluvision.app.widget`) from the widget extension's own process.
+- Consumes: the JSON file written by Task 2, read via the same App Group container URL (`group.com.velavision.caregiver.widget`) from the widget extension's own process.
 - Produces: a `Widget` conforming to WidgetKit's `Widget` protocol, with a `TimelineProvider` that reads the snapshot file and refreshes every ~15–30 minutes, plus whenever the OS triggers a reload (the main app should call WidgetKit's reload-timelines API after writing a new snapshot — this belongs in Task 4).
 
 - [ ] **Step 1: Research the config-plugin approach**
@@ -291,7 +291,7 @@ struct WidgetSnapshot: Codable {
 
 func loadSnapshot(patientId: String) -> WidgetSnapshot? {
     guard let containerURL = FileManager.default.containerURL(
-        forSecurityApplicationGroupIdentifier: "group.com.evaluvision.app.widget"
+        forSecurityApplicationGroupIdentifier: "group.com.velavision.caregiver.widget"
     ) else { return nil }
     let fileURL = containerURL.appendingPathComponent("widget-snapshot-\(patientId).json")
     guard let data = try? Data(contentsOf: fileURL) else { return nil }
@@ -435,4 +435,4 @@ git commit -m "feat: trigger widget snapshot refresh and reload on data changes,
 - [ ] Approve kicking off an EAS build once Tasks 1–4 are code-complete (consumes EAS build quota — confirm before it runs). This build must include both the widget-bridge local module and the widget extension target, so it likely needs to happen after Task 3, not incrementally per task.
 - [ ] Have an active Apple Developer Program membership with the App Groups capability enabled for the app's bundle ID (this is a paid-tier requirement, not available on a free Apple ID — confirm current enrollment before starting Task 2).
 - [ ] Walk through every manual verification step in Tasks 2, 3, and 4 on a physical device (widgets don't reliably preview correctly in the simulator for App Group file access in all Xcode versions — confirm on a real iPhone).
-- [ ] Decide the exact App Group identifier (`group.com.evaluvision.app.widget` is this plan's placeholder — confirm the real bundle identifier prefix matches what's registered in the Apple Developer portal for this app).
+- [ ] Decide the exact App Group identifier (`group.com.velavision.caregiver.widget` is this plan's placeholder — confirm the real bundle identifier prefix matches what's registered in the Apple Developer portal for this app).

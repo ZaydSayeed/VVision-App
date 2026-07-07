@@ -22,7 +22,7 @@
       "buildNumber": "12",
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.com.velavision.app.widget"
+          "group.com.velavision.caregiver.widget"
         ]
       },
       "infoPlist": {

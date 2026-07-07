@@ -99,7 +99,7 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
         setAppleSyncEnabled(true);
       } else {
         setAppleSyncMessage(
-          "Calendar access was denied. You can enable it in iPhone Settings > EvaluVision > Calendars."
+          "Calendar access was denied. You can enable it in iPhone Settings > Vela Vision > Calendars."
         );
         setAppleSyncEnabled(false);
       }

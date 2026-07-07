@@ -16,14 +16,18 @@ describe("buildWidgetSnapshot", () => {
       { id: "rem-1", text: "Use restroom", completed_date: null },
       { id: "rem-2", text: "Take Adderall", completed_date: "2026-07-10" },
     ];
+    const medications = [
+      { id: "med-1", name: "Donepezil", dosage: "10mg", taken_date: null },
+    ];
 
-    const snapshot = buildWidgetSnapshot("patient-123", "Mom", events, reminders as any);
+    const snapshot = buildWidgetSnapshot("patient-123", "Mom", events, reminders as any, medications as any);
 
     expect(snapshot.patientId).toBe("patient-123");
     expect(snapshot.patientName).toBe("Mom");
     expect(snapshot.checklist).toEqual([
       { id: "rem-1", label: "Use restroom", completed: false },
       { id: "rem-2", label: "Take Adderall", completed: true },
+      { id: "med-1", label: "Take Donepezil (10mg)", completed: false },
     ]);
     expect(snapshot.appointments).toHaveLength(1);
     expect(snapshot.appointments[0]).toMatchObject({ id: "evt-1", title: "Dr. Smith" });
@@ -31,7 +35,7 @@ describe("buildWidgetSnapshot", () => {
   });
 
   it("produces an empty checklist and appointments array when there is nothing today", () => {
-    const snapshot = buildWidgetSnapshot("patient-123", "Mom", [], []);
+    const snapshot = buildWidgetSnapshot("patient-123", "Mom", [], [], []);
     expect(snapshot.checklist).toEqual([]);
     expect(snapshot.appointments).toEqual([]);
   });

@@ -9,7 +9,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { fonts, spacing, radius } from "../../config/theme";
-import { listVisits, createVisit } from "../../api/visits";
+import { listCalendarEvents, createCalendarEvent, CalendarEventOccurrence } from "../../services/calendarApi";
 import { fetchDoctors, Doctor, removeDoctor } from "../../api/doctors";
 import { ExportFlowSheet } from "../../components/ExportFlowSheet";
 
@@ -23,8 +23,8 @@ export default function VisitReportsScreen({ patientId, patientName, onBack }: P
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  // --- Visits state ---
-  const [visits, setVisits] = useState<any[]>([]);
+  // --- Visits state (calendar events, category "medical") ---
+  const [visits, setVisits] = useState<CalendarEventOccurrence[]>([]);
   const [loadingVisits, setLoadingVisits] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -45,11 +45,17 @@ export default function VisitReportsScreen({ patientId, patientName, onBack }: P
   const loadAll = useCallback(async (silent = false) => {
     if (!silent) setLoadingVisits(true);
     try {
+      // Visits are stored as calendar events (category "medical"). The list
+      // endpoint doesn't filter by category server-side, so we filter here.
+      // Range covers well past and future so both completed and upcoming
+      // visits show up.
+      const from = new Date(Date.now() - 5 * 365 * 86_400_000).toISOString();
+      const to = new Date(Date.now() + 2 * 365 * 86_400_000).toISOString();
       const [v, d] = await Promise.all([
-        listVisits(patientId).catch(() => ({ visits: [] })),
+        listCalendarEvents(patientId, from, to).catch(() => []),
         fetchDoctors(patientId).catch(() => []),
       ]);
-      setVisits(v.visits ?? []);
+      setVisits(v.filter((e) => e.category === "medical"));
       setDoctors(d);
     } finally {
       setLoadingVisits(false);
@@ -63,9 +69,13 @@ export default function VisitReportsScreen({ patientId, patientName, onBack }: P
     if (!formProvider.trim()) { Alert.alert("Missing", "Enter a provider name."); return; }
     setScheduling(true);
     try {
-      await createVisit(patientId, {
-        providerName: formProvider.trim(),
-        scheduledFor: formDate.toISOString(),
+      const startAt = formDate.toISOString();
+      const endAt = new Date(formDate.getTime() + 30 * 60_000).toISOString();
+      await createCalendarEvent(patientId, {
+        title: formProvider.trim(),
+        category: "medical",
+        startAt,
+        endAt,
         notes: formNotes.trim() || undefined,
       });
       setShowSchedule(false);
@@ -203,13 +213,13 @@ export default function VisitReportsScreen({ patientId, patientName, onBack }: P
           {visits.length === 0 ? (
             <Text style={styles.emptyText}>No visits scheduled yet.</Text>
           ) : (
-            visits.map((v: any) => {
-              const date = new Date(v.scheduledFor).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-              const isPast = new Date(v.scheduledFor) < new Date();
+            visits.map((v) => {
+              const date = new Date(v.startAt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              const isPast = new Date(v.startAt) < new Date();
               return (
-                <TouchableOpacity key={v._id ?? v.id} style={styles.card} activeOpacity={0.75} onPress={() => openExport(v._id ?? v.id)}>
+                <TouchableOpacity key={`${v.id}:${v.occurrenceAt}`} style={styles.card} activeOpacity={0.75} onPress={() => openExport(v.id)}>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardTitle}>{v.providerName}</Text>
+                    <Text style={styles.cardTitle}>{v.title}</Text>
                     <Text style={styles.cardSub}>{date}</Text>
                     <View style={styles.pillRow}>
                       <View style={[styles.pill, isPast && { backgroundColor: colors.surface }]}>

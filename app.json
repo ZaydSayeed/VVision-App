@@ -20,6 +20,11 @@
         "applinks:velavision.org"
       ],
       "buildNumber": "12",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.velavision.app.widget"
+        ]
+      },
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Vela Vision uses the microphone for voice check-ins with your care team.",
         "NSMotionUsageDescription": "Vela uses motion data to detect activity patterns for your care team.",

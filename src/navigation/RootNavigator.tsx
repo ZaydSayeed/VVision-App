@@ -43,6 +43,7 @@ import { useHelpAlert } from "../hooks/useHelpAlert";
 import { usePushRegistration } from "../hooks/usePushRegistration";
 import { useInviteDeepLink } from "../hooks/useInviteDeepLink";
 import { usePasswordResetDeepLink } from "../hooks/usePasswordResetDeepLink";
+import { useWidgetDeepLink } from "../hooks/useWidgetDeepLink";
 import { ResetPasswordScreen } from "../screens/ResetPasswordScreen";
 import { ResolveSheet, HelpCause } from "../components/ResolveSheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -112,6 +113,9 @@ export function RootNavigator() {
 
   // Password-reset deep links — opens ResetPasswordScreen via recoveryMode.
   usePasswordResetDeepLink(startRecovery);
+
+  // Widget deep links (vela://calendar/<patientId>) — see hook.
+  useWidgetDeepLink(user);
 
   // Expo push-token registration (caregiver livestream + patient reminders).
   usePushRegistration(user);

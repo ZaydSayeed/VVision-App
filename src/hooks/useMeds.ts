@@ -8,8 +8,11 @@ import {
   updateMedication,
   deleteMedication,
 } from "../api/client";
+import { useAuth } from "../context/AuthContext";
+import { refreshWidgetForPatient } from "../services/calendarApi";
 
 export function useMeds(patientId?: string) {
+  const { user } = useAuth();
   const [meds, setMeds] = useState<Medication[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -45,6 +48,12 @@ export function useMeds(patientId?: string) {
       try {
         const data = await updateMedication(id, { taken_date: newDate });
         setMeds((prev) => prev.map((m) => (m.id === id ? data : m)));
+        const targetPatientId = patientId ?? user?.patient_id ?? undefined;
+        if (targetPatientId) {
+          refreshWidgetForPatient(targetPatientId, user?.name).catch((err) =>
+            console.warn("[widget] snapshot refresh failed (non-fatal):", err)
+          );
+        }
       } catch {
         // Roll back — a medication checkbox must never lie about whether a dose
         // was logged (false "taken" risks a missed or double dose). (SAFE-3)
@@ -55,7 +64,7 @@ export function useMeds(patientId?: string) {
         );
       }
     },
-    [meds]
+    [meds, patientId, user]
   );
 
   const editMed = useCallback(async (id: string, name: string, dosage: string, time: string) => {

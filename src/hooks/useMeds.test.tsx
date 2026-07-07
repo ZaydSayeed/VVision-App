@@ -9,6 +9,16 @@ jest.mock("../api/client", () => ({
   deleteMedication: jest.fn(),
 }));
 
+// useMeds refreshes the widget snapshot after a successful toggle (Task 4).
+// Mock AuthContext (avoids needing a real Supabase client in this test) and
+// calendarApi's refresh helper (avoids requiring the native widget-bridge module).
+jest.mock("../context/AuthContext", () => ({
+  useAuth: () => ({ user: { id: "u1", patient_id: "p1", name: "Mom" } }),
+}));
+jest.mock("../services/calendarApi", () => ({
+  refreshWidgetForPatient: jest.fn(() => Promise.resolve()),
+}));
+
 import { useMeds } from "./useMeds";
 import * as client from "../api/client";
 

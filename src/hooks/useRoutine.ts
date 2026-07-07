@@ -8,8 +8,11 @@ import {
   updateRoutine,
   deleteRoutine,
 } from "../api/client";
+import { useAuth } from "../context/AuthContext";
+import { refreshWidgetForPatient } from "../services/calendarApi";
 
 export function useRoutine(patientId?: string) {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -45,6 +48,12 @@ export function useRoutine(patientId?: string) {
       try {
         const data = await updateRoutine(id, { completed_date: newDate });
         setTasks((prev) => prev.map((t) => (t.id === id ? data : t)));
+        const targetPatientId = patientId ?? user?.patient_id ?? undefined;
+        if (targetPatientId) {
+          refreshWidgetForPatient(targetPatientId, user?.name).catch((err) =>
+            console.warn("[widget] snapshot refresh failed (non-fatal):", err)
+          );
+        }
       } catch {
         setTasks(previous);
         Alert.alert(
@@ -53,7 +62,7 @@ export function useRoutine(patientId?: string) {
         );
       }
     },
-    [tasks]
+    [tasks, patientId, user]
   );
 
   const deleteTask = useCallback(async (id: string) => {

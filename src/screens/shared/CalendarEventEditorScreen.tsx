@@ -76,7 +76,7 @@ interface Props {
   patientName?: string;
 }
 
-export function CalendarEventEditorScreen({ patientId: propPatientId }: Props) {
+export function CalendarEventEditorScreen({ patientId: propPatientId, patientName: propPatientName }: Props) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<any>();
@@ -85,13 +85,16 @@ export function CalendarEventEditorScreen({ patientId: propPatientId }: Props) {
     eventId,
     event: existingEvent,
     patientId: routePatientId,
+    patientName: routePatientName,
   } = (route.params ?? {}) as {
     eventId?: string;
     event?: CalendarEventOccurrence;
     patientId?: string;
+    patientName?: string;
   };
 
   const patientId = propPatientId ?? routePatientId ?? user?.patient_id ?? undefined;
+  const patientName = propPatientName ?? routePatientName ?? user?.name;
   const isEditing = !!eventId;
 
   // Use the series' true anchor (startAt), not the tapped occurrence's own
@@ -156,9 +159,9 @@ export function CalendarEventEditorScreen({ patientId: propPatientId }: Props) {
     setSaving(true);
     try {
       if (isEditing && eventId) {
-        await updateCalendarEvent(patientId, eventId, input);
+        await updateCalendarEvent(patientId, eventId, input, patientName);
       } else {
-        await createCalendarEvent(patientId, input);
+        await createCalendarEvent(patientId, input, patientName);
       }
       navigation.goBack();
     } catch (e: any) {
@@ -181,7 +184,7 @@ export function CalendarEventEditorScreen({ patientId: propPatientId }: Props) {
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteCalendarEvent(patientId, eventId);
+            await deleteCalendarEvent(patientId, eventId, patientName);
             navigation.goBack();
           } catch (e: any) {
             if (typeof e?.message === "string" && e.message.includes("403")) {

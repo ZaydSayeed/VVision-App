@@ -122,7 +122,7 @@ export function CalendarScreen({ patientId: propPatientId, patientName }: Props)
     );
     try {
       const dateKey = occurrence.occurrenceAt.slice(0, 10);
-      await completeCalendarEventOccurrence(patientId, occurrence.id, dateKey);
+      await completeCalendarEventOccurrence(patientId, occurrence.id, dateKey, patientName ?? user?.name);
     } catch {
       // Revert on failure.
       setEvents((prev) =>

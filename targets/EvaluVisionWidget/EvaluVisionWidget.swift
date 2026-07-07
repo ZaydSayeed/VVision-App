@@ -129,6 +129,11 @@ struct EvaluVisionWidgetView: View {
             }
         }
         .containerBackground(velaBackground, for: .widget)
+        // Deep link back into the app's calendar screen for this widget's patient
+        // (src/hooks/useWidgetDeepLink.ts parses this same "vela://calendar/<id>"
+        // format). No snapshot yet (fresh install) -> no URL, tapping just opens
+        // the app.
+        .widgetURL(entry.snapshot.flatMap { URL(string: "vela://calendar/\($0.patientId)") })
     }
 
     private func content(for snapshot: WidgetSnapshot) -> some View {

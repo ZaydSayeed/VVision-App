@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { PatientSummary } from "../types";
 import { fetchLinkedPatients } from "../api/client";
+import { writeWidgetPatientsList } from "../../modules/widget-bridge";
 
 const POLL_INTERVAL = 15000;
 
@@ -15,6 +16,13 @@ export function usePatients() {
     try {
       const data = await fetchLinkedPatients();
       setPatients(data);
+      // Populates the widget's configuration picker (targets/EvaluVisionWidget/AppIntent.swift)
+      // for caregivers managing multiple patients. Non-fatal — the widget
+      // degrades gracefully (falls back to the active-patient pointer) if this
+      // never lands.
+      writeWidgetPatientsList(data.map((p) => ({ id: p.id, name: p.name }))).catch((err) =>
+        console.warn("[widget] patients list write failed (non-fatal):", err)
+      );
     } catch {
       setPatients([]);
     } finally {

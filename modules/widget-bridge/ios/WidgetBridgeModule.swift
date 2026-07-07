@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import WidgetKit
 
 private let appGroupIdentifier = "group.com.velavision.caregiver.widget"
 
@@ -30,6 +31,13 @@ public class WidgetBridgeModule: Module {
 
       let fileURL = containerURL.appendingPathComponent(filename)
       try jsonString.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+
+    // Asks WidgetKit to re-fetch the timeline for every placed instance of this
+    // app's widgets, so a fresh snapshot (written via writeSnapshot above)
+    // shows up within seconds instead of waiting for the ~20-minute schedule.
+    AsyncFunction("reloadTimelines") {
+      WidgetCenter.shared.reloadAllTimelines()
     }
   }
 }

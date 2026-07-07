@@ -132,7 +132,7 @@ export function CalendarEventEditorScreen({ patientId: propPatientId }: Props) {
       return;
     }
 
-    let recurrenceRule: string | undefined;
+    let recurrenceRule: string | null = null;
     if (recurrenceType === "daily") {
       recurrenceRule = buildDailyRule();
     } else if (recurrenceType === "weekly") {

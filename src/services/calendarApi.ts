@@ -19,7 +19,7 @@ export interface CalendarEventInput {
   startAt: string;
   endAt: string;
   notes?: string;
-  recurrenceRule?: string;
+  recurrenceRule?: string | null;
 }
 
 export async function listCalendarEvents(

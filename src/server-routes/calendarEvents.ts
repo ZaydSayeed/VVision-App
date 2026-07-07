@@ -14,7 +14,7 @@ export const calendarEventCreateSchema = z.object({
   startAt: z.string(),
   endAt: z.string(),
   notes: z.string().max(1000).optional(),
-  recurrenceRule: z.string().max(500).optional(),
+  recurrenceRule: z.string().max(500).optional().nullable(),
 });
 
 export const calendarEventUpdateSchema = calendarEventCreateSchema.partial();

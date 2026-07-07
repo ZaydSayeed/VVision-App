@@ -323,6 +323,28 @@ describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
       { $set: {} }
     );
   });
+
+  it("clears an existing recurrence rule when recurrenceRule is explicitly null", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({
+      _id: new ObjectId(id),
+      patientId: "patient-123",
+      createdBy: "user-caregiver",
+      recurrenceRule: "FREQ=DAILY",
+    });
+    mockCol.updateOne = vi.fn().mockResolvedValue({ matchedCount: 1 });
+
+    const res = await request(app)
+      .patch(`/api/profiles/patient-123/calendar-events/${id}`)
+      .send({ recurrenceRule: null });
+
+    expect(res.status).toBe(200);
+    expect(mockCol.updateOne).toHaveBeenCalledWith(
+      { _id: expect.anything() },
+      { $set: { recurrenceRule: null } }
+    );
+  });
 });
 
 describe("DELETE /api/profiles/:patientId/calendar-events/:id", () => {

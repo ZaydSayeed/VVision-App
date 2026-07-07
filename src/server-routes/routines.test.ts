@@ -71,6 +71,7 @@ describe("GET /api/routines", () => {
 
     expect(res.status).toBe(200);
     expect(mockRoutinesCol.find).toHaveBeenCalledWith({ patient_id: "patient-other" });
+    expect(userHasPatientAccess).toHaveBeenCalledWith(expect.anything(), "user-caregiver", "patient-other");
   });
 
   it("with a patientId param and no access, returns 403 and does not query routines", async () => {
@@ -81,5 +82,6 @@ describe("GET /api/routines", () => {
     expect(res.status).toBe(403);
     expect(res.body).toEqual({ detail: "No access to this profile" });
     expect(mockRoutinesCol.find).not.toHaveBeenCalled();
+    expect(userHasPatientAccess).toHaveBeenCalledWith(expect.anything(), "user-caregiver", "patient-other");
   });
 });

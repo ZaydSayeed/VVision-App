@@ -75,7 +75,7 @@
       [
         "expo-calendar",
         {
-          "calendarPermission": "EvaluVision uses your calendar to add appointments and events you create in the app, so they also show up in your phone's Calendar app."
+          "calendarPermission": "Vela uses your calendar to add appointments and events you create in the app, so they also show up in your phone's Calendar app."
         }
       ]
     ],

@@ -15,8 +15,18 @@ vi.mock("../server-core/seatResolver", () => ({
   },
 }));
 
-const mockCol = {
+const mockCol: {
+  insertOne: ReturnType<typeof vi.fn>;
+  find: ReturnType<typeof vi.fn>;
+  findOne: ReturnType<typeof vi.fn>;
+  updateOne: ReturnType<typeof vi.fn>;
+  deleteOne: ReturnType<typeof vi.fn>;
+} = {
   insertOne: vi.fn().mockResolvedValue({ insertedId: { toString: () => "event-1" } }),
+  find: vi.fn(),
+  findOne: vi.fn(),
+  updateOne: vi.fn(),
+  deleteOne: vi.fn(),
 };
 vi.mock("../server-core/database", () => ({
   getDb: () => ({ collection: () => mockCol }),

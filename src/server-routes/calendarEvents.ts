@@ -85,11 +85,12 @@ router.get("/:patientId/calendar-events", authMiddleware, requirePatientAccess, 
 router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = calendarEventUpdateSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
-  if (!ObjectId.isValid(req.params.id)) { res.status(404).json({ detail: "Event not found" }); return; }
+  const id = req.params.id;
+  if (typeof id !== "string" || !ObjectId.isValid(id)) { res.status(404).json({ detail: "Event not found" }); return; }
   try {
     const db = getDb();
     const doc = await db.collection("calendar_events").findOne({
-      _id: new ObjectId(String(req.params.id)),
+      _id: new ObjectId(id),
       patientId: req.params.patientId,
     });
     if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
@@ -107,11 +108,12 @@ router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAc
 });
 
 router.delete("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
-  if (!ObjectId.isValid(req.params.id)) { res.status(404).json({ detail: "Event not found" }); return; }
+  const id = req.params.id;
+  if (typeof id !== "string" || !ObjectId.isValid(id)) { res.status(404).json({ detail: "Event not found" }); return; }
   try {
     const db = getDb();
     const doc = await db.collection("calendar_events").findOne({
-      _id: new ObjectId(String(req.params.id)),
+      _id: new ObjectId(id),
       patientId: req.params.patientId,
     });
     if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
@@ -130,11 +132,12 @@ const completeSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) 
 router.post("/:patientId/calendar-events/:id/complete", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = completeSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
-  if (!ObjectId.isValid(req.params.id)) { res.status(404).json({ detail: "Event not found" }); return; }
+  const id = req.params.id;
+  if (typeof id !== "string" || !ObjectId.isValid(id)) { res.status(404).json({ detail: "Event not found" }); return; }
   try {
     const db = getDb();
     const doc = await db.collection("calendar_events").findOne({
-      _id: new ObjectId(String(req.params.id)),
+      _id: new ObjectId(id),
       patientId: req.params.patientId,
     });
     if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }

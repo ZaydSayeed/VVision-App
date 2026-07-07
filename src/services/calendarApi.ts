@@ -22,6 +22,18 @@ export interface CalendarEventOccurrence {
   completed: boolean;
 }
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  category: CalendarCategory;
+  startAt: string;
+  endAt: string;
+  notes: string | null;
+  recurrenceRule: string | null;
+  createdBy: string;
+  completedDates: string[];
+}
+
 export interface CalendarEventInput {
   title: string;
   category: CalendarCategory;
@@ -42,6 +54,12 @@ export async function listCalendarEvents(
   if (!res.ok) throw new Error(`Failed to load calendar events: ${res.status}`);
   const data = await res.json();
   return data.events ?? [];
+}
+
+export async function getCalendarEvent(patientId: string, id: string): Promise<CalendarEvent> {
+  const res = await authFetch(`/api/profiles/${patientId}/calendar-events/${id}`);
+  if (!res.ok) throw new Error(`Failed to load calendar event: ${res.status}`);
+  return res.json();
 }
 
 export async function createCalendarEvent(

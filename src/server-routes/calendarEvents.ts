@@ -83,6 +83,34 @@ router.get("/:patientId/calendar-events", authMiddleware, requirePatientAccess, 
   }
 });
 
+router.get("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
+  const id = req.params.id;
+  if (typeof id !== "string" || !ObjectId.isValid(id)) { res.status(404).json({ detail: "Event not found" }); return; }
+  try {
+    const db = getDb();
+    const doc = await db.collection("calendar_events").findOne({
+      _id: new ObjectId(id),
+      patientId: req.params.patientId,
+    });
+    if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
+
+    res.json({
+      id: doc._id.toString(),
+      title: doc.title,
+      category: doc.category,
+      startAt: doc.startAt,
+      endAt: doc.endAt,
+      notes: doc.notes ?? null,
+      recurrenceRule: doc.recurrenceRule ?? null,
+      createdBy: doc.createdBy,
+      completedDates: doc.completedDates ?? [],
+    });
+  } catch (err) {
+    console.error("calendar-events get-by-id error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
 router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = calendarEventUpdateSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }

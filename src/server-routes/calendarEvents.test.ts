@@ -270,6 +270,69 @@ describe("GET /api/profiles/:patientId/calendar-events", () => {
   });
 });
 
+describe("GET /api/profiles/:patientId/calendar-events/:id", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns the single event document", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne.mockResolvedValue({
+      _id: new ObjectId(id),
+      patientId: "patient-123",
+      title: "Dr. Smith checkup",
+      category: "medical",
+      startAt: "2026-07-10T13:00:00.000Z",
+      endAt: "2026-07-10T13:30:00.000Z",
+      notes: "Bring meds list",
+      recurrenceRule: null,
+      createdBy: "user-caregiver",
+      completedDates: ["2026-07-10"],
+    });
+
+    const res = await request(app).get(`/api/profiles/patient-123/calendar-events/${id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id,
+      title: "Dr. Smith checkup",
+      category: "medical",
+      startAt: "2026-07-10T13:00:00.000Z",
+      endAt: "2026-07-10T13:30:00.000Z",
+      notes: "Bring meds list",
+      recurrenceRule: null,
+      createdBy: "user-caregiver",
+      completedDates: ["2026-07-10"],
+    });
+  });
+
+  it("returns 404 when the event does not exist", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne.mockResolvedValue(null);
+
+    const res = await request(app).get(`/api/profiles/patient-123/calendar-events/${id}`);
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ detail: "Event not found" });
+  });
+
+  it("returns 404 when the id is malformed", async () => {
+    const res = await request(app).get("/api/profiles/patient-123/calendar-events/not-a-valid-id");
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ detail: "Event not found" });
+  });
+
+  it("scopes the lookup by patientId, not just the event id", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne.mockResolvedValue(null);
+
+    await request(app).get(`/api/profiles/patient-123/calendar-events/${id}`);
+    expect(mockCol.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ patientId: "patient-123" })
+    );
+  });
+});
+
 describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
   beforeEach(() => vi.clearAllMocks());
 

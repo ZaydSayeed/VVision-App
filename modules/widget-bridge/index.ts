@@ -1,4 +1,4 @@
-import { requireNativeModule } from "expo-modules-core";
+import { requireOptionalNativeModule } from "expo-modules-core";
 
 import type { WidgetSnapshot } from "../../src/services/widgetSnapshot";
 
@@ -7,9 +7,16 @@ interface WidgetBridgeNativeModule {
   reloadTimelines(): Promise<void>;
 }
 
-const NativeWidgetBridge = requireNativeModule<WidgetBridgeNativeModule>("WidgetBridge");
+// Only registered on iOS (see expo-module.config.json's `platforms: ["apple"]`).
+// On Android, web, and unmodified Expo Go this resolves to `null` instead of
+// throwing, so every export below must no-op gracefully when it's absent.
+const NativeWidgetBridge =
+  requireOptionalNativeModule<WidgetBridgeNativeModule>("WidgetBridge");
 
 export async function writeWidgetSnapshot(snapshot: WidgetSnapshot): Promise<void> {
+  if (!NativeWidgetBridge) {
+    return;
+  }
   const filename = `widget-snapshot-${snapshot.patientId}.json`;
   await NativeWidgetBridge.writeSnapshot(filename, JSON.stringify(snapshot));
 }
@@ -22,6 +29,9 @@ export async function writeWidgetActivePatient(
   patientId: string,
   patientName?: string
 ): Promise<void> {
+  if (!NativeWidgetBridge) {
+    return;
+  }
   await NativeWidgetBridge.writeSnapshot(
     "widget-active-patient.json",
     JSON.stringify({ patientId, patientName })
@@ -35,6 +45,9 @@ export async function writeWidgetActivePatient(
 export async function writeWidgetPatientsList(
   patients: { id: string; name: string }[]
 ): Promise<void> {
+  if (!NativeWidgetBridge) {
+    return;
+  }
   await NativeWidgetBridge.writeSnapshot("widget-patients.json", JSON.stringify(patients));
 }
 
@@ -42,5 +55,8 @@ export async function writeWidgetPatientsList(
 // freshly written snapshot shows up within seconds instead of waiting for the
 // widget's own ~20-minute refresh schedule.
 export async function reloadWidgetTimelines(): Promise<void> {
+  if (!NativeWidgetBridge) {
+    return;
+  }
   await NativeWidgetBridge.reloadTimelines();
 }

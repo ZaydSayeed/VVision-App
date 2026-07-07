@@ -237,7 +237,10 @@ describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
       .send({ title: "Updated title" });
 
     expect(res.status).toBe(200);
-    expect(mockCol.updateOne).toHaveBeenCalled();
+    expect(mockCol.updateOne).toHaveBeenCalledWith(
+      { _id: expect.anything() },
+      { $set: { title: "Updated title" } }
+    );
   });
 
   it("returns 403 when the caller did not create the event", async () => {
@@ -262,5 +265,52 @@ describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
       .send({ title: "Updated title" });
 
     expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when the id is malformed", async () => {
+    const res = await request(app)
+      .patch("/api/profiles/patient-123/calendar-events/not-a-valid-id")
+      .send({ title: "Updated title" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.detail).toBe("Event not found");
+  });
+
+  it("strips createdBy and patientId from update payload", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "user-caregiver" });
+    mockCol.updateOne = vi.fn().mockResolvedValue({ matchedCount: 1 });
+
+    const res = await request(app)
+      .patch(`/api/profiles/patient-123/calendar-events/${id}`)
+      .send({
+        title: "Updated title",
+        createdBy: "someone-else",
+        patientId: "different-patient",
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockCol.updateOne).toHaveBeenCalledWith(
+      { _id: expect.anything() },
+      { $set: { title: "Updated title" } }
+    );
+  });
+
+  it("accepts an empty update body and calls updateOne with empty $set", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "user-caregiver" });
+    mockCol.updateOne = vi.fn().mockResolvedValue({ matchedCount: 1 });
+
+    const res = await request(app)
+      .patch(`/api/profiles/patient-123/calendar-events/${id}`)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(mockCol.updateOne).toHaveBeenCalledWith(
+      { _id: expect.anything() },
+      { $set: {} }
+    );
   });
 });

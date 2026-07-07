@@ -85,6 +85,7 @@ router.get("/:patientId/calendar-events", authMiddleware, requirePatientAccess, 
 router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
   const parsed = calendarEventUpdateSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
+  if (!ObjectId.isValid(req.params.id)) { res.status(404).json({ detail: "Event not found" }); return; }
   try {
     const db = getDb();
     const doc = await db.collection("calendar_events").findOne({

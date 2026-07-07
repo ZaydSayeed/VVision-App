@@ -97,4 +97,128 @@ describe("GET /api/profiles/:patientId/calendar-events", () => {
     expect(res.body.events[0]).toMatchObject({ occurrenceAt: "2026-07-10T13:00:00.000Z", completed: true });
     expect(res.body.events[1]).toMatchObject({ occurrenceAt: "2026-07-11T13:00:00.000Z", completed: false });
   });
+
+  it("returns a non-recurring one-off event with matching startAt/endAt", async () => {
+    mockCol.find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([
+        {
+          _id: { toString: () => "event-2" },
+          patientId: "patient-123",
+          title: "Dr. Smith checkup",
+          category: "medical",
+          startAt: "2026-07-15T15:00:00.000Z",
+          endAt: "2026-07-15T15:30:00.000Z",
+          recurrenceRule: null,
+          notes: "Routine checkup",
+          createdBy: "user-caregiver",
+          completedDates: [],
+        },
+      ]),
+    });
+
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "2026-07-15T00:00:00.000Z", to: "2026-07-16T00:00:00.000Z" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(1);
+    expect(res.body.events[0]).toMatchObject({
+      id: "event-2",
+      title: "Dr. Smith checkup",
+      occurrenceAt: "2026-07-15T15:00:00.000Z",
+      endAt: "2026-07-15T15:30:00.000Z",
+      completed: false,
+      recurrenceRule: null,
+    });
+  });
+
+  it("excludes docs with zero matching occurrences in the requested range", async () => {
+    mockCol.find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([
+        {
+          _id: { toString: () => "event-3" },
+          patientId: "patient-123",
+          title: "Past appointment",
+          category: "medical",
+          startAt: "2026-07-01T10:00:00.000Z",
+          endAt: "2026-07-01T10:30:00.000Z",
+          recurrenceRule: null,
+          notes: null,
+          createdBy: "user-caregiver",
+          completedDates: [],
+        },
+      ]),
+    });
+
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "2026-07-15T00:00:00.000Z", to: "2026-07-20T00:00:00.000Z" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(0);
+  });
+
+  it("merges and sorts multiple docs chronologically", async () => {
+    mockCol.find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([
+        {
+          _id: { toString: () => "event-4" },
+          patientId: "patient-123",
+          title: "Evening medication",
+          category: "medication",
+          startAt: "2026-07-15T19:00:00.000Z",
+          endAt: "2026-07-15T19:05:00.000Z",
+          recurrenceRule: null,
+          notes: null,
+          createdBy: "user-caregiver",
+          completedDates: [],
+        },
+        {
+          _id: { toString: () => "event-5" },
+          patientId: "patient-123",
+          title: "Morning medication",
+          category: "medication",
+          startAt: "2026-07-15T08:00:00.000Z",
+          endAt: "2026-07-15T08:05:00.000Z",
+          recurrenceRule: null,
+          notes: null,
+          createdBy: "user-caregiver",
+          completedDates: [],
+        },
+      ]),
+    });
+
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "2026-07-15T00:00:00.000Z", to: "2026-07-16T00:00:00.000Z" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(2);
+    expect(res.body.events[0]).toMatchObject({
+      occurrenceAt: "2026-07-15T08:00:00.000Z",
+      title: "Morning medication",
+    });
+    expect(res.body.events[1]).toMatchObject({
+      occurrenceAt: "2026-07-15T19:00:00.000Z",
+      title: "Evening medication",
+    });
+  });
+
+  it("returns 400 when from/to query params are malformed dates", async () => {
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "not-a-date", to: "2026-07-20T00:00:00.000Z" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.detail).toBe("Invalid from/to date");
+  });
+
+  it("returns 400 when to query param is a malformed date", async () => {
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "2026-07-10T00:00:00.000Z", to: "invalid-date" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.detail).toBe("Invalid from/to date");
+  });
 });

@@ -44,6 +44,12 @@ router.get("/:patientId/calendar-events", authMiddleware, requirePatientAccess, 
     const db = getDb();
     const from = String(req.query.from ?? new Date().toISOString());
     const to = String(req.query.to ?? new Date(Date.now() + 7 * 86_400_000).toISOString());
+
+    if (Number.isNaN(new Date(from).getTime()) || Number.isNaN(new Date(to).getTime())) {
+      res.status(400).json({ detail: "Invalid from/to date" });
+      return;
+    }
+
     const docs = await db.collection("calendar_events").find({ patientId: req.params.patientId }).toArray();
 
     const events = docs.flatMap((doc: any) => {

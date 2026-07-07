@@ -43,7 +43,7 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
   const [linkCode, setLinkCode] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showPatientPicker, setShowPatientPicker] = useState(false);
+  const [patientPickerTarget, setPatientPickerTarget] = useState<"VisitReports" | "Calendar" | null>(null);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -188,7 +188,7 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                       onClose();
                       navigation.navigate("VisitReports", { patientId: patients[0].id, patientName: patients[0].name });
                     } else {
-                      setShowPatientPicker(true);
+                      setPatientPickerTarget("VisitReports");
                     }
                   }}
                 >
@@ -200,6 +200,33 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                 </TouchableOpacity>
               </View>
             )}
+
+            {/* Calendar (caregiver: pick a patient; patient: own calendar) */}
+            <View style={[styles.section, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.row}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (user?.role === "patient") {
+                    onClose();
+                    navigation.navigate("Calendar");
+                    return;
+                  }
+                  if (patients.length === 1) {
+                    onClose();
+                    navigation.navigate("Calendar", { patientId: patients[0].id, patientName: patients[0].name });
+                  } else {
+                    setPatientPickerTarget("Calendar");
+                  }
+                }}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="calendar-outline" size={20} color={colors.violet} />
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Calendar</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
 
             {/* Subscription (caregiver only) */}
             {user?.role === "caregiver" && (
@@ -494,9 +521,9 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
               </View>
             </Modal>
 
-            {/* Patient picker modal for Visit Reports */}
-            <Modal visible={showPatientPicker} transparent animationType="fade" onRequestClose={() => setShowPatientPicker(false)}>
-              <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} activeOpacity={1} onPress={() => setShowPatientPicker(false)}>
+            {/* Patient picker modal for Visit Reports / Calendar */}
+            <Modal visible={patientPickerTarget !== null} transparent animationType="fade" onRequestClose={() => setPatientPickerTarget(null)}>
+              <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} activeOpacity={1} onPress={() => setPatientPickerTarget(null)}>
                 <View style={{ backgroundColor: colors.bg, borderRadius: 16, padding: 24, width: "80%" }}>
                   <Text style={{ fontSize: 17, ...fonts.medium, color: colors.text, marginBottom: 16 }}>Which patient?</Text>
                   {patients.map(p => (
@@ -504,9 +531,10 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
                       key={p.id}
                       style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}
                       onPress={() => {
-                        setShowPatientPicker(false);
+                        const target = patientPickerTarget;
+                        setPatientPickerTarget(null);
                         onClose();
-                        navigation.navigate("VisitReports", { patientId: p.id, patientName: p.name });
+                        if (target) navigation.navigate(target, { patientId: p.id, patientName: p.name });
                       }}
                       activeOpacity={0.7}
                     >

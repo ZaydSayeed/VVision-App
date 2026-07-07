@@ -550,6 +550,14 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
               <Ionicons name="pulse" size={16} color={colors.violet} />
               <Text style={styles.reportBtnAltText}>Health</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.reportBtnAlt}
+              onPress={() => navigation.navigate("Calendar", { patientId, patientName })}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="calendar-outline" size={16} color={colors.violet} />
+              <Text style={styles.reportBtnAltText}>Calendar</Text>
+            </TouchableOpacity>
           </View>
         </View>
 

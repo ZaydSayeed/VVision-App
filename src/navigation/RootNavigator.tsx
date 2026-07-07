@@ -26,6 +26,7 @@ import CheckInScreen from "../screens/caregiver/CheckInScreen";
 import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import VisitReportsScreen from "../screens/caregiver/VisitReportsScreen";
 import { CaregiverHealthScreen } from "../screens/caregiver/CaregiverHealthScreen";
+import { CalendarScreen } from "../screens/shared/CalendarScreen";
 import PaywallScreen from "../screens/caregiver/PaywallScreen";
 import InviteSeatScreen from "../screens/caregiver/InviteSeatScreen";
 import { startHomeKitListeners } from "../lib/homekit";
@@ -212,6 +213,7 @@ export function RootNavigator() {
           options={{ headerShown: false }}
         />
         <PatientStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
+        <PatientStack.Screen name="Calendar" component={CalendarScreen} options={{ headerShown: true, title: "Calendar" }} />
       </PatientStack.Navigator>
       <BackgroundDecor />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -381,6 +383,12 @@ function CaregiverView({
           }}
         </CaregiverStack.Screen>
         <CaregiverStack.Screen name="CaregiverHealth" component={CaregiverHealthScreen} options={{ headerShown: true, title: "Health", headerBackTitle: "Back" }} />
+        <CaregiverStack.Screen name="Calendar" options={{ headerShown: true, title: "Calendar" }}>
+          {({ route }: any) => {
+            const { patientId, patientName } = route.params || {};
+            return <CalendarScreen patientId={patientId} patientName={patientName} />;
+          }}
+        </CaregiverStack.Screen>
         <CaregiverStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
         <CaregiverStack.Screen name="Paywall" component={PaywallScreen} options={{ headerShown: false }} />
         <CaregiverStack.Screen name="InviteSeat" component={InviteSeatScreen} options={{ headerShown: false }} />

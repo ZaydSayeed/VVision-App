@@ -64,6 +64,7 @@ router.get("/:patientId/calendar-events", authMiddleware, requirePatientAccess, 
           id: doc._id.toString(),
           title: doc.title,
           category: doc.category,
+          startAt: doc.startAt,
           occurrenceAt,
           endAt: new Date(new Date(occurrenceAt).getTime() + durationMs).toISOString(),
           notes: doc.notes ?? null,
@@ -94,7 +95,13 @@ router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAc
       patientId: req.params.patientId,
     });
     if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
-    if (doc.createdBy !== req.seat!.userId) { res.status(403).json({ detail: "Only the creator can edit this event" }); return; }
+    // Events migrated from the old "visits" feature carry a "migrated"
+    // sentinel createdBy — no real user id ever matches it, so the intent is
+    // that anyone with patient access can edit/delete them (see Task 6).
+    if (doc.createdBy !== "migrated" && doc.createdBy !== req.seat!.userId) {
+      res.status(403).json({ detail: "Only the creator can edit this event" });
+      return;
+    }
 
     await db.collection("calendar_events").updateOne(
       { _id: doc._id },
@@ -117,7 +124,10 @@ router.delete("/:patientId/calendar-events/:id", authMiddleware, requirePatientA
       patientId: req.params.patientId,
     });
     if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
-    if (doc.createdBy !== req.seat!.userId) { res.status(403).json({ detail: "Only the creator can delete this event" }); return; }
+    if (doc.createdBy !== "migrated" && doc.createdBy !== req.seat!.userId) {
+      res.status(403).json({ detail: "Only the creator can delete this event" });
+      return;
+    }
 
     await db.collection("calendar_events").deleteOne({ _id: doc._id });
     res.json({ ok: true });

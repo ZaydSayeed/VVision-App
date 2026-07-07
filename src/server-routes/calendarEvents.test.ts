@@ -231,6 +231,43 @@ describe("GET /api/profiles/:patientId/calendar-events", () => {
     expect(res.status).toBe(400);
     expect(res.body.detail).toBe("Invalid from/to date");
   });
+
+  it("includes the document's original startAt distinct from occurrenceAt for a recurring event's later occurrence", async () => {
+    mockCol.find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([
+        {
+          _id: { toString: () => "event-6" },
+          patientId: "patient-123",
+          title: "Daily walk",
+          category: "personal",
+          startAt: "2026-07-10T13:00:00.000Z",
+          endAt: "2026-07-10T13:30:00.000Z",
+          recurrenceRule: "FREQ=DAILY",
+          notes: null,
+          createdBy: "user-caregiver",
+          completedDates: [],
+        },
+      ]),
+    });
+
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "2026-07-10T00:00:00.000Z", to: "2026-07-12T00:00:00.000Z" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(2);
+    // First occurrence: startAt equals occurrenceAt.
+    expect(res.body.events[0]).toMatchObject({
+      startAt: "2026-07-10T13:00:00.000Z",
+      occurrenceAt: "2026-07-10T13:00:00.000Z",
+    });
+    // Second occurrence: startAt still points at the series anchor, distinct
+    // from this occurrence's own datetime.
+    expect(res.body.events[1]).toMatchObject({
+      startAt: "2026-07-10T13:00:00.000Z",
+      occurrenceAt: "2026-07-11T13:00:00.000Z",
+    });
+  });
 });
 
 describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
@@ -324,6 +361,23 @@ describe("PATCH /api/profiles/:patientId/calendar-events/:id", () => {
     );
   });
 
+  it("allows a user who is not \"migrated\" to edit a migrated event", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "migrated" });
+    mockCol.updateOne = vi.fn().mockResolvedValue({ matchedCount: 1 });
+
+    const res = await request(app)
+      .patch(`/api/profiles/patient-123/calendar-events/${id}`)
+      .send({ title: "Updated title" });
+
+    expect(res.status).toBe(200);
+    expect(mockCol.updateOne).toHaveBeenCalledWith(
+      { _id: expect.anything() },
+      { $set: { title: "Updated title" } }
+    );
+  });
+
   it("clears an existing recurrence rule when recurrenceRule is explicitly null", async () => {
     const { ObjectId } = await import("mongodb");
     const id = new ObjectId().toString();
@@ -384,6 +438,17 @@ describe("DELETE /api/profiles/:patientId/calendar-events/:id", () => {
     const res = await request(app).delete("/api/profiles/patient-123/calendar-events/not-a-valid-id");
     expect(res.status).toBe(404);
     expect(res.body.detail).toBe("Event not found");
+  });
+
+  it("allows a user who is not \"migrated\" to delete a migrated event", async () => {
+    const { ObjectId } = await import("mongodb");
+    const id = new ObjectId().toString();
+    mockCol.findOne = vi.fn().mockResolvedValue({ _id: new ObjectId(id), patientId: "patient-123", createdBy: "migrated" });
+    mockCol.deleteOne = vi.fn().mockResolvedValue({ deletedCount: 1 });
+
+    const res = await request(app).delete(`/api/profiles/patient-123/calendar-events/${id}`);
+    expect(res.status).toBe(200);
+    expect(mockCol.deleteOne).toHaveBeenCalled();
   });
 });
 

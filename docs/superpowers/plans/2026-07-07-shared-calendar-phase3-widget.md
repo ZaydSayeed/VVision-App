@@ -244,10 +244,10 @@ git commit -m "feat: add native widget-bridge module to write shared App Group s
 
 **Files:**
 - Create: `widget-extension-plugin/withWidgetExtension.ts` (an Expo config plugin that adds the native widget extension target during prebuild)
-- Create: `widget-extension-plugin/ios/Vela VisionWidget/Vela VisionWidget.swift`
-- Create: `widget-extension-plugin/ios/Vela VisionWidget/Info.plist`
+- Create: `widget-extension-plugin/ios/VelaVisionWidget/VelaVisionWidget.swift`
+- Create: `widget-extension-plugin/ios/VelaVisionWidget/Info.plist`
 
-Adding a full native widget extension target via a config plugin is one of the more involved things Expo's config-plugin system supports — fetch current Expo docs on "config plugins" and "adding a native target" (or a widely-used community example like `@bacons/apple-targets`, which exists specifically to simplify this) before hand-rolling the Xcode project mutation logic. Using an established community plugin for the mechanical "add a target to the Xcode project" part is reasonable here (YAGNI — don't reinvent Xcode project-file surgery), while the actual widget UI code (`Vela VisionWidget.swift`) is bespoke to this app's design.
+Adding a full native widget extension target via a config plugin is one of the more involved things Expo's config-plugin system supports — fetch current Expo docs on "config plugins" and "adding a native target" (or a widely-used community example like `@bacons/apple-targets`, which exists specifically to simplify this) before hand-rolling the Xcode project mutation logic. Using an established community plugin for the mechanical "add a target to the Xcode project" part is reasonable here (YAGNI — don't reinvent Xcode project-file surgery), while the actual widget UI code (`VelaVisionWidget.swift`) is bespoke to this app's design.
 
 **Interfaces:**
 - Consumes: the JSON file written by Task 2, read via the same App Group container URL (`group.com.evaluvision.app.widget`) from the widget extension's own process.
@@ -264,7 +264,7 @@ Follow whatever folder/manifest structure the plugin from Step 1 requires. This 
 - [ ] **Step 3: Implement the timeline provider and view**
 
 ```swift
-// Vela VisionWidget.swift — illustrative; adjust types/imports to match the
+// VelaVisionWidget.swift — illustrative; adjust types/imports to match the
 // scaffolding from Step 1/2 and the App Group identifier from Task 2.
 import WidgetKit
 import SwiftUI
@@ -298,12 +298,12 @@ func loadSnapshot(patientId: String) -> WidgetSnapshot? {
     return try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
 }
 
-struct Vela VisionEntry: TimelineEntry {
+struct VelaVisionEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
 }
 
-struct Vela VisionProvider: TimelineProvider {
+struct VelaVisionProvider: TimelineProvider {
     // Patient selection (which patientId this widget instance shows) comes
     // from WidgetKit's configuration/intent system for a per-instance
     // picker — confirm the exact mechanism (static configuration vs
@@ -312,26 +312,26 @@ struct Vela VisionProvider: TimelineProvider {
     // on-device smoke test, but the caregiver-picks-a-patient requirement
     // from the spec needs the configurable-intent variant to actually ship.
 
-    func placeholder(in context: Context) -> Vela VisionEntry {
-        Vela VisionEntry(date: Date(), snapshot: nil)
+    func placeholder(in context: Context) -> VelaVisionEntry {
+        VelaVisionEntry(date: Date(), snapshot: nil)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (Vela VisionEntry) -> Void) {
-        completion(Vela VisionEntry(date: Date(), snapshot: nil))
+    func getSnapshot(in context: Context, completion: @escaping (VelaVisionEntry) -> Void) {
+        completion(VelaVisionEntry(date: Date(), snapshot: nil))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Vela VisionEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<VelaVisionEntry>) -> Void) {
         // TODO(Task 3 Step 4): resolve the actual patientId for this widget
         // instance from its configuration, not a hardcoded placeholder.
         let snapshot = loadSnapshot(patientId: "REPLACE_WITH_CONFIGURED_PATIENT_ID")
-        let entry = Vela VisionEntry(date: Date(), snapshot: snapshot)
+        let entry = VelaVisionEntry(date: Date(), snapshot: snapshot)
         let nextRefresh = Calendar.current.date(byAdding: .minute, value: 20, to: Date())!
         completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
     }
 }
 
-struct Vela VisionWidgetView: View {
-    var entry: Vela VisionEntry
+struct VelaVisionWidgetView: View {
+    var entry: VelaVisionEntry
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -356,12 +356,12 @@ struct Vela VisionWidgetView: View {
     }
 }
 
-struct Vela VisionWidget: Widget {
-    let kind: String = "Vela VisionWidget"
+struct VelaVisionWidget: Widget {
+    let kind: String = "VelaVisionWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Vela VisionProvider()) { entry in
-            Vela VisionWidgetView(entry: entry)
+        StaticConfiguration(kind: kind, provider: VelaVisionProvider()) { entry in
+            VelaVisionWidgetView(entry: entry)
         }
         .configurationDisplayName("Vela Vision Today")
         .description("Today's checklist and appointments.")

@@ -27,6 +27,7 @@ import CheckInTextScreen from "../screens/caregiver/CheckInTextScreen";
 import VisitReportsScreen from "../screens/caregiver/VisitReportsScreen";
 import { CaregiverHealthScreen } from "../screens/caregiver/CaregiverHealthScreen";
 import { CalendarScreen } from "../screens/shared/CalendarScreen";
+import { CalendarEventEditorScreen } from "../screens/shared/CalendarEventEditorScreen";
 import PaywallScreen from "../screens/caregiver/PaywallScreen";
 import InviteSeatScreen from "../screens/caregiver/InviteSeatScreen";
 import { startHomeKitListeners } from "../lib/homekit";
@@ -214,6 +215,7 @@ export function RootNavigator() {
         />
         <PatientStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />
         <PatientStack.Screen name="Calendar" component={CalendarScreen} options={{ headerShown: true, title: "Calendar" }} />
+        <PatientStack.Screen name="CalendarEventEditor" component={CalendarEventEditorScreen} options={{ headerShown: true, title: "Event" }} />
       </PatientStack.Navigator>
       <BackgroundDecor />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -387,6 +389,12 @@ function CaregiverView({
           {({ route }: any) => {
             const { patientId, patientName } = route.params || {};
             return <CalendarScreen patientId={patientId} patientName={patientName} />;
+          }}
+        </CaregiverStack.Screen>
+        <CaregiverStack.Screen name="CalendarEventEditor" options={{ headerShown: true, title: "Event" }}>
+          {({ route }: any) => {
+            const { patientId, patientName } = route.params || {};
+            return <CalendarEventEditorScreen patientId={patientId} patientName={patientName} />;
           }}
         </CaregiverStack.Screen>
         <CaregiverStack.Screen name="AcceptInvite" component={AcceptInviteScreen} options={{ headerShown: false }} />

@@ -302,7 +302,7 @@ export function CalendarScreen({ patientId: propPatientId, patientName }: Props)
             <TouchableOpacity
               style={styles.card}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate("CalendarEventEditor", { eventId: item.id })}
+              onPress={() => navigation.navigate("CalendarEventEditor", { eventId: item.id, event: item, patientId })}
               accessibilityRole="button"
               accessibilityLabel={`${item.title}, ${CALENDAR_CATEGORY_LABELS[item.category]}, ${formatOccurrenceTime(item.occurrenceAt)}`}
             >
@@ -333,7 +333,7 @@ export function CalendarScreen({ patientId: propPatientId, patientName }: Props)
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.85}
-        onPress={() => navigation.navigate("CalendarEventEditor")}
+        onPress={() => navigation.navigate("CalendarEventEditor", { patientId })}
         accessibilityRole="button"
         accessibilityLabel="Add calendar event"
       >

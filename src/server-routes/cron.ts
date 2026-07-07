@@ -3,6 +3,7 @@ import { getDb } from "../server-core/database";
 import { config } from "../server-core/config";
 import { escalateHelpAlerts } from "../server-jobs/escalateHelpAlerts";
 import { fireRemindersForAll } from "../server-jobs/fireReminders";
+import { migrateVisitsToCalendarEvents } from "../server-jobs/migrateVisitsToCalendarEvents";
 
 const router = Router();
 
@@ -47,6 +48,31 @@ router.post("/cron/tick", async (req, res) => {
     });
   } catch (err) {
     console.error("cron tick error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+// POST /api/internal/cron/migrate-visits
+// One-off admin trigger for the visits -> calendar_events data migration.
+// Not part of the recurring cron cadence — hit this manually once against
+// production, confirm the count, then remove this route and its import.
+// Protected by the same CRON_SECRET shared secret as /cron/tick.
+router.post("/cron/migrate-visits", async (req, res) => {
+  if (!config.cronSecret) {
+    res.status(503).json({ detail: "Cron trigger not configured" });
+    return;
+  }
+  if (!isAuthorizedCronRequest(req.get("x-cron-secret") ?? undefined, config.cronSecret)) {
+    res.status(401).json({ detail: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const db = getDb();
+    const migrated = await migrateVisitsToCalendarEvents(db);
+    res.json({ ok: true, migrated });
+  } catch (err) {
+    console.error("visits migration error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });

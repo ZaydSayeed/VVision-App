@@ -92,19 +92,25 @@ export function SideDrawer({ visible, onClose }: SideDrawerProps) {
 
   const handleToggleAppleSync = async (value: boolean) => {
     setAppleSyncMessage(null);
-    if (value) {
-      const granted = await requestAppleCalendarPermission();
-      if (granted) {
-        await setAppleCalendarSyncEnabled(true);
-        setAppleSyncEnabled(true);
+    try {
+      if (value) {
+        const granted = await requestAppleCalendarPermission();
+        if (granted) {
+          await setAppleCalendarSyncEnabled(true);
+          setAppleSyncEnabled(true);
+        } else {
+          setAppleSyncMessage(
+            "Calendar access was denied. You can enable it in iPhone Settings > Vela Vision > Calendars."
+          );
+          setAppleSyncEnabled(false);
+        }
       } else {
-        setAppleSyncMessage(
-          "Calendar access was denied. You can enable it in iPhone Settings > Vela Vision > Calendars."
-        );
+        await setAppleCalendarSyncEnabled(false);
         setAppleSyncEnabled(false);
       }
-    } else {
-      await setAppleCalendarSyncEnabled(false);
+    } catch (err) {
+      console.warn("[SideDrawer] apple calendar sync toggle failed:", err);
+      setAppleSyncMessage("Couldn't enable calendar sync. Please try again.");
       setAppleSyncEnabled(false);
     }
   };

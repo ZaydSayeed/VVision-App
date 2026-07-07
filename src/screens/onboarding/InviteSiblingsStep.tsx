@@ -4,6 +4,7 @@ import { inviteSeat } from "../../api/seats";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
+import { fonts, spacing, radius } from "../../config/theme";
 import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function InviteSiblingsStep({ navigation }: any) {
@@ -14,13 +15,13 @@ export default function InviteSiblingsStep({ navigation }: any) {
   const [busy, setBusy] = useState(false);
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, padding: 24 },
-    title: { fontSize: 24, fontWeight: "700", color: colors.text, marginBottom: 8 },
-    subtitle: { color: colors.muted, marginBottom: 24 },
-    input: { borderWidth: 1, borderColor: colors.border, padding: 12, borderRadius: 10, color: colors.text, marginBottom: 8 },
-    sendBtn: { backgroundColor: colors.violet, padding: 16, borderRadius: 12, marginTop: 8, marginBottom: 12 },
-    sendBtnText: { color: "white", textAlign: "center" as const, fontWeight: "700" as const },
-    skipText: { color: colors.muted, textAlign: "center" as const },
+    container: { flex: 1, padding: spacing.xxl },
+    title: { fontSize: 24, lineHeight: 30, ...fonts.medium, color: colors.text, marginBottom: spacing.sm },
+    subtitle: { fontSize: 15, lineHeight: 22, ...fonts.regular, color: colors.muted, marginBottom: spacing.xxl },
+    input: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: spacing.lg, borderRadius: radius.md, fontSize: 16, ...fonts.regular, color: colors.text, marginBottom: spacing.sm, minHeight: 52 },
+    sendBtn: { backgroundColor: colors.violet, padding: spacing.lg, borderRadius: radius.pill, minHeight: 56, justifyContent: "center" as const, marginTop: spacing.sm, marginBottom: spacing.md },
+    sendBtnText: { color: "#FFFFFF", textAlign: "center" as const, ...fonts.medium, fontSize: 16 },
+    skipText: { fontSize: 15, ...fonts.regular, color: colors.muted, textAlign: "center" as const, paddingVertical: spacing.md },
   }), [colors]);
 
   const send = async () => {
@@ -49,7 +50,7 @@ export default function InviteSiblingsStep({ navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <OnboardingProgress />
     <View style={styles.container}>
       <Text style={styles.title}>Invite family</Text>

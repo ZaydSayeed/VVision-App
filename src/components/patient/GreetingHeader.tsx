@@ -47,15 +47,15 @@ export function GreetingHeader({ greeting, firstName, notifCount, onOpenNotifs }
       marginBottom: 2,
     },
     greetingLine: {
-      fontSize: 17,
-      color: colors.muted,
+      fontSize: 20,
+      color: colors.subtext,
       ...fonts.regular,
     },
     greetingName: {
-      fontSize: 36,
+      fontSize: 40,
       color: colors.text,
       ...fonts.medium,
-      lineHeight: 42,
+      lineHeight: 46,
     },
     greetingAccent: {
       color: colors.violet,
@@ -70,19 +70,19 @@ export function GreetingHeader({ greeting, firstName, notifCount, onOpenNotifs }
     },
     notifBadge: {
       position: "absolute",
-      top: 9,
-      right: 9,
-      minWidth: 16,
-      height: 16,
-      borderRadius: 8,
+      top: 6,
+      right: 6,
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
       backgroundColor: colors.violet,
       alignItems: "center",
       justifyContent: "center",
-      paddingHorizontal: 3,
+      paddingHorizontal: 4,
       borderWidth: 1.5,
       borderColor: colors.warm,
     },
-    notifBadgeText: { fontSize: 9, color: "#FFFFFF", ...fonts.medium },
+    notifBadgeText: { fontSize: 12, color: "#FFFFFF", ...fonts.medium },
   }), [colors]);
 
   return (

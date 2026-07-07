@@ -137,13 +137,19 @@ export function RootNavigator() {
     splashLogo: { width: 160, height: 196 },
     visionFab: {
       position: "absolute", bottom: 108, right: 24,
-      width: 56, height: 56, borderRadius: 28,
+      height: 60, borderRadius: 30,
       shadowColor: colors.violet, shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.45, shadowRadius: 14, elevation: 12, overflow: "hidden",
     },
     visionFabGradient: {
-      width: 56, height: 56, borderRadius: 28,
+      height: 60, borderRadius: 30,
+      paddingHorizontal: 22,
+      flexDirection: "row",
       alignItems: "center", justifyContent: "center",
+      gap: 8,
+    },
+    visionFabLabel: {
+      fontSize: 17, color: "#FFFFFF", ...fonts.medium,
     },
   }), [colors]);
 
@@ -210,9 +216,16 @@ export function RootNavigator() {
       <BackgroundDecor />
       <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <VisionSheet visible={visionOpen} onClose={() => setVisionOpen(false)} />
-      <TouchableOpacity onPress={() => setVisionOpen(true)} style={styles.visionFab} activeOpacity={0.85}>
+      <TouchableOpacity
+        onPress={() => setVisionOpen(true)}
+        style={styles.visionFab}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Ask Vela, your assistant"
+      >
         <LinearGradient colors={[...gradients.primary]} style={styles.visionFabGradient}>
           <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+          <Text style={styles.visionFabLabel}>Ask Vela</Text>
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
@@ -379,17 +392,21 @@ function CaregiverView({
         onPress={() => setVisionOpen(true)}
         style={{
           position: "absolute", bottom: 108, right: 24,
-          width: 56, height: 56, borderRadius: 28,
+          height: 56, borderRadius: 28,
           shadowColor: colors.violet, shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.45, shadowRadius: 14, elevation: 12, overflow: "hidden",
         }}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Ask Vela, your assistant"
       >
         <LinearGradient colors={[...gradients.primary]} style={{
-          width: 56, height: 56, borderRadius: 28,
-          alignItems: "center", justifyContent: "center",
+          height: 56, borderRadius: 28, paddingHorizontal: 20,
+          flexDirection: "row",
+          alignItems: "center", justifyContent: "center", gap: 8,
         }}>
-          <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+          <Ionicons name="sparkles" size={20} color="#FFFFFF" />
+          <Text style={{ fontSize: 15, color: "#FFFFFF", ...fonts.medium }}>Ask Vela</Text>
         </LinearGradient>
       </TouchableOpacity>
 

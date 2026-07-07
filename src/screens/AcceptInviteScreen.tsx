@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { View, Text, ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import { acceptInvite } from "../api/seats";
 import { useTheme } from "../context/ThemeContext";
+import { fonts, spacing, radius } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -13,11 +14,11 @@ export default function AcceptInviteScreen({ route, navigation }: any) {
   const { user } = useAuth();
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, padding: 24, justifyContent: "center" },
-    title: { fontSize: 22, fontWeight: "700", textAlign: "center", color: colors.text },
-    message: { textAlign: "center", marginTop: 12, color: colors.muted },
-    btn: { backgroundColor: colors.violet, padding: 16, borderRadius: 12, marginTop: 24 },
-    btnText: { color: "white", textAlign: "center", fontWeight: "700" },
+    container: { flex: 1, padding: spacing.xxl, justifyContent: "center", backgroundColor: colors.bg },
+    title: { fontSize: 24, lineHeight: 30, ...fonts.medium, textAlign: "center", color: colors.text },
+    message: { fontSize: 15, lineHeight: 22, ...fonts.regular, textAlign: "center", marginTop: spacing.md, color: colors.muted },
+    btn: { backgroundColor: colors.violet, padding: spacing.lg, borderRadius: radius.pill, minHeight: 56, justifyContent: "center", marginTop: spacing.xxl },
+    btnText: { color: "#FFFFFF", textAlign: "center", ...fonts.medium, fontSize: 16 },
   }), [colors]);
 
   useEffect(() => {

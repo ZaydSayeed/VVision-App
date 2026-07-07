@@ -33,7 +33,6 @@ export default function InviteSeatScreen({ navigation }: any) {
         },
         title: {
           fontSize: 22,
-          fontWeight: "700",
           color: colors.text,
           ...fonts.medium,
         },
@@ -75,13 +74,11 @@ export default function InviteSeatScreen({ navigation }: any) {
         },
         roleBtnTextActive: {
           color: "white",
-          fontWeight: "600",
           fontSize: 14,
           ...fonts.medium,
         },
         roleBtnTextInactive: {
           color: colors.text,
-          fontWeight: "600",
           fontSize: 14,
           ...fonts.medium,
         },
@@ -100,7 +97,6 @@ export default function InviteSeatScreen({ navigation }: any) {
         },
         submitText: {
           color: "white",
-          fontWeight: "700",
           fontSize: 16,
           ...fonts.medium,
         },

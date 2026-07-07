@@ -4,6 +4,7 @@ import { authFetch } from "../../api/authFetch";
 import { useCurrentProfile } from "../../hooks/useCurrentProfile";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
+import { fonts, spacing, radius } from "../../config/theme";
 import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function ProfileBasicsStep({ navigation }: any) {
@@ -15,16 +16,16 @@ export default function ProfileBasicsStep({ navigation }: any) {
   const [busy, setBusy] = useState(false);
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, padding: 24 },
-    title: { fontSize: 24, fontWeight: "700", color: colors.text, marginBottom: 8 },
-    subtitle: { color: colors.muted, marginBottom: 24 },
-    input: { borderWidth: 1, borderColor: colors.border, padding: 14, borderRadius: 10, fontSize: 16, color: colors.text, marginBottom: 16 },
-    stageLabel: { fontWeight: "600", color: colors.text, marginBottom: 8 },
-    stageRow: { flexDirection: "row" as const, gap: 8, marginBottom: 24 },
-    stageBtn: { flex: 1, padding: 12, borderRadius: 10 },
-    stageBtnText: { textAlign: "center" as const, fontWeight: "600" as const, textTransform: "capitalize" as const },
-    continueBtn: { padding: 16, borderRadius: 12 },
-    continueBtnText: { color: "white", textAlign: "center" as const, fontWeight: "700" as const, fontSize: 16 },
+    container: { flex: 1, padding: spacing.xxl },
+    title: { fontSize: 24, lineHeight: 30, ...fonts.medium, color: colors.text, marginBottom: spacing.sm },
+    subtitle: { fontSize: 15, lineHeight: 22, ...fonts.regular, color: colors.muted, marginBottom: spacing.xxl },
+    input: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: spacing.lg, borderRadius: radius.md, fontSize: 16, ...fonts.regular, color: colors.text, marginBottom: spacing.lg, minHeight: 52 },
+    stageLabel: { fontSize: 15, ...fonts.medium, color: colors.text, marginBottom: spacing.sm },
+    stageRow: { flexDirection: "row" as const, gap: spacing.sm, marginBottom: spacing.xxl },
+    stageBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radius.pill, minHeight: 44, justifyContent: "center" as const },
+    stageBtnText: { textAlign: "center" as const, fontSize: 14, ...fonts.medium, textTransform: "capitalize" as const },
+    continueBtn: { padding: spacing.lg, borderRadius: radius.pill, minHeight: 56, justifyContent: "center" as const },
+    continueBtnText: { color: "#FFFFFF", textAlign: "center" as const, ...fonts.medium, fontSize: 16 },
   }), [colors]);
 
   const next = async () => {
@@ -43,7 +44,7 @@ export default function ProfileBasicsStep({ navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <OnboardingProgress />
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Tell us about your parent</Text>

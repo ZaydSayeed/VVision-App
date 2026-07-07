@@ -18,10 +18,10 @@ const METRIC_CONFIG: Array<{
   accentColor: string;
   summaryKey: "steps" | "heartRate" | "activeMinutes" | "sleep";
 }> = [
-  { metric: "steps", title: "Steps", iconName: "footsteps-outline", accentColor: "#F97316", summaryKey: "steps" },
-  { metric: "heart_rate", title: "Heart Rate", iconName: "heart-outline", accentColor: "#EF4444", summaryKey: "heartRate" },
-  { metric: "active_minutes", title: "Active Minutes", iconName: "flash-outline", accentColor: "#22C55E", summaryKey: "activeMinutes" },
-  { metric: "sleep", title: "Sleep", iconName: "moon-outline", accentColor: "#6366F1", summaryKey: "sleep" },
+  { metric: "steps", title: "Steps", iconName: "footsteps-outline", accentColor: "#E8934A", summaryKey: "steps" },
+  { metric: "heart_rate", title: "Heart Rate", iconName: "heart-outline", accentColor: "#D95F5F", summaryKey: "heartRate" },
+  { metric: "active_minutes", title: "Active Minutes", iconName: "flash-outline", accentColor: "#5C8E7A", summaryKey: "activeMinutes" },
+  { metric: "sleep", title: "Sleep", iconName: "moon-outline", accentColor: "#7B5CE7", summaryKey: "sleep" },
 ];
 
 function getSummaryValues(data: any) {

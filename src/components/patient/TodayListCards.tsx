@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
-import { fonts, spacing, radius, shadow } from "../../config/theme";
+import { fonts, spacing, radius, shadow, patientType, patientTouch } from "../../config/theme";
 import { RoutineTask, Medication, Reminder } from "../../types";
 
 /** Shared "full-width status card" chrome for the meds + tasks lists (verbatim from TodayScreen). */
@@ -35,49 +35,48 @@ function useFullCardStyles() {
       marginBottom: spacing.sm,
     },
     fullCardTitle: {
-      fontSize: 10,
+      ...patientType.label,
       ...fonts.medium,
-      letterSpacing: 1.2,
-      textTransform: "uppercase",
       marginRight: "auto" as const,
     },
     fullCardPill: {
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 2,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 4,
       borderRadius: radius.pill,
     },
-    fullCardPillText: { fontSize: 11, ...fonts.medium },
+    fullCardPillText: { fontSize: 14, ...fonts.medium },
     fullCardPlusBtn: {
-      width: 28, height: 28, borderRadius: 14,
+      width: 44, height: 44, borderRadius: 22,
       alignItems: "center", justifyContent: "center",
     },
-    fullCardPlusBtnText: { color: "#fff", fontSize: 18, lineHeight: 22, fontWeight: "400" as const },
+    fullCardPlusBtnText: { color: "#fff", fontSize: 26, lineHeight: 30, ...fonts.regular },
     fullCardItem: {
       flexDirection: "row",
       alignItems: "center",
       gap: spacing.sm,
-      paddingVertical: 4,
+      paddingVertical: spacing.sm,
+      minHeight: patientTouch.min,
     },
     fullCardCheckboxBtn: {
-      width: 44,
-      height: 44,
+      width: patientTouch.min,
+      height: patientTouch.min,
       alignItems: "center",
       justifyContent: "center",
     },
     fullCardCheckbox: {
-      width: 22, height: 22, borderRadius: radius.sm,
+      width: 34, height: 34, borderRadius: radius.sm,
       alignItems: "center", justifyContent: "center",
     },
-    fullCardItemText: { fontSize: 14, color: colors.text, ...fonts.regular },
+    fullCardItemText: { ...patientType.item, color: colors.text, ...fonts.regular },
     fullCardItemDone: { color: colors.muted, textDecorationLine: "line-through" },
-    fullCardEmpty: { fontSize: 13, color: colors.muted, ...fonts.regular },
+    fullCardEmpty: { ...patientType.secondary, color: colors.muted, ...fonts.regular },
     fullCardProgressTrack: {
-      height: 5, borderRadius: radius.pill,
+      height: 6, borderRadius: radius.pill,
       backgroundColor: colors.surface,
       marginTop: spacing.sm,
     },
-    fullCardProgressFill: { height: 5, borderRadius: radius.pill },
-    fullCardProgressText: { fontSize: 10, color: colors.muted, ...fonts.regular, marginTop: 3 },
+    fullCardProgressFill: { height: 6, borderRadius: radius.pill },
+    fullCardProgressText: { fontSize: 14, color: colors.muted, ...fonts.regular, marginTop: 5 },
   }), [colors]);
 }
 
@@ -125,7 +124,7 @@ export function MedicationsCard({ meds, medsDone, isTakenToday, onToggleTaken, o
               <View key={med.id} style={styles.fullCardItem}>
                 <TouchableOpacity style={styles.fullCardCheckboxBtn} onPress={() => onToggleTaken(med.id)} activeOpacity={0.75} accessibilityLabel={`Mark ${med.name} as ${taken ? "not taken" : "taken"}`} accessibilityRole="checkbox" accessibilityState={{ checked: taken }}>
                   <View style={[styles.fullCardCheckbox, { backgroundColor: taken ? colors.amber : "transparent", borderWidth: taken ? 0 : 1.5, borderColor: colors.amber }]}>
-                    {taken && <Ionicons name="checkmark" size={13} color="#fff" />}
+                    {taken && <Ionicons name="checkmark" size={20} color="#fff" />}
                   </View>
                 </TouchableOpacity>
                 <Text style={[styles.fullCardItemText, taken && styles.fullCardItemDone]} numberOfLines={2}>
@@ -203,7 +202,7 @@ export function TasksCard({
                 accessibilityState={{ checked: item.done }}
               >
                 <View style={[styles.fullCardCheckbox, { backgroundColor: item.done ? colors.sage : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: colors.sage }]}>
-                  {item.done && <Ionicons name="checkmark" size={13} color="#fff" />}
+                  {item.done && <Ionicons name="checkmark" size={20} color="#fff" />}
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
@@ -224,7 +223,7 @@ export function TasksCard({
                   ])}
                   activeOpacity={0.75}
                 >
-                  <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
+                  <Ionicons name="close-circle-outline" size={28} color={colors.muted} />
                 </TouchableOpacity>
               )}
             </View>

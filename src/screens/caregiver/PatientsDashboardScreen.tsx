@@ -105,6 +105,35 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
       ...fonts.medium,
     },
 
+    // Overall status banner — answers "is everything okay?" before anything else
+    statusBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      borderRadius: radius.xl,
+      padding: spacing.lg,
+      marginBottom: spacing.lg,
+    },
+    statusIconWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.bg,
+    },
+    statusHeadline: {
+      fontSize: 17,
+      color: colors.text,
+      ...fonts.medium,
+    },
+    statusSub: {
+      fontSize: 13,
+      color: colors.subtext,
+      ...fonts.regular,
+      marginTop: 1,
+    },
+
     // Card
     card: {
       backgroundColor: colors.bg,
@@ -283,7 +312,36 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
             </Text>
           </View>
         ) : (
-          patients.map((patient) => {
+          <>
+          {(() => {
+            const helpCount = patients.reduce((n, p) => n + (p.pendingHelp ?? 0), 0);
+            const allClear = helpCount === 0;
+            return (
+              <View
+                style={[styles.statusBanner, { backgroundColor: allClear ? colors.sageSoft : colors.coralSoft }]}
+                accessibilityRole="summary"
+              >
+                <View style={styles.statusIconWrap}>
+                  <Ionicons
+                    name={allClear ? "checkmark-circle" : "hand-left"}
+                    size={26}
+                    color={allClear ? colors.sage : colors.coral}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.statusHeadline}>
+                    {allClear ? "Everything looks okay" : `${helpCount} help request${helpCount === 1 ? "" : "s"} waiting`}
+                  </Text>
+                  <Text style={styles.statusSub}>
+                    {allClear
+                      ? `All ${patients.length === 1 ? "1 patient is" : `${patients.length} patients are`} accounted for today`
+                      : "Open the Alerts tab to respond"}
+                  </Text>
+                </View>
+              </View>
+            );
+          })()}
+          {patients.map((patient) => {
             const needsHelp = (patient.pendingHelp ?? 0) > 0;
             const accentColor = needsHelp ? colors.amber : colors.sage;
             const softColor = needsHelp ? colors.amberSoft : colors.sageSoft;
@@ -357,7 +415,8 @@ export function PatientsDashboardScreen({ onSelectPatient, onAddPatient }: Props
                 </View>
               </TouchableOpacity>
             );
-          })
+          })}
+          </>
         )}
       </ScrollView>
     </View>

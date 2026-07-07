@@ -185,6 +185,17 @@ Full token set — both `lightColors` and `darkColors` exported. `AppColors = ty
 
 ---
 
+## Hard-Won Gotchas (from the 2026-07-06 failure audit — read before any work)
+- **This folder (`~/Documents/VVision-App`) is the real repo.** `~/projects/VVision-App` is a stale duplicate — never edit or commit there.
+- **Render does NOT auto-deploy on push.** Deploys are manual. The backend once ran 6 weeks stale because a failed deploy silently kept serving the old build. After backend changes: deploy manually in the Render dashboard and confirm the new build is live.
+- **Run `npx tsc --noEmit` before calling any backend change done.** Render runs `tsx` with no type-checking — a bad import once crashed the whole server on boot and nothing caught it.
+- **Live backend uses MongoDB database `haadisiddiqui1_db_user`**, not `dvision` (which the local `.env` points to and is nearly empty). Debugging against the wrong DB wastes hours.
+- **Render free tier cold-starts (~30s).** Never treat a failed first request as a real failure: no `signOut()` on refresh failure, use the `request()` wrapper (35s timeout), never raw `fetch` that swallows errors.
+- **Old-arch React Native:** `PanGestureHandler` and native `@react-native-community/slider` inside `Modal` crash fatally. Native modules (`expo-location`, etc.) crash Expo Go / stale dev clients at import — check the dev client before adding one, and always commit `package.json` + `app.json` plugin changes together.
+- **IAP product IDs are case-sensitive:** `VelaVisionStarter` / `VelaVisionUnlimited`. A lowercase match once blanked the paywall and caused an App Store rejection.
+- **Dates:** never use `.toISOString()` for "today" — UTC shifted evening health readings to tomorrow. Use local-date helpers.
+- **Both ends or it isn't a feature:** an endpoint without UI (unlink) and a button without a screen (Safe Zone, password reset) have each shipped broken here. Trace the full user path before declaring done.
+
 ## Important Notes
 - The **link code** (patients share with caregivers to connect) requires the backend to be running. If it's not showing in the side drawer, it's a backend connectivity issue, not a frontend bug.
 - The **Faces** feature (face recognition) requires the glasses hardware system running on the same network. Most face-related API calls will fail gracefully with an offline state if the glasses aren't connected.

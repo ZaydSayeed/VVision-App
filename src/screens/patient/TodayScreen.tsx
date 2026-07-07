@@ -26,7 +26,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { fonts, spacing, radius, shadow } from "../../config/theme";
 import { registerReminderReload, registerTaskReload, registerMedReload } from "../../utils/reminderEvents";
-import { HeroStatCard } from "../../components/HeroStatCard";
+import { UpNextCard } from "../../components/patient/UpNextCard";
 import { getGreeting } from "../../utils/greeting";
 import { useClock } from "../../hooks/useClock";
 import { MoodCheckIn } from "../../components/patient/MoodCheckIn";
@@ -72,7 +72,6 @@ export function TodayScreen() {
   const pendingTasks = tasks.filter((t) => !isCompletedToday(t));
   const pendingMeds = meds.filter((m) => !isTakenToday(m));
   const totalNotifs = pendingTasks.length + pendingMeds.length;
-  const [remindersOn, setRemindersOn] = useState(true);
 
   // ── Notification panel ──────────────────────────────────────
   const [notifOpen, setNotifOpen] = useState(false);
@@ -165,16 +164,17 @@ export function TodayScreen() {
       marginBottom: spacing.xs,
     },
     noteLabel: {
-      fontSize: 10, color: colors.violet, ...fonts.medium,
+      fontSize: 13, color: colors.violet, ...fonts.medium,
       letterSpacing: 1, textTransform: "uppercase",
     },
     noteViewAll: {
       flexDirection: "row", alignItems: "center", gap: 2,
+      minHeight: 44, paddingHorizontal: spacing.xs, justifyContent: "center",
     },
-    noteViewAllText: { fontSize: 12, color: colors.violet, ...fonts.medium },
-    noteText: { fontSize: 14, color: colors.text, ...fonts.regular, lineHeight: 21 },
-    notePlaceholder: { fontSize: 14, color: colors.muted, ...fonts.regular, fontStyle: "italic" },
-    noteTimestamp: { fontSize: 11, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
+    noteViewAllText: { fontSize: 15, color: colors.violet, ...fonts.medium },
+    noteText: { fontSize: 18, color: colors.text, ...fonts.regular, lineHeight: 26 },
+    notePlaceholder: { fontSize: 16, color: colors.muted, ...fonts.regular, fontStyle: "italic" },
+    noteTimestamp: { fontSize: 13, color: colors.muted, ...fonts.regular, marginTop: spacing.xs },
 
     // Full-width stacked cards → ./components/patient/TodayListCards
 
@@ -209,7 +209,7 @@ export function TodayScreen() {
       {dataError ? (
         <View style={{ marginHorizontal: spacing.xl, marginBottom: spacing.sm, backgroundColor: colors.coralSoft, borderRadius: radius.lg, padding: spacing.md, flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
           <Ionicons name="wifi-outline" size={16} color={colors.coral} />
-          <Text style={{ fontSize: 13, color: colors.coral, ...fonts.regular, flex: 1 }}>Couldn't load your data. Showing last saved version.</Text>
+          <Text style={{ fontSize: 16, color: colors.coral, ...fonts.regular, flex: 1, lineHeight: 22 }}>Couldn't load your data. Showing last saved version.</Text>
         </View>
       ) : null}
 
@@ -221,22 +221,15 @@ export function TodayScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.violet} />
         }
       >
-        {/* ── Hero progress card ──────────────────────────── */}
-        <HeroStatCard
-          stats={[
-            { label: "Routine", value: `${routineDone} of ${tasks.length}`, iconName: "leaf", iconColor: colors.sage },
-            { label: "Meds", value: `${medsDone} of ${meds.length}`, iconName: "medkit", iconColor: colors.amber },
-          ]}
-          toggle={{
-            label: "Reminders on",
-            value: remindersOn,
-            onChange: setRemindersOn,
-            iconName: "notifications-outline",
-          }}
-          cta={{
-            label: "See today's schedule",
-            onPress: openNotifs,
-          }}
+        {/* ── Up Next — the one thing to do now ────────────── */}
+        <UpNextCard
+          tasks={tasks}
+          meds={meds}
+          isCompletedToday={isCompletedToday}
+          isTakenToday={isTakenToday}
+          onCompleteTask={toggleComplete}
+          onTakeMed={toggleTaken}
+          onSeeSchedule={openNotifs}
         />
 
         {/* ── Mood check-in card ────────────────────────────── */}

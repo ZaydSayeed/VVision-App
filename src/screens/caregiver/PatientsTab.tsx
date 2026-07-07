@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { BackHandler } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import { PatientSummary } from "../../types";
@@ -60,6 +61,17 @@ export function PatientsTab() {
     });
     return () => subscription.remove();
   }, [patients]);
+
+  // Hardware back walks the view hierarchy instead of leaving the tab
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (view === "logDetail") { setView("logs"); return true; }
+      if (view === "logs" || view === "livestream") { setView("detail"); return true; }
+      if (view === "detail" || view === "link") { setView("dashboard"); return true; }
+      return false;
+    });
+    return () => sub.remove();
+  }, [view]);
 
   if (view === "link") {
     return (

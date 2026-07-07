@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useOnboarding } from "../../hooks/useOnboarding";
 import { useTheme } from "../../context/ThemeContext";
+import { fonts, spacing, radius } from "../../config/theme";
 import OnboardingProgress from "../../components/OnboardingProgress";
 
 export default function CallerSetupStep({ navigation }: any) {
@@ -9,12 +10,12 @@ export default function CallerSetupStep({ navigation }: any) {
   const { colors } = useTheme();
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { flex: 1, padding: 24, justifyContent: "center" as const },
-    title: { fontSize: 24, fontWeight: "700", color: colors.text, marginBottom: 8 },
-    subtitle: { color: colors.muted, marginBottom: 32 },
-    primaryBtn: { backgroundColor: colors.violet, padding: 16, borderRadius: 12, marginBottom: 12 },
-    primaryBtnText: { color: "white", textAlign: "center" as const, fontWeight: "700" as const },
-    skipText: { color: colors.muted, textAlign: "center" as const },
+    container: { flex: 1, padding: spacing.xxl, justifyContent: "center" as const },
+    title: { fontSize: 24, lineHeight: 30, ...fonts.medium, color: colors.text, marginBottom: spacing.sm },
+    subtitle: { fontSize: 15, lineHeight: 22, ...fonts.regular, color: colors.muted, marginBottom: spacing.xxxl },
+    primaryBtn: { backgroundColor: colors.violet, padding: spacing.lg, borderRadius: radius.pill, minHeight: 56, justifyContent: "center" as const, marginBottom: spacing.md },
+    primaryBtnText: { color: "#FFFFFF", textAlign: "center" as const, ...fonts.medium, fontSize: 16 },
+    skipText: { fontSize: 15, ...fonts.regular, color: colors.muted, textAlign: "center" as const, paddingVertical: spacing.md },
   }), [colors]);
 
   const advance = async () => {
@@ -23,7 +24,7 @@ export default function CallerSetupStep({ navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
     <OnboardingProgress />
     <View style={styles.container}>
       <Text style={styles.title}>Set up a companion caller?</Text>

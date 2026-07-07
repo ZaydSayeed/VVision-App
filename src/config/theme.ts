@@ -96,6 +96,23 @@ export const fonts = {
   displayLight: { fontFamily: "DMSans_400Regular" },
 };
 
+// Patient-facing type scale — dementia-informed. Aging eyes + cognitive load
+// need bigger everything: body >= 19pt, primary labels 24pt+, generous leading.
+// Touch targets: 56dp comfortable minimum, 88dp+ for primary actions.
+export const patientType = {
+  name: { fontSize: 40, lineHeight: 46 },
+  title: { fontSize: 26, lineHeight: 33 },
+  body: { fontSize: 20, lineHeight: 28 },
+  item: { fontSize: 19, lineHeight: 26 },
+  secondary: { fontSize: 16, lineHeight: 23 },
+  label: { fontSize: 13, letterSpacing: 1.1, textTransform: "uppercase" as const },
+};
+
+export const patientTouch = {
+  min: 56,
+  primary: 88,
+};
+
 export const typography = {
   // Size tokens
   hero: 34,

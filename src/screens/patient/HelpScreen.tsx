@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -48,7 +49,8 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
     if (justResolved) {
       setHandledVisible(true);
       clearSentState();
-      setTimeout(() => setHandledVisible(false), 3000);
+      // Stays visible long enough to be seen and re-read — never a 3-second flash
+      setTimeout(() => setHandledVisible(false), 20000);
     }
   }, [alerts]);
 
@@ -62,12 +64,25 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
     }
   }
 
-  async function handleCancel() {
-    const latest = alerts.find((a) => !a.dismissed);
-    if (latest) {
-      try { await dismissAlert(latest.id); } catch { /* ignore */ }
-    }
-    clearSentState();
+  function handleCancel() {
+    // Retracting a live emergency needs a second, explicit step
+    Alert.alert(
+      "Cancel your help request?",
+      `${caregiverDisplay} has already been notified. Only cancel if you no longer need help.`,
+      [
+        { text: "Keep it", style: "cancel" },
+        {
+          text: "Yes, I'm okay now",
+          onPress: async () => {
+            const latest = alerts.find((a) => !a.dismissed);
+            if (latest) {
+              try { await dismissAlert(latest.id); } catch { /* ignore */ }
+            }
+            clearSentState();
+          },
+        },
+      ]
+    );
   }
 
   const recent = alerts.slice(0, 3);
@@ -165,7 +180,7 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
       lineHeight: 28,
     },
     hint: {
-      fontSize: 16,
+      fontSize: 18,
       color: colors.muted,
       ...fonts.regular,
       textAlign: "center",
@@ -178,14 +193,16 @@ export function HelpScreen({ patientName, caregiverName }: HelpScreenProps) {
     },
     cancelBtn: {
       marginTop: spacing.lg,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.xxl,
+      paddingVertical: spacing.lg,
+      paddingHorizontal: spacing.xxxl,
+      minHeight: 56,
+      justifyContent: "center",
       borderRadius: radius.pill,
       borderWidth: 1.5,
       borderColor: colors.coral,
     },
     cancelBtnText: {
-      fontSize: 15,
+      fontSize: 18,
       color: colors.coral,
       ...fonts.medium,
       textAlign: "center",

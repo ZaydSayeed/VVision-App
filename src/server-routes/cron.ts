@@ -3,6 +3,7 @@ import { getDb } from "../server-core/database";
 import { config } from "../server-core/config";
 import { escalateHelpAlerts } from "../server-jobs/escalateHelpAlerts";
 import { fireRemindersForAll } from "../server-jobs/fireReminders";
+import { fireCalendarReminders } from "../server-jobs/fireCalendarReminders";
 import { migrateVisitsToCalendarEvents } from "../server-jobs/migrateVisitsToCalendarEvents";
 
 const router = Router();
@@ -35,11 +36,12 @@ router.post("/cron/tick", async (req, res) => {
     // The jobs are idempotent (escalation claims levels atomically; reminders
     // dedup by notified_date), so running alongside in-process cron is safe.
     // allSettled so one job's failure never discards the other's work.
-    const [escalation, reminders] = await Promise.allSettled([
+    const [escalation, reminders, calendarReminders] = await Promise.allSettled([
       escalateHelpAlerts(db),
       fireRemindersForAll(db),
+      fireCalendarReminders(db),
     ]);
-    for (const r of [escalation, reminders]) {
+    for (const r of [escalation, reminders, calendarReminders]) {
       if (r.status === "rejected") console.error("cron tick job failed:", r.reason);
     }
     res.json({

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { ObjectId } from "mongodb";
 import { getDb } from "../server-core/database";
 import { authMiddleware } from "../server-core/security";
 import { requirePatientAccess } from "../server-core/seatResolver";
@@ -15,6 +16,8 @@ export const calendarEventCreateSchema = z.object({
   notes: z.string().max(1000).optional(),
   recurrenceRule: z.string().max(500).optional(),
 });
+
+export const calendarEventUpdateSchema = calendarEventCreateSchema.partial();
 
 const router = Router();
 
@@ -75,6 +78,29 @@ router.get("/:patientId/calendar-events", authMiddleware, requirePatientAccess, 
     res.json({ events });
   } catch (err) {
     console.error("calendar-events list error:", err);
+    res.status(500).json({ detail: "Internal server error" });
+  }
+});
+
+router.patch("/:patientId/calendar-events/:id", authMiddleware, requirePatientAccess, async (req, res) => {
+  const parsed = calendarEventUpdateSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ detail: parsed.error.issues[0].message }); return; }
+  try {
+    const db = getDb();
+    const doc = await db.collection("calendar_events").findOne({
+      _id: new ObjectId(String(req.params.id)),
+      patientId: req.params.patientId,
+    });
+    if (!doc) { res.status(404).json({ detail: "Event not found" }); return; }
+    if (doc.createdBy !== req.seat!.userId) { res.status(403).json({ detail: "Only the creator can edit this event" }); return; }
+
+    await db.collection("calendar_events").updateOne(
+      { _id: doc._id },
+      { $set: parsed.data }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("calendar-events update error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
 });

@@ -66,3 +66,35 @@ describe("POST /api/profiles/:patientId/calendar-events", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("GET /api/profiles/:patientId/calendar-events", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("expands a recurring event into one entry per occurrence", async () => {
+    mockCol.find = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([
+        {
+          _id: { toString: () => "event-1" },
+          patientId: "patient-123",
+          title: "Morning Adderall",
+          category: "medication",
+          startAt: "2026-07-10T13:00:00.000Z",
+          endAt: "2026-07-10T13:05:00.000Z",
+          recurrenceRule: "FREQ=DAILY",
+          notes: null,
+          createdBy: "user-caregiver",
+          completedDates: ["2026-07-10"],
+        },
+      ]),
+    });
+
+    const res = await request(app)
+      .get("/api/profiles/patient-123/calendar-events")
+      .query({ from: "2026-07-10T00:00:00.000Z", to: "2026-07-12T00:00:00.000Z" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(2);
+    expect(res.body.events[0]).toMatchObject({ occurrenceAt: "2026-07-10T13:00:00.000Z", completed: true });
+    expect(res.body.events[1]).toMatchObject({ occurrenceAt: "2026-07-11T13:00:00.000Z", completed: false });
+  });
+});

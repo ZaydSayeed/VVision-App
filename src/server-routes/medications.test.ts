@@ -10,10 +10,10 @@ vi.mock("../server-core/security", () => ({
 }));
 
 vi.mock("../server-core/patientResolver", () => ({
-  resolvePatientId: (req: any, _res: any, next: any) => {
+  resolvePatientId: vi.fn((req: any, _res: any, next: any) => {
     req.patientId = "patient-own";
     next();
-  },
+  }),
 }));
 
 const mockUsersCol = {
@@ -44,6 +44,7 @@ vi.mock("../server-core/seatResolver", () => ({
 }));
 
 import { userHasPatientAccess } from "../server-core/seatResolver";
+import { resolvePatientId } from "../server-core/patientResolver";
 
 import medicationRoutes from "./medications";
 const app = express();
@@ -82,6 +83,23 @@ describe("GET /api/medications", () => {
     expect(res.status).toBe(403);
     expect(res.body).toEqual({ detail: "No access to this profile" });
     expect(mockMedicationsCol.find).not.toHaveBeenCalled();
+    expect(userHasPatientAccess).toHaveBeenCalledWith(expect.anything(), "user-caregiver", "patient-other");
+  });
+
+  it("seat-only caregiver with no own linked patient can still fetch via patientId (does not depend on resolvePatientId)", async () => {
+    // Simulate a caller who has no default/legacy patient_id link of their own —
+    // resolvePatientId would 404 them in the real implementation, and here it does not
+    // even set req.patientId. It must not be invoked at all when ?patientId= is present.
+    vi.mocked(resolvePatientId).mockImplementation(async (_req: any, res: any) => {
+      res.status(404).json({ detail: "No patient linked to your account" });
+    });
+    vi.mocked(userHasPatientAccess).mockResolvedValue("paid_aide");
+
+    const res = await request(app).get("/api/medications").query({ patientId: "patient-other" });
+
+    expect(res.status).toBe(200);
+    expect(mockMedicationsCol.find).toHaveBeenCalledWith({ patient_id: "patient-other" });
+    expect(resolvePatientId).not.toHaveBeenCalled();
     expect(userHasPatientAccess).toHaveBeenCalledWith(expect.anything(), "user-caregiver", "patient-other");
   });
 });

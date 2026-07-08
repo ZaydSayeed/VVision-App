@@ -33,12 +33,22 @@ function medOut(doc: any) {
 }
 
 // GET /api/medications
-router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
+router.get(
+  "/",
+  authMiddleware,
+  (req, res, next) => {
+    if (typeof req.query.patientId === "string" && req.query.patientId.length > 0) {
+      next();
+      return;
+    }
+    resolvePatientId(req, res, next);
+  },
+  async (req, res) => {
   try {
     const db = getDb();
-    let patientId = req.patientId!;
-
     const requestedPatientId = req.query.patientId;
+    let patientId: string;
+
     if (typeof requestedPatientId === "string" && requestedPatientId.length > 0) {
       const userId = req.auth!.userId;
       const role = await userHasPatientAccess(db, userId, requestedPatientId);
@@ -47,6 +57,8 @@ router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
         return;
       }
       patientId = requestedPatientId;
+    } else {
+      patientId = req.patientId!;
     }
 
     const docs = await db
@@ -59,7 +71,8 @@ router.get("/", authMiddleware, resolvePatientId, async (req, res) => {
     console.error("list medications error:", err);
     res.status(500).json({ detail: "Internal server error" });
   }
-});
+  }
+);
 
 // POST /api/medications
 router.post("/", authMiddleware, resolvePatientId, async (req, res) => {

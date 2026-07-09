@@ -62,6 +62,19 @@ function endOfToday(): Date {
   return d;
 }
 
+function startOfMonth(): Date {
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function startOfNextMonth(): Date {
+  const d = startOfMonth();
+  d.setMonth(d.getMonth() + 1);
+  return d;
+}
+
 /**
  * Rebuilds today's widget snapshot for `patientId` and pushes it (plus the
  * active-patient pointer) into the App Group, then asks WidgetKit to reload —
@@ -83,10 +96,16 @@ export async function refreshWidgetForPatient(
   patientId: string,
   patientName?: string
 ): Promise<void> {
-  const [events, tasks, medications] = await Promise.all([
+  const [events, tasks, medications, monthEvents] = await Promise.all([
     listCalendarEvents(patientId, startOfToday().toISOString(), endOfToday().toISOString()),
     fetchRoutines(patientId).catch(() => []),
     fetchMedications(patientId).catch(() => []),
+    // Month-wide range feeds the large widget's mini-calendar dot indicators
+    // (Task: widget UX follow-up). Best-effort — a failure here shouldn't
+    // block today's checklist/appointments from refreshing.
+    listCalendarEvents(patientId, startOfMonth().toISOString(), startOfNextMonth().toISOString()).catch(
+      () => []
+    ),
   ]);
 
   // The widget's checklist is fed by whatever this device's "today" tasks +
@@ -104,7 +123,8 @@ export async function refreshWidgetForPatient(
     patientName ?? "",
     events,
     reminders,
-    medications
+    medications,
+    monthEvents
   );
 
   await writeWidgetSnapshot(snapshot);

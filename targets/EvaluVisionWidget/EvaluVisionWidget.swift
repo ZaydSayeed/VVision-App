@@ -23,6 +23,11 @@ struct WidgetSnapshot: Codable {
     let generatedAt: String
     let checklist: [WidgetChecklistItem]
     let appointments: [WidgetAppointment]
+    // "YYYY-MM-DD" (local-date) strings for the current month's days that have
+    // at least one calendar event — feeds the large widget's mini-calendar dot
+    // indicators. Optional so a stale cached snapshot written before this
+    // field existed still decodes successfully (falls back to "no dots").
+    let monthEventDays: [String]?
 }
 
 // Codable mirror of `widget-active-patient.json` (written by the app in Task 4).
@@ -72,6 +77,12 @@ func loadSnapshot(patientId: String) -> WidgetSnapshot? {
 struct EvaluVisionEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
+    // True only when the user explicitly picked a patient via the widget's
+    // configuration (the caregiver-with-multiple-patients case). False when
+    // the widget fell back to the active-patient pointer (the patient's own
+    // device, where there's only ever one patient — themselves — so showing
+    // their own name in the title is redundant).
+    let hasExplicitlyConfiguredPatient: Bool
 }
 
 // AppIntentTimelineProvider ties the timeline to SelectPatientIntent, so each
@@ -82,23 +93,29 @@ struct EvaluVisionProvider: AppIntentTimelineProvider {
     typealias Intent = SelectPatientIntent
 
     func placeholder(in context: Context) -> EvaluVisionEntry {
-        EvaluVisionEntry(date: Date(), snapshot: nil)
+        EvaluVisionEntry(date: Date(), snapshot: nil, hasExplicitlyConfiguredPatient: false)
     }
 
     func snapshot(for configuration: SelectPatientIntent, in context: Context) async
         -> EvaluVisionEntry
     {
-        let patientId = resolvePatientId(configuredPatientId: configuration.patient?.id)
+        let configuredId = configuration.patient?.id
+        let patientId = resolvePatientId(configuredPatientId: configuredId)
         let snapshot = patientId.flatMap(loadSnapshot)
-        return EvaluVisionEntry(date: Date(), snapshot: snapshot)
+        return EvaluVisionEntry(
+            date: Date(), snapshot: snapshot,
+            hasExplicitlyConfiguredPatient: !(configuredId ?? "").isEmpty)
     }
 
     func timeline(for configuration: SelectPatientIntent, in context: Context) async
         -> Timeline<EvaluVisionEntry>
     {
-        let patientId = resolvePatientId(configuredPatientId: configuration.patient?.id)
+        let configuredId = configuration.patient?.id
+        let patientId = resolvePatientId(configuredPatientId: configuredId)
         let snapshot = patientId.flatMap(loadSnapshot)
-        let entry = EvaluVisionEntry(date: Date(), snapshot: snapshot)
+        let entry = EvaluVisionEntry(
+            date: Date(), snapshot: snapshot,
+            hasExplicitlyConfiguredPatient: !(configuredId ?? "").isEmpty)
 
         // Refresh ~every 20 min as a floor; the app also calls
         // WidgetCenter.reloadTimelines after writing a fresh snapshot (Task 4),
@@ -123,7 +140,7 @@ struct EvaluVisionWidgetView: View {
     var body: some View {
         Group {
             if let snapshot = entry.snapshot {
-                content(for: snapshot)
+                content(for: snapshot, showPatientName: entry.hasExplicitlyConfiguredPatient)
             } else {
                 emptyState
             }
@@ -136,9 +153,17 @@ struct EvaluVisionWidgetView: View {
         .widgetURL(entry.snapshot.flatMap { URL(string: "vela://calendar/\($0.patientId)") })
     }
 
-    private func content(for snapshot: WidgetSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(snapshot.patientName.isEmpty ? "Today" : snapshot.patientName)
+    private func content(for snapshot: WidgetSnapshot, showPatientName: Bool) -> some View {
+        // On a caregiver's widget (patient explicitly configured), the patient's
+        // name distinguishes which of their patients this is. On a patient's own
+        // device (no explicit configuration — there's only ever themselves),
+        // showing their own name back to them is redundant, so show a plain
+        // "Today's Tasks" heading instead.
+        let title = (showPatientName && !snapshot.patientName.isEmpty)
+            ? snapshot.patientName
+            : "Today's Tasks"
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(title)
                 .font(.headline)
                 .foregroundStyle(.white)
                 .lineLimit(1)
@@ -182,6 +207,13 @@ struct EvaluVisionWidgetView: View {
                     .foregroundStyle(.white.opacity(0.6))
             }
 
+            // The large size has real vertical room left after the checklist —
+            // fill it with a mini month calendar instead of empty space.
+            if family == .systemLarge {
+                Spacer(minLength: 8)
+                MiniMonthCalendarView(eventDays: Set(snapshot.monthEventDays ?? []))
+            }
+
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -197,6 +229,91 @@ struct EvaluVisionWidgetView: View {
                 .foregroundStyle(.white.opacity(0.7))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Mini month calendar (large widget only)
+
+// Compact current-month grid: today highlighted, a small dot under any day
+// that has a calendar event (per `eventDays`, "YYYY-MM-DD" local-date keys
+// matching WidgetSnapshot.monthEventDays).
+private struct MiniMonthCalendarView: View {
+    let eventDays: Set<String>
+
+    private static let weekdaySymbols = ["S", "M", "T", "W", "T", "F", "S"]
+    private static let dateKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.calendar = Calendar.current
+        f.timeZone = TimeZone.current
+        return f
+    }()
+
+    private var calendar: Calendar { Calendar.current }
+    private var today: Date { Date() }
+
+    // Leading blanks + real day-of-month numbers, laid out Sun-first to match
+    // `weekdaySymbols` — nil entries render as empty cells before day 1.
+    private var days: [Int?] {
+        guard
+            let monthInterval = calendar.dateInterval(of: .month, for: today),
+            let range = calendar.range(of: .day, in: .month, for: today)
+        else { return [] }
+
+        let firstWeekday = calendar.component(.weekday, from: monthInterval.start)  // 1 = Sunday
+        let leadingBlanks = Array<Int?>(repeating: nil, count: firstWeekday - 1)
+        let dayNumbers = range.map { Optional($0) }
+        return leadingBlanks + dayNumbers
+    }
+
+    private func dateKey(forDay day: Int) -> String? {
+        var components = calendar.dateComponents([.year, .month], from: today)
+        components.day = day
+        guard let date = calendar.date(from: components) else { return nil }
+        return Self.dateKeyFormatter.string(from: date)
+    }
+
+    private var todayDayNumber: Int {
+        calendar.component(.day, from: today)
+    }
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+
+    var body: some View {
+        VStack(spacing: 3) {
+            HStack(spacing: 2) {
+                ForEach(Array(Self.weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                    Text(symbol)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(Array(days.enumerated()), id: \.offset) { _, day in
+                    if let day {
+                        let isToday = day == todayDayNumber
+                        let hasEvent = dateKey(forDay: day).map { eventDays.contains($0) } ?? false
+                        VStack(spacing: 1) {
+                            Text("\(day)")
+                                .font(.system(size: 10))
+                                .foregroundStyle(isToday ? .black : .white.opacity(0.85))
+                                .frame(width: 16, height: 16)
+                                .background(
+                                    Circle().fill(isToday ? Color.white : Color.clear)
+                                )
+                            Circle()
+                                .fill(hasEvent ? Color.blue : Color.clear)
+                                .frame(width: 3, height: 3)
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        Color.clear.frame(width: 16, height: 16)
+                    }
+                }
+            }
+        }
     }
 }
 

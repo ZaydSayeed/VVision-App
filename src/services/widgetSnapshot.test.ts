@@ -38,5 +38,34 @@ describe("buildWidgetSnapshot", () => {
     const snapshot = buildWidgetSnapshot("patient-123", "Mom", [], [], []);
     expect(snapshot.checklist).toEqual([]);
     expect(snapshot.appointments).toEqual([]);
+    expect(snapshot.monthEventDays).toEqual([]);
+  });
+
+  it("derives monthEventDays as sorted, deduplicated local-date strings from monthEvents", () => {
+    const monthEvents: CalendarEventOccurrence[] = [
+      {
+        id: "evt-1", title: "Dr. Smith", category: "medical",
+        startAt: "2026-07-15T15:00:00.000Z",
+        occurrenceAt: "2026-07-15T15:00:00.000Z", endAt: "2026-07-15T15:30:00.000Z",
+        notes: null, recurrenceRule: null, createdBy: "caregiver-1", completed: false,
+      },
+      {
+        id: "evt-2", title: "Dentist", category: "medical",
+        startAt: "2026-07-15T18:00:00.000Z",
+        occurrenceAt: "2026-07-15T18:00:00.000Z", endAt: "2026-07-15T18:30:00.000Z",
+        notes: null, recurrenceRule: null, createdBy: "caregiver-1", completed: false,
+      },
+      {
+        id: "evt-3", title: "Physical Therapy", category: "medical",
+        startAt: "2026-07-03T14:00:00.000Z",
+        occurrenceAt: "2026-07-03T14:00:00.000Z", endAt: "2026-07-03T14:30:00.000Z",
+        notes: null, recurrenceRule: null, createdBy: "caregiver-1", completed: false,
+      },
+    ];
+
+    const snapshot = buildWidgetSnapshot("patient-123", "Mom", [], [], [], monthEvents);
+
+    // Two same-day events (evt-1, evt-2) collapse to one date key; sorted ascending.
+    expect(snapshot.monthEventDays).toEqual(["2026-07-03", "2026-07-15"]);
   });
 });

@@ -35,6 +35,7 @@ import { AddTaskModal, EditTaskModal, AddMedModal } from "../../components/patie
 import { MedicationsCard, TasksCard } from "../../components/patient/TodayListCards";
 import { GreetingHeader } from "../../components/patient/GreetingHeader";
 import { AddChooserSheet } from "../../components/patient/AddChooserSheet";
+import { refreshWidgetForPatient } from "../../services/calendarApi";
 
 const SCREEN_W = Dimensions.get("window").width;
 const PANEL_WIDTH = Math.min(SCREEN_W * 0.82, 340);
@@ -50,6 +51,17 @@ export function TodayScreen() {
   useEffect(() => { registerReminderReload(reloadReminders); }, [reloadReminders]);
   useEffect(() => { registerTaskReload(reloadRoutine); }, [reloadRoutine]);
   useEffect(() => { registerMedReload(reloadMeds); }, [reloadMeds]);
+  // Populate the widget's App Group data as soon as the patient's own home
+  // screen loads, not just after their first task/med mutation — otherwise a
+  // freshly signed-in patient who never touches a checkbox never gets a
+  // snapshot or active-patient pointer written, and the widget stays stuck
+  // in its empty/placeholder state indefinitely.
+  useEffect(() => {
+    if (!patientId) return;
+    refreshWidgetForPatient(patientId, user?.name).catch((err) =>
+      console.warn("[TodayScreen] initial widget refresh failed:", err)
+    );
+  }, [patientId]);
   const { pinnedNote, notes: caregiverNotes, reload: reloadNotes } = useNotes(patientId);
   const [notesModalVisible, setNotesModalVisible] = useState(false);
   const dataError = routineError || medsError;

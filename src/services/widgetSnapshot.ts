@@ -34,10 +34,24 @@ export interface WidgetSnapshot {
   generatedAt: string;
   checklist: WidgetChecklistItem[];
   appointments: WidgetAppointment[];
+  // Days in the CURRENT calendar month (local time) that have at least one
+  // calendar event, as "YYYY-MM-DD" strings — feeds the mini month-calendar
+  // dot indicators on the large widget. Local-date, not UTC (see the
+  // project's date-handling convention: never derive "which day" via
+  // toISOString, since that shifts evening events to the next UTC day).
+  monthEventDays: string[];
 }
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function localDateKey(iso: string): string {
+  const d = new Date(iso);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function buildWidgetSnapshot(
@@ -45,8 +59,13 @@ export function buildWidgetSnapshot(
   patientName: string,
   todayEvents: CalendarEventOccurrence[],
   todayReminders: ReminderItem[],
-  todayMedications: MedicationItem[]
+  todayMedications: MedicationItem[],
+  monthEvents: CalendarEventOccurrence[] = []
 ): WidgetSnapshot {
+  const monthEventDays = Array.from(
+    new Set(monthEvents.map((e) => localDateKey(e.occurrenceAt)))
+  ).sort();
+
   return {
     patientId,
     patientName,
@@ -68,5 +87,6 @@ export function buildWidgetSnapshot(
       title: e.title,
       time: formatTime(e.occurrenceAt),
     })),
+    monthEventDays,
   };
 }

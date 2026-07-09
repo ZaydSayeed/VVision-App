@@ -24,6 +24,7 @@ import { fonts, spacing, radius } from "../../config/theme";
 import { formatRelativeTime } from "../../hooks/useDashboardData";
 import { API_BASE_URL } from "../../config/api";
 import { authHeaders } from "../../api/client";
+import { refreshWidgetForPatient } from "../../services/calendarApi";
 
 const MOOD_EMOJI: Record<string, string> = {
   happy: "😊",
@@ -96,6 +97,17 @@ export function PatientDetailScreen({ patientId, patientName, onBack, onViewLogs
     const interval = setInterval(refreshData, 15000);
     return () => clearInterval(interval);
   }, [refreshData]);
+  // Same reasoning as TodayScreen's patient-side fix: a caregiver opening
+  // this patient's detail screen for the first time (before touching any
+  // task/med/calendar item) should still populate that patient's widget
+  // data, not leave it stuck empty until some mutation happens to trigger
+  // a refresh.
+  useEffect(() => {
+    if (!patientId) return;
+    refreshWidgetForPatient(patientId, patientName).catch((err) =>
+      console.warn("[PatientDetailScreen] initial widget refresh failed:", err)
+    );
+  }, [patientId, patientName]);
   const [moodHistory, setMoodHistory] = useState<Array<{ date: string; mood: string }>>([]);
   const [geofence, setGeofence] = useState<{ lat: number; lng: number; radiusMeters: number; name: string } | null>(null);
   const [geofenceSheetOpen, setGeofenceSheetOpen] = useState(false);
